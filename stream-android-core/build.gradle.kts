@@ -60,6 +60,7 @@ dependencies {
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
 
+    detektPlugins(libs.detekt.formatting)
 
     // Network
     implementation(libs.moshi)

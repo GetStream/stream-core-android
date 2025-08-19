@@ -45,7 +45,6 @@ import okhttp3.Response
  * @param tokenManager Provides, invalidates, and refreshes tokens.
  * @param jsonParser JSON parser used to decode error payloads when requests fail.
  * @param authType The value set on the `stream-auth-type` header (e.g., "jwt").
- * @param retryCount The number of times to retry on token errors.
  */
 internal class StreamAuthInterceptor(
     private val tokenManager: StreamTokenManager,

@@ -90,11 +90,12 @@ internal fun createClient(
 ): StreamClient<StreamClientState> {
     val clientLogger = logProvider.taggedLogger(tag = "StreamCoreClient")
     val parent = scope.coroutineContext[Job]
-    val supervisorJob = if (parent != null) {
-        SupervisorJob(parent)
-    } else {
-        SupervisorJob()
-    }
+    val supervisorJob =
+        if (parent != null) {
+            SupervisorJob(parent)
+        } else {
+            SupervisorJob()
+        }
     val clientScope = CoroutineScope(supervisorJob + scope.coroutineContext)
     val state = StreamClientStateImpl()
     clientLogger.d { "Creating StreamClient" }

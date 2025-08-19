@@ -34,7 +34,6 @@ import io.getstream.android.core.api.subscribe.StreamSubscriptionManager
 import io.getstream.android.core.internal.socket.StreamSocketSession
 import io.getstream.android.core.internal.state.MutableStreamClientState
 import io.mockk.*
-import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
@@ -73,33 +72,37 @@ class StreamClientIImplTest {
         // SingleFlight: execute the lambda and wrap into Result
         singleFlight = mockk(relaxed = true)
         coEvery { singleFlight.clear(any()) } just Awaits
-        coEvery { singleFlight.run(any(), any<suspend () -> Any>()) } coAnswers {
-            val block = secondArg<suspend () -> Any>()
-            Result.success(block())
-        }
+        coEvery { singleFlight.run(any(), any<suspend () -> Any>()) } coAnswers
+            {
+                val block = secondArg<suspend () -> Any>()
+                Result.success(block())
+            }
 
         // Mutable client state: expose a real StateFlow that update() mutates
-        connFlow = MutableStateFlow<StreamConnectionState>(StreamConnectionState.Disconnected.Manual)
+        connFlow =
+            MutableStateFlow<StreamConnectionState>(StreamConnectionState.Disconnected.Manual)
         mutableClientState = mockk(relaxed = true)
         every { mutableClientState.connectionState } returns connFlow
-        every { mutableClientState.update(any()) } answers {
-            connFlow.value = firstArg()
-            Result.success(Unit)
-        }
+        every { mutableClientState.update(any()) } answers
+            {
+                connFlow.value = firstArg()
+                Result.success(Unit)
+            }
 
         every { connectionIdHolder.clear() } returns Result.success(Unit)
 
-        client = StreamClientIImpl(
-            userId = userId,
-            tokenManager = tokenManager,
-            singleFlight = singleFlight,
-            serialQueue = serialQueue,
-            connectionIdHolder = connectionIdHolder,
-            socketSession = socketSession,
-            mutableClientState = mutableClientState,
-            logger = logger,
-            subscriptionManager = subscriptionManager,
-        )
+        client =
+            StreamClientIImpl(
+                userId = userId,
+                tokenManager = tokenManager,
+                singleFlight = singleFlight,
+                serialQueue = serialQueue,
+                connectionIdHolder = connectionIdHolder,
+                socketSession = socketSession,
+                mutableClientState = mutableClientState,
+                logger = logger,
+                subscriptionManager = subscriptionManager,
+            )
     }
 
     @Test
@@ -119,43 +122,45 @@ class StreamClientIImplTest {
     }
 
     @Test
-    fun `disconnect performs cleanup - updates state, clears ids, cancels handle, stops processors`() = runTest {
-        // Make singleFlight actually run the provided block and return success
-        coEvery { singleFlight.run(any(), any<suspend () -> Any>()) } coAnswers {
-            val block = secondArg<suspend () -> Any>()
-            block() // execute disconnect body
-            Result.success(Unit)
+    fun `disconnect performs cleanup - updates state, clears ids, cancels handle, stops processors`() =
+        runTest {
+            // Make singleFlight actually run the provided block and return success
+            coEvery { singleFlight.run(any(), any<suspend () -> Any>()) } coAnswers
+                {
+                    val block = secondArg<suspend () -> Any>()
+                    block() // execute disconnect body
+                    Result.success(Unit)
+                }
+            coJustRun { singleFlight.clear(true) }
+
+            // Pretend we already have a live subscription handle inside the client
+            val fakeHandle = mockk<StreamSubscription>(relaxed = true)
+            val handleField =
+                client.javaClass.getDeclaredField("handle").apply { isAccessible = true }
+            handleField.set(client, fakeHandle)
+
+            every { connectionIdHolder.clear() } returns Result.success(Unit)
+            every { socketSession.disconnect() } returns Result.success(Unit)
+            coEvery { serialQueue.stop(any()) } returns Result.success(Unit) // default-arg path
+            justRun { tokenManager.invalidate() }
+
+            val result = client.disconnect()
+
+            assertTrue(result.isSuccess)
+
+            // State moved to Manual
+            assertTrue(connFlow.value is StreamConnectionState.Disconnected.Manual)
+
+            verify { connectionIdHolder.clear() }
+            verify { socketSession.disconnect() }
+            verify { fakeHandle.cancel() } // the previous handle is cancelled
+            verify { tokenManager.invalidate() }
+            coVerify { serialQueue.stop(any()) }
+            coVerify { singleFlight.clear(true) }
+
+            // Handle is nulled
+            assertNull(handleField.get(client))
         }
-        coJustRun { singleFlight.clear(true) }
-
-        // Pretend we already have a live subscription handle inside the client
-        val fakeHandle = mockk<StreamSubscription>(relaxed = true)
-        val handleField = client.javaClass.getDeclaredField("handle").apply { isAccessible = true }
-        handleField.set(client, fakeHandle)
-
-        every { connectionIdHolder.clear() } returns Result.success(Unit)
-        every { socketSession.disconnect() } returns Result.success(Unit)
-        coEvery { serialQueue.stop(any()) } returns Result.success(Unit) // default-arg path
-        justRun { tokenManager.invalidate() }
-
-        val result = client.disconnect()
-
-        assertTrue(result.isSuccess)
-
-        // State moved to Manual
-        assertTrue(connFlow.value is StreamConnectionState.Disconnected.Manual)
-
-        verify { connectionIdHolder.clear() }
-        verify { socketSession.disconnect() }
-        verify { fakeHandle.cancel() }    // the previous handle is cancelled
-        verify { tokenManager.invalidate() }
-        coVerify { serialQueue.stop(any()) }
-        coVerify { singleFlight.clear(true) }
-
-        // Handle is nulled
-        assertNull(handleField.get(client))
-    }
-
 
     @Test
     fun `subscribe delegates to subscriptionManager`() {
@@ -171,164 +176,189 @@ class StreamClientIImplTest {
     }
 
     @Test
-    fun `connect success - subscribes once, calls session connect, updates state and connectionId, returns user`() = runTest {
-        // single-flight executes block and returns its result
-        coEvery { singleFlight.run(any(), any<suspend () -> StreamConnectedUser>()) } coAnswers {
-            val block = secondArg<suspend () -> StreamConnectedUser>()
-            Result.success(block.invoke())
+    fun `connect success - subscribes once, calls session connect, updates state and connectionId, returns user`() =
+        runTest {
+            // single-flight executes block and returns its result
+            coEvery { singleFlight.run(any(), any<suspend () -> StreamConnectedUser>()) } coAnswers
+                {
+                    val block = secondArg<suspend () -> StreamConnectedUser>()
+                    Result.success(block.invoke())
+                }
+
+            // subscribe once to the socket session
+            val fakeHandle = mockk<StreamSubscription>(relaxed = true)
+            every { socketSession.subscribe(any<StreamClientListener>(), any()) } returns
+                Result.success(fakeHandle)
+
+            // token resolves
+            val token = StreamToken.fromString("tok")
+            coEvery { tokenManager.loadIfAbsent() } returns Result.success(token)
+
+            // session connect succeeds
+            val connectedUser = mockk<StreamConnectedUser>(relaxed = true)
+            val connectedState = StreamConnectionState.Connected(connectedUser, "conn-1")
+            coEvery { socketSession.connect(any()) } returns Result.success(connectedState)
+
+            every { connectionIdHolder.setConnectionId("conn-1") } returns Result.success("Unit")
+
+            val result = client.connect()
+
+            // result is the connected user
+            assertTrue(result.isSuccess)
+            assertSame(connectedUser, result.getOrNull())
+
+            // state is updated to Connected
+            assertTrue(connFlow.value is StreamConnectionState.Connected)
+
+            // interactions
+            verify(exactly = 1) { socketSession.subscribe(any<StreamClientListener>(), any()) }
+            coVerify(exactly = 1) { tokenManager.loadIfAbsent() }
+            coVerify(exactly = 1) { socketSession.connect(match { it.token == "tok" }) }
+            verify(exactly = 1) { connectionIdHolder.setConnectionId("conn-1") }
         }
-
-        // subscribe once to the socket session
-        val fakeHandle = mockk<StreamSubscription>(relaxed = true)
-        every { socketSession.subscribe(any<StreamClientListener>(), any()) } returns Result.success(fakeHandle)
-
-        // token resolves
-        val token = StreamToken.fromString("tok")
-        coEvery { tokenManager.loadIfAbsent() } returns Result.success(token)
-
-        // session connect succeeds
-        val connectedUser = mockk<StreamConnectedUser>(relaxed = true)
-        val connectedState = StreamConnectionState.Connected(connectedUser, "conn-1")
-        coEvery { socketSession.connect(any()) } returns Result.success(connectedState)
-
-        every { connectionIdHolder.setConnectionId("conn-1") } returns Result.success("Unit")
-
-        val result = client.connect()
-
-        // result is the connected user
-        assertTrue(result.isSuccess)
-        assertSame(connectedUser, result.getOrNull())
-
-        // state is updated to Connected
-        assertTrue(connFlow.value is StreamConnectionState.Connected)
-
-        // interactions
-        verify(exactly = 1) { socketSession.subscribe(any<StreamClientListener>(), any()) }
-        coVerify(exactly = 1) { tokenManager.loadIfAbsent() }
-        coVerify(exactly = 1) { socketSession.connect(match { it.token == "tok" }) }
-        verify(exactly = 1) { connectionIdHolder.setConnectionId("conn-1") }
-    }
 
     @Test
-    fun `connect early-exit when already connected - returns existing user and does not hit session or token`() = runTest {
-        // Make single-flight run the block
-        coEvery { singleFlight.run(any(), any<suspend () -> StreamConnectedUser>()) } coAnswers {
-            val block = secondArg<suspend () -> StreamConnectedUser>()
-            Result.success(block.invoke())
+    fun `connect early-exit when already connected - returns existing user and does not hit session or token`() =
+        runTest {
+            // Make single-flight run the block
+            coEvery { singleFlight.run(any(), any<suspend () -> StreamConnectedUser>()) } coAnswers
+                {
+                    val block = secondArg<suspend () -> StreamConnectedUser>()
+                    Result.success(block.invoke())
+                }
+
+            // Pretend we are already connected
+            val existingUser = mockk<StreamConnectedUser>(relaxed = true)
+            mutableClientState.update(
+                StreamConnectionState.Connected(existingUser, "existing-conn")
+            )
+
+            val result = client.connect()
+
+            assertTrue(result.isSuccess)
+            assertSame(existingUser, result.getOrNull())
+
+            // No new subscribe, no token load, no session connect, no connectionId set
+            verify(exactly = 0) { socketSession.subscribe(any<StreamClientListener>(), any()) }
+            coVerify(exactly = 0) { tokenManager.loadIfAbsent() }
+            coVerify(exactly = 0) { socketSession.connect(any()) }
+            verify(exactly = 0) { connectionIdHolder.setConnectionId(any()) }
         }
-
-        // Pretend we are already connected
-        val existingUser = mockk<StreamConnectedUser>(relaxed = true)
-        mutableClientState.update(StreamConnectionState.Connected(existingUser, "existing-conn"))
-
-        val result = client.connect()
-
-        assertTrue(result.isSuccess)
-        assertSame(existingUser, result.getOrNull())
-
-        // No new subscribe, no token load, no session connect, no connectionId set
-        verify(exactly = 0) { socketSession.subscribe(any<StreamClientListener>(), any()) }
-        coVerify(exactly = 0) { tokenManager.loadIfAbsent() }
-        coVerify(exactly = 0) { socketSession.connect(any()) }
-        verify(exactly = 0) { connectionIdHolder.setConnectionId(any()) }
-    }
 
     @Test
-    fun `connect fails when token manager fails - emits Disconnected_Error and returns failure`() = runTest {
-        // single-flight executes block
-        coEvery { singleFlight.run(any(), any<suspend () -> StreamConnectedUser>()) } coAnswers {
-            val block = secondArg<suspend () -> StreamConnectedUser>()
-            try {
-                Result.success(block.invoke())
-            } catch (t: Throwable) {
-                Result.failure(t)
-            }
+    fun `connect fails when token manager fails - emits Disconnected_Error and returns failure`() =
+        runTest {
+            // single-flight executes block
+            coEvery { singleFlight.run(any(), any<suspend () -> StreamConnectedUser>()) } coAnswers
+                {
+                    val block = secondArg<suspend () -> StreamConnectedUser>()
+                    try {
+                        Result.success(block.invoke())
+                    } catch (t: Throwable) {
+                        Result.failure(t)
+                    }
+                }
+
+            // subscribe is attempted before token load
+            every { socketSession.subscribe(any<StreamClientListener>(), any()) } returns
+                Result.success(mockk(relaxed = true))
+
+            val boom = RuntimeException("no token")
+            coEvery { tokenManager.loadIfAbsent() } returns Result.failure(boom)
+
+            val result = client.connect()
+
+            assertTrue(result.isFailure)
+            // state should be Disconnected.Error
+            val state = connFlow.value
+            assertTrue(state is StreamConnectionState.Disconnected.Error)
+
+            // verify no session connect or connection id set
+            verify(exactly = 1) { socketSession.subscribe(any<StreamClientListener>(), any()) }
+            coVerify(exactly = 1) { tokenManager.loadIfAbsent() }
+            coVerify(exactly = 0) { socketSession.connect(any()) }
+            verify(exactly = 0) { connectionIdHolder.setConnectionId(any()) }
         }
-
-        // subscribe is attempted before token load
-        every { socketSession.subscribe(any<StreamClientListener>(), any()) } returns Result.success(mockk(relaxed = true))
-
-        val boom = RuntimeException("no token")
-        coEvery { tokenManager.loadIfAbsent() } returns Result.failure(boom)
-
-        val result = client.connect()
-
-        assertTrue(result.isFailure)
-        // state should be Disconnected.Error
-        val state = connFlow.value
-        assertTrue(state is StreamConnectionState.Disconnected.Error)
-
-        // verify no session connect or connection id set
-        verify(exactly = 1) { socketSession.subscribe(any<StreamClientListener>(), any()) }
-        coVerify(exactly = 1) { tokenManager.loadIfAbsent() }
-        coVerify(exactly = 0) { socketSession.connect(any()) }
-        verify(exactly = 0) { connectionIdHolder.setConnectionId(any()) }
-    }
 
     @Test
-    fun `connect fails when socket session connect fails - emits Disconnected_Error and returns failure`() = runTest {
-        // single-flight executes block
-        coEvery { singleFlight.run(any(), any<suspend () -> StreamConnectedUser>()) } coAnswers {
-            val block = secondArg<suspend () -> StreamConnectedUser>()
-            try {
-                Result.success(block.invoke())
-            } catch (t: Throwable) {
-                Result.failure(t)
-            }
+    fun `connect fails when socket session connect fails - emits Disconnected_Error and returns failure`() =
+        runTest {
+            // single-flight executes block
+            coEvery { singleFlight.run(any(), any<suspend () -> StreamConnectedUser>()) } coAnswers
+                {
+                    val block = secondArg<suspend () -> StreamConnectedUser>()
+                    try {
+                        Result.success(block.invoke())
+                    } catch (t: Throwable) {
+                        Result.failure(t)
+                    }
+                }
+
+            // subscribe created
+            every { socketSession.subscribe(any<StreamClientListener>(), any()) } returns
+                Result.success(mockk(relaxed = true))
+
+            // token ok
+            val token = StreamToken.fromString("tok")
+            coEvery { tokenManager.loadIfAbsent() } returns Result.success(token)
+
+            // session connect fails
+            val boom = IllegalStateException("connect failed")
+            coEvery { socketSession.connect(any()) } returns Result.failure(boom)
+
+            val result = client.connect()
+
+            assertTrue(result.isFailure)
+            // state should be Disconnected.Error
+            val state = connFlow.value
+            assertTrue(state is StreamConnectionState.Disconnected.Error)
+
+            // verify interactions
+            verify(exactly = 1) { socketSession.subscribe(any<StreamClientListener>(), any()) }
+            coVerify(exactly = 1) { tokenManager.loadIfAbsent() }
+            coVerify(exactly = 1) { socketSession.connect(match { it.token == "tok" }) }
+            verify(exactly = 0) { connectionIdHolder.setConnectionId(any()) }
         }
-
-        // subscribe created
-        every { socketSession.subscribe(any<StreamClientListener>(), any()) } returns Result.success(mockk(relaxed = true))
-
-        // token ok
-        val token = StreamToken.fromString("tok")
-        coEvery { tokenManager.loadIfAbsent() } returns Result.success(token)
-
-        // session connect fails
-        val boom = IllegalStateException("connect failed")
-        coEvery { socketSession.connect(any()) } returns Result.failure(boom)
-
-        val result = client.connect()
-
-        assertTrue(result.isFailure)
-        // state should be Disconnected.Error
-        val state = connFlow.value
-        assertTrue(state is StreamConnectionState.Disconnected.Error)
-
-        // verify interactions
-        verify(exactly = 1) { socketSession.subscribe(any<StreamClientListener>(), any()) }
-        coVerify(exactly = 1) { tokenManager.loadIfAbsent() }
-        coVerify(exactly = 1) { socketSession.connect(match { it.token == "tok" }) }
-        verify(exactly = 0) { connectionIdHolder.setConnectionId(any()) }
-    }
 
     @Test
     fun `subscription onState updates client state and forwards to subscribers`() = runTest {
         // Make single-flight execute the block
-        coEvery { singleFlight.run(any(), any<suspend () -> StreamConnectedUser>()) } coAnswers {
-            val block = secondArg<suspend () -> StreamConnectedUser>()
-            try { Result.success(block.invoke()) } catch (t: Throwable) { Result.failure(t) }
-        }
+        coEvery { singleFlight.run(any(), any<suspend () -> StreamConnectedUser>()) } coAnswers
+            {
+                val block = secondArg<suspend () -> StreamConnectedUser>()
+                try {
+                    Result.success(block.invoke())
+                } catch (t: Throwable) {
+                    Result.failure(t)
+                }
+            }
 
         // Capture the internal listener the client registers with the socket session
         var capturedListener: StreamClientListener? = null
-        every { socketSession.subscribe(any<StreamClientListener>(), any()) } answers {
-            capturedListener = firstArg()
-            Result.success(mockk(relaxed = true))
-        }
+        every { socketSession.subscribe(any<StreamClientListener>(), any()) } answers
+            {
+                capturedListener = firstArg()
+                Result.success(mockk(relaxed = true))
+            }
 
-        // Record what the external subscribers receive via subscriptionManager.forEach { it.onState(state) }
+        // Record what the external subscribers receive via subscriptionManager.forEach {
+        // it.onState(state) }
         val receivedStates = mutableListOf<StreamConnectionState>()
-        every { subscriptionManager.forEach(any()) } answers {
-            val block = firstArg<(StreamClientListener) -> Unit>()
-            val external = mockk<StreamClientListener>(relaxed = true)
-            every { external.onState(any()) } answers { receivedStates += firstArg<StreamConnectionState>() }
-            block(external)
-            Result.success(Unit)
-        }
+        every { subscriptionManager.forEach(any()) } answers
+            {
+                val block = firstArg<(StreamClientListener) -> Unit>()
+                val external = mockk<StreamClientListener>(relaxed = true)
+                every { external.onState(any()) } answers
+                    {
+                        receivedStates += firstArg<StreamConnectionState>()
+                    }
+                block(external)
+                Result.success(Unit)
+            }
 
         // Force connect() to bail early after subscribe (so we don't need a real socket connect)
-        coEvery { tokenManager.loadIfAbsent() } returns Result.failure(RuntimeException("stop here"))
+        coEvery { tokenManager.loadIfAbsent() } returns
+            Result.failure(RuntimeException("stop here"))
 
         // Trigger subscription installation
         client.connect()
@@ -347,30 +377,41 @@ class StreamClientIImplTest {
     @Test
     fun `subscription onEvent forwards to subscribers`() = runTest {
         // Make single-flight execute the block
-        coEvery { singleFlight.run(any(), any<suspend () -> StreamConnectedUser>()) } coAnswers {
-            val block = secondArg<suspend () -> StreamConnectedUser>()
-            try { Result.success(block.invoke()) } catch (t: Throwable) { Result.failure(t) }
-        }
+        coEvery { singleFlight.run(any(), any<suspend () -> StreamConnectedUser>()) } coAnswers
+            {
+                val block = secondArg<suspend () -> StreamConnectedUser>()
+                try {
+                    Result.success(block.invoke())
+                } catch (t: Throwable) {
+                    Result.failure(t)
+                }
+            }
 
         // Capture internal listener
         var capturedListener: StreamClientListener? = null
-        every { socketSession.subscribe(any<StreamClientListener>(), any()) } answers {
-            capturedListener = firstArg()
-            Result.success(mockk(relaxed = true))
-        }
+        every { socketSession.subscribe(any<StreamClientListener>(), any()) } answers
+            {
+                capturedListener = firstArg()
+                Result.success(mockk(relaxed = true))
+            }
 
         // Record forwarded events
         val forwardedEvents = mutableListOf<StreamClientWsEvent>()
-        every { subscriptionManager.forEach(any()) } answers {
-            val block = firstArg<(StreamClientListener) -> Unit>()
-            val external = mockk<StreamClientListener>(relaxed = true)
-            every { external.onEvent(any<StreamClientWsEvent>()) } answers { forwardedEvents += firstArg<StreamClientWsEvent>() }
-            block(external)
-            Result.success(Unit)
-        }
+        every { subscriptionManager.forEach(any()) } answers
+            {
+                val block = firstArg<(StreamClientListener) -> Unit>()
+                val external = mockk<StreamClientListener>(relaxed = true)
+                every { external.onEvent(any<StreamClientWsEvent>()) } answers
+                    {
+                        forwardedEvents += firstArg<StreamClientWsEvent>()
+                    }
+                block(external)
+                Result.success(Unit)
+            }
 
         // Stop connect after subscribe
-        coEvery { tokenManager.loadIfAbsent() } returns Result.failure(RuntimeException("stop here"))
+        coEvery { tokenManager.loadIfAbsent() } returns
+            Result.failure(RuntimeException("stop here"))
 
         // Trigger subscription installation
         client.connect()
@@ -384,6 +425,4 @@ class StreamClientIImplTest {
         assertTrue(forwardedEvents.contains(event))
         verify(atLeast = 1) { subscriptionManager.forEach(any()) }
     }
-
 }
-

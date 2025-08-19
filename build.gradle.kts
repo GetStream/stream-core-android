@@ -24,6 +24,7 @@ spotless {
 }
 
 detekt {
+    autoCorrect = true
     toolVersion = "1.23.8"
     config.setFrom(file("config/detekt/detekt.yml"))
     buildUponDefaultConfig = true

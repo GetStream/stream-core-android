@@ -43,6 +43,7 @@ internal const val EVENT_TYPE_CONNECTION_OK = "connection.ok"
  *
  * @property connectionId The unique identifier for the connection.
  * @property me The own user response containing user details.
+ * @property type The type of the event.
  */
 @JsonClass(generateAdapter = true)
 internal data class StreamClientConnectedEvent(

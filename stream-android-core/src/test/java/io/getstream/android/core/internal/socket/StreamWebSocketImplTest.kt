@@ -1,3 +1,18 @@
+/*
+ * Copyright (c) 2014-2025 Stream.io Inc. All rights reserved.
+ *
+ * Licensed under the Stream License;
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    https://github.com/GetStream/stream-android-base/blob/main/LICENSE
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 @file:OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 
 package io.getstream.android.core.internal.socket
@@ -10,10 +25,8 @@ import io.getstream.android.core.api.subscribe.StreamSubscription
 import io.getstream.android.core.api.subscribe.StreamSubscriptionManager
 import io.mockk.CapturingSlot
 import io.mockk.MockKAnnotations
-import io.mockk.Runs
 import io.mockk.confirmVerified
 import io.mockk.every
-import io.mockk.just
 import io.mockk.mockk
 import io.mockk.slot
 import io.mockk.verify
@@ -190,10 +203,7 @@ class StreamWebSocketImplTest {
         val res = impl.close()
         assertTrue(res.isSuccess)
         verify {
-            okWs.close(
-                SocketConstants.CLOSE_SOCKET_CODE,
-                SocketConstants.CLOSE_SOCKET_REASON
-            )
+            okWs.close(SocketConstants.CLOSE_SOCKET_CODE, SocketConstants.CLOSE_SOCKET_REASON)
         }
     }
 
@@ -204,11 +214,12 @@ class StreamWebSocketImplTest {
         val impl = StreamWebSocketImpl(logger, factory, subs)
         val listener = mockk<StreamWebSocketListener>(relaxed = true)
 
-        every { subs.forEach(any()) } answers {
-            val block = firstArg<(StreamWebSocketListener) -> Unit>()
-            block(listener)
-            Result.success(Unit)
-        }
+        every { subs.forEach(any()) } answers
+            {
+                val block = firstArg<(StreamWebSocketListener) -> Unit>()
+                block(listener)
+                Result.success(Unit)
+            }
 
         val resp = mockResponse(101)
         impl.onOpen(mockk(relaxed = true), resp)
@@ -220,11 +231,12 @@ class StreamWebSocketImplTest {
         val impl = StreamWebSocketImpl(logger, factory, subs)
         val listener = mockk<StreamWebSocketListener>(relaxed = true)
 
-        every { subs.forEach(any()) } answers {
-            val block = firstArg<(StreamWebSocketListener) -> Unit>()
-            block(listener)
-            Result.success(Unit)
-        }
+        every { subs.forEach(any()) } answers
+            {
+                val block = firstArg<(StreamWebSocketListener) -> Unit>()
+                block(listener)
+                Result.success(Unit)
+            }
 
         impl.onMessage(mockk(relaxed = true), "ping")
         verify { listener.onMessage("ping") }
@@ -235,11 +247,12 @@ class StreamWebSocketImplTest {
         val impl = StreamWebSocketImpl(logger, factory, subs)
         val listener = mockk<StreamWebSocketListener>(relaxed = true)
 
-        every { subs.forEach(any()) } answers {
-            val block = firstArg<(StreamWebSocketListener) -> Unit>()
-            block(listener)
-            Result.success(Unit)
-        }
+        every { subs.forEach(any()) } answers
+            {
+                val block = firstArg<(StreamWebSocketListener) -> Unit>()
+                block(listener)
+                Result.success(Unit)
+            }
 
         val bytes = "hi".toByteArray().toByteString()
         impl.onMessage(mockk(relaxed = true), bytes)
@@ -251,11 +264,12 @@ class StreamWebSocketImplTest {
         val impl = StreamWebSocketImpl(logger, factory, subs)
         val listener = mockk<StreamWebSocketListener>(relaxed = true)
 
-        every { subs.forEach(any()) } answers {
-            val block = firstArg<(StreamWebSocketListener) -> Unit>()
-            block(listener)
-            Result.success(Unit)
-        }
+        every { subs.forEach(any()) } answers
+            {
+                val block = firstArg<(StreamWebSocketListener) -> Unit>()
+                block(listener)
+                Result.success(Unit)
+            }
 
         val boom = IllegalStateException("nope")
         val resp: Response? = null
@@ -268,11 +282,12 @@ class StreamWebSocketImplTest {
         val impl = StreamWebSocketImpl(logger, factory, subs)
         val listener = mockk<StreamWebSocketListener>(relaxed = true)
 
-        every { subs.forEach(any()) } answers {
-            val block = firstArg<(StreamWebSocketListener) -> Unit>()
-            block(listener)
-            Result.success(Unit)
-        }
+        every { subs.forEach(any()) } answers
+            {
+                val block = firstArg<(StreamWebSocketListener) -> Unit>()
+                block(listener)
+                Result.success(Unit)
+            }
 
         impl.onClosed(mockk(relaxed = true), 1000, "bye")
         verify { listener.onClosed(1000, "bye") }
@@ -283,11 +298,12 @@ class StreamWebSocketImplTest {
         val impl = StreamWebSocketImpl(logger, factory, subs)
         val listener = mockk<StreamWebSocketListener>(relaxed = true)
 
-        every { subs.forEach(any()) } answers {
-            val block = firstArg<(StreamWebSocketListener) -> Unit>()
-            block(listener)
-            Result.success(Unit)
-        }
+        every { subs.forEach(any()) } answers
+            {
+                val block = firstArg<(StreamWebSocketListener) -> Unit>()
+                block(listener)
+                Result.success(Unit)
+            }
 
         impl.onClosing(mockk(relaxed = true), 1001, "going away")
         verify { listener.onClosing(1001, "going away") }
@@ -300,9 +316,12 @@ class StreamWebSocketImplTest {
         val impl = StreamWebSocketImpl(logger, factory, subs)
         val listener = mockk<StreamWebSocketListener>(relaxed = true)
         val sub = mockk<StreamSubscription>(relaxed = true)
-        val opts = StreamSubscriptionManager.SubscribeOptions(
-            retention = StreamSubscriptionManager.SubscribeOptions.SubscriptionRetention.KEEP_UNTIL_CANCELLED
-        )
+        val opts =
+            StreamSubscriptionManager.SubscribeOptions(
+                retention =
+                    StreamSubscriptionManager.SubscribeOptions.SubscriptionRetention
+                        .KEEP_UNTIL_CANCELLED
+            )
         every { subs.subscribe(listener, opts) } returns Result.success(sub)
 
         val res = impl.subscribe(listener, opts)
@@ -327,17 +346,19 @@ class StreamWebSocketImplTest {
         val impl = StreamWebSocketImpl(logger, factory, subs)
         val listener = mockk<StreamWebSocketListener>(relaxed = true)
 
-        every { subs.forEach(any()) } answers {
-            val block = firstArg<(StreamWebSocketListener) -> Unit>()
-            block(listener) // execute the block to simulate delivery
-            Result.success(Unit)
-        }
+        every { subs.forEach(any()) } answers
+            {
+                val block = firstArg<(StreamWebSocketListener) -> Unit>()
+                block(listener) // execute the block to simulate delivery
+                Result.success(Unit)
+            }
 
         val ran = booleanArrayOf(false)
-        val res = impl.forEach {
-            ran[0] = true
-            assertSame(listener, it)
-        }
+        val res =
+            impl.forEach {
+                ran[0] = true
+                assertSame(listener, it)
+            }
         assertTrue(res.isSuccess)
         assertTrue(ran[0])
         verify { subs.forEach(any()) }

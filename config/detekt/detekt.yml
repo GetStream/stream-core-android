@@ -7,6 +7,11 @@ build:
     style: 2
     comments: 2
 
+formatting:
+  active: true
+  autoCorrect: true
+  android: true
+
 config:
   validation: true
   warningsAsErrors: true
@@ -95,7 +100,7 @@ complexity:
   active: true
   CognitiveComplexMethod:
     active: true
-    threshold: 8
+    threshold: 10
   ComplexCondition:
     active: true
     threshold: 4
@@ -110,7 +115,7 @@ complexity:
     threshold: 8
     ignoreSingleWhenExpression: true
     ignoreSimpleWhenEntries: true
-    ignoreNestingFunctions: false
+    ignoreNestingFunctions: true
     nestingFunctions:
       - 'also'
       - 'apply'

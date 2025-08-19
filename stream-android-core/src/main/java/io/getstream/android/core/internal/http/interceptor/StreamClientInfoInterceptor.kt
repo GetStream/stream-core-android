@@ -20,9 +20,12 @@ import okhttp3.Interceptor
 import okhttp3.Response
 
 /**
- * Interceptor which adds the default headers to the request.
+ * OkHttp interceptor that appends the `X-Stream-Client` header to the request.
  *
- * @property clientInfo the value of the `X-Stream-Client` header.
+ * Behavior:
+ * - Adds the header if it's not already present.
+ *
+ * @param clientInfo The client info header value.
  */
 internal class StreamClientInfoInterceptor(private val clientInfo: StreamHttpClientInfoHeader) :
     Interceptor {

@@ -1,4 +1,22 @@
-@file:OptIn(kotlin.time.ExperimentalTime::class, kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+/*
+ * Copyright (c) 2014-2025 Stream.io Inc. All rights reserved.
+ *
+ * Licensed under the Stream License;
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    https://github.com/GetStream/stream-android-base/blob/main/LICENSE
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+@file:OptIn(
+    kotlin.time.ExperimentalTime::class,
+    kotlinx.coroutines.ExperimentalCoroutinesApi::class,
+)
 
 package io.getstream.android.core.internal.client
 
@@ -40,10 +58,10 @@ import io.mockk.every
 import io.mockk.justRun
 import io.mockk.mockk
 import io.mockk.verify
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
 import kotlin.test.assertSame
 import kotlin.test.assertTrue
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import org.junit.Test
@@ -75,26 +93,27 @@ class StreamClientTest {
         val scope = testScope()
         val logs = loggerProvider()
 
-        val client: StreamClient<StreamClientState> = createClient(
-            apiKey = apiKey,
-            userId = userId,
-            endpoint = ep,
-            clientSubscriptionManager = null,
-            tokenProvider = tp,
-            tokenManager = null,
-            singleFlightProcessor = null,
-            serialProcessingQueue = null,
-            retryProcessor = null,
-            httpInterceptors = emptyList(),
-            connectionIdHolder = null,
-            socketFactory = null,
-            healthMonitor = null,
-            socketSubscriptionManager = null,
-            socketEventDebounceProcessor = null,
-            json = null,
-            logProvider = logs,
-            scope = scope
-        )
+        val client: StreamClient<StreamClientState> =
+            createClient(
+                apiKey = apiKey,
+                userId = userId,
+                endpoint = ep,
+                clientSubscriptionManager = null,
+                tokenProvider = tp,
+                tokenManager = null,
+                singleFlightProcessor = null,
+                serialProcessingQueue = null,
+                retryProcessor = null,
+                httpInterceptors = emptyList(),
+                connectionIdHolder = null,
+                socketFactory = null,
+                healthMonitor = null,
+                socketSubscriptionManager = null,
+                socketEventDebounceProcessor = null,
+                json = null,
+                logProvider = logs,
+                scope = scope,
+            )
 
         // Downcast & inspect internals
         assertTrue(client is StreamClientIImpl)
@@ -108,7 +127,9 @@ class StreamClientTest {
         assertTrue(singleFlight is StreamSingleFlightProcessorImpl)
 
         val tokenManager = client.getPrivate("tokenManager")
-        assertTrue(tokenManager is StreamTokenManager) // concrete is StreamTokenManagerImpl, interface is enough
+        assertTrue(
+            tokenManager is StreamTokenManager
+        ) // concrete is StreamTokenManagerImpl, interface is enough
 
         val connHolder = client.getPrivate("connectionIdHolder")
         assertTrue(connHolder is StreamConnectionIdHolderImpl)
@@ -156,29 +177,32 @@ class StreamClientTest {
         val customHealth = mockk<StreamHealthMonitor>(relaxed = true)
         val customDebounce = mockk<StreamDebounceMessageProcessor<String>>(relaxed = true)
         val customSocketFactory = mockk<StreamWebSocketFactory>(relaxed = true)
-        val customSocketSubsMgr = mockk<StreamSubscriptionManager<StreamWebSocketListener>>(relaxed = true)
-        val customClientSubsMgr = mockk<StreamSubscriptionManager<StreamClientListener>>(relaxed = true)
+        val customSocketSubsMgr =
+            mockk<StreamSubscriptionManager<StreamWebSocketListener>>(relaxed = true)
+        val customClientSubsMgr =
+            mockk<StreamSubscriptionManager<StreamClientListener>>(relaxed = true)
 
-        val client: StreamClient<StreamClientState> = createClient(
-            apiKey = apiKey,
-            userId = userId,
-            endpoint = ep,
-            clientSubscriptionManager = customClientSubsMgr,
-            tokenProvider = tp,
-            tokenManager = customTokenMgr,
-            singleFlightProcessor = customSF,
-            serialProcessingQueue = customSerial,
-            retryProcessor = null, // not observable downstream
-            httpInterceptors = emptyList(),
-            connectionIdHolder = customConnHolder,
-            socketFactory = customSocketFactory,
-            healthMonitor = customHealth,
-            socketSubscriptionManager = customSocketSubsMgr,
-            socketEventDebounceProcessor = customDebounce,
-            json = customJson,
-            logProvider = logs,
-            scope = scope
-        )
+        val client: StreamClient<StreamClientState> =
+            createClient(
+                apiKey = apiKey,
+                userId = userId,
+                endpoint = ep,
+                clientSubscriptionManager = customClientSubsMgr,
+                tokenProvider = tp,
+                tokenManager = customTokenMgr,
+                singleFlightProcessor = customSF,
+                serialProcessingQueue = customSerial,
+                retryProcessor = null, // not observable downstream
+                httpInterceptors = emptyList(),
+                connectionIdHolder = customConnHolder,
+                socketFactory = customSocketFactory,
+                healthMonitor = customHealth,
+                socketSubscriptionManager = customSocketSubsMgr,
+                socketEventDebounceProcessor = customDebounce,
+                json = customJson,
+                logProvider = logs,
+                scope = scope,
+            )
 
         assertTrue(client is StreamClientIImpl)
 
@@ -225,8 +249,10 @@ class StreamClientTest {
         val customHealth = mockk<StreamHealthMonitor>(relaxed = true)
         val customDebounce = mockk<StreamDebounceMessageProcessor<String>>(relaxed = true)
         val customSocketFactory = mockk<StreamWebSocketFactory>(relaxed = true)
-        val customSocketSubsMgr = mockk<StreamSubscriptionManager<StreamWebSocketListener>>(relaxed = true)
-        val customClientSubsMgr = mockk<StreamSubscriptionManager<StreamClientListener>>(relaxed = true)
+        val customSocketSubsMgr =
+            mockk<StreamSubscriptionManager<StreamWebSocketListener>>(relaxed = true)
+        val customClientSubsMgr =
+            mockk<StreamSubscriptionManager<StreamClientListener>>(relaxed = true)
 
         // Stubs for cleanup path
         // serialQueue.stop() is called twice in the onCompletion block.
@@ -239,26 +265,27 @@ class StreamClientTest {
         every { customSF.clear(true) } returns Result.success(Unit)
 
         // Build the client
-        val client: StreamClient<StreamClientState> = createClient(
-            apiKey = apiKey,
-            userId = userId,
-            endpoint = ep,
-            clientSubscriptionManager = customClientSubsMgr,
-            tokenProvider = tp,
-            tokenManager = customTokenMgr,
-            singleFlightProcessor = customSF,
-            serialProcessingQueue = customSerial,
-            retryProcessor = null,
-            httpInterceptors = emptyList(),
-            connectionIdHolder = customConnHolder,
-            socketFactory = customSocketFactory,
-            healthMonitor = customHealth,
-            socketSubscriptionManager = customSocketSubsMgr,
-            socketEventDebounceProcessor = customDebounce,
-            json = mockk(relaxed = true),
-            logProvider = logs,
-            scope = scope
-        )
+        val client: StreamClient<StreamClientState> =
+            createClient(
+                apiKey = apiKey,
+                userId = userId,
+                endpoint = ep,
+                clientSubscriptionManager = customClientSubsMgr,
+                tokenProvider = tp,
+                tokenManager = customTokenMgr,
+                singleFlightProcessor = customSF,
+                serialProcessingQueue = customSerial,
+                retryProcessor = null,
+                httpInterceptors = emptyList(),
+                connectionIdHolder = customConnHolder,
+                socketFactory = customSocketFactory,
+                healthMonitor = customHealth,
+                socketSubscriptionManager = customSocketSubsMgr,
+                socketEventDebounceProcessor = customDebounce,
+                json = mockk(relaxed = true),
+                logProvider = logs,
+                scope = scope,
+            )
 
         // Act: cancel parent scope -> should complete child SupervisorJob and run cleanup
         parentJob.cancel()
