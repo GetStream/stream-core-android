@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<lint>
+    <issue id="NoPublicInInternalPackages" severity="error">
+        <option name="packages" value="io.getstream**internal**" />
+    </issue>
+    <issue id="NotKeepingInstance" severity="error">
+        <option name="keepInstanceOf" value="io.getstream.android.core.api.StreamClient" />
+    </issue>
+    <issue id="SuspendRunCatching" severity="error"/>
+    <issue id="ExposeAsStateFlow" severity="error"/>
+    <issue id="StreamCoreApiMissing" severity="error">
+        <option name="packages" value="io.getstream.android.core.api.*,io.getstream.android.core.api" />
+    </issue>
+</lint>
