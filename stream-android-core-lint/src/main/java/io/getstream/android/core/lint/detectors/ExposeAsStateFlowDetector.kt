@@ -51,23 +51,23 @@ class ExposeAsStateFlowDetector : Detector(), Detector.UastScanner {
         object : UElementHandler() {
 
             override fun visitField(node: UField) {
-                // Kotlin 'val state: StateFlow<T> = ...' compiles to a field with initializer
+                // Kotlin `val state: StateFlow<T> = ...` compiles to a field with initializer
                 checkPropertyInitializer(context, node, node.type, node.uastInitializer, node)
             }
 
             override fun visitVariable(node: UVariable) {
-                // top-level Kotlin 'val state: StateFlow<T> = ...'
+                // top-level Kotlin `val state: StateFlow<T> = ...`
                 checkPropertyInitializer(context, node, node.type, node.uastInitializer, node)
             }
 
             override fun visitMethod(node: UMethod) {
                 // Kotlin property getter or Java getter
-                // Only consider non-private, returning StateFlow<*>
                 if (!isApiVisible(node)) return
                 val returnType = node.returnType ?: return
                 if (!isStateFlowType(context, returnType)) return
 
                 val returnExpr = findReturnExpression(node) ?: return
+
                 // Ignore already-safe: receiver.asStateFlow()
                 if (isAlreadyAsStateFlowCall(returnExpr)) return
 
@@ -153,16 +153,26 @@ class ExposeAsStateFlowDetector : Detector(), Detector.UastScanner {
     }
 
     private fun isAlreadyAsStateFlowCall(expr: UExpression): Boolean {
-        // Match: <receiver>.asStateFlow()
-        val call = expr as? UCallExpression ?: return false
-        val name = call.methodName ?: return false
-        return name == "asStateFlow" && call.receiver != null
+        // Match: <receiver>.asStateFlow() or (<receiver>)?.asStateFlow()
+        return when (expr) {
+            is UCallExpression -> expr.methodName == "asStateFlow"
+            is UQualifiedReferenceExpression -> {
+                val call = expr.selector as? UCallExpression
+                call?.methodName == "asStateFlow"
+            }
+            else -> false
+        }
     }
 
     private fun isClearlyMutableQualified(expr: UExpression, context: JavaContext): Boolean {
         // Qualified reference like holder._state, where receiver or selector type is
         // MutableStateFlow
         val qualified = expr as? UQualifiedReferenceExpression ?: return false
+
+        // If this is X.asStateFlow(), it's already safe → don't mark as mutable
+        val selCall = qualified.selector as? UCallExpression
+        if (selCall?.methodName == "asStateFlow") return false
+
         val selType = qualified.selector.getExpressionType()
         val recvType = qualified.receiver.getExpressionType()
         return (selType != null && isMutableStateFlowType(context, selType)) ||
@@ -186,12 +196,12 @@ class ExposeAsStateFlowDetector : Detector(), Detector.UastScanner {
     }
 
     /**
-     * Extracts the returned expression from a getter or method. Handles both expression bodies and
-     * block bodies.
+     * Extracts the returned expression from a getter or method. Handles both block bodies (`return
+     * expr`) and expression-bodied getters (`get() = expr`).
      */
     private fun findReturnExpression(method: UMethod): UExpression? {
         val body = method.uastBody ?: return null
-        when (body) {
+        return when (body) {
             is UBlockExpression -> {
                 var last: UExpression? = null
                 body.accept(
@@ -202,10 +212,10 @@ class ExposeAsStateFlowDetector : Detector(), Detector.UastScanner {
                         }
                     }
                 )
-                return last
+                last
             }
+            else -> body as? UExpression // expression-bodied getter: get() = _state.asStateFlow()
         }
-        return null
     }
 
     companion object {

@@ -61,7 +61,9 @@ internal class StreamAuthInterceptor(
     }
 
     override fun intercept(chain: Interceptor.Chain): Response {
-        val token = runBlocking { tokenManager.loadIfAbsent() }.getOrThrow()
+        val token =
+            runBlocking { tokenManager.loadIfAbsent() }
+                .getOrEndpointException("Failed to load token.")
         val original = chain.request()
         val authed = original.withAuthHeaders(authType, token.rawValue)
 
@@ -77,12 +79,16 @@ internal class StreamAuthInterceptor(
         val alreadyRetried = original.header(HEADER_RETRIED_ON_AUTH) == "present"
 
         if (parsed.isSuccess) {
-            val error = parsed.getOrThrow()
+            val error = parsed.getOrEndpointException("Failed to parse error body.")
             if (!alreadyRetried && isTokenInvalidErrorCode(error.code)) {
                 // Refresh and retry once.
                 firstResponse.close()
-                tokenManager.invalidate().getOrThrow()
-                val refreshed = runBlocking { tokenManager.refresh() }.getOrThrow()
+                tokenManager
+                    .invalidate()
+                    .getOrEndpointException(message = "Failed to invalidate token")
+                val refreshed =
+                    runBlocking { tokenManager.refresh() }
+                        .getOrEndpointException("Failed to refresh token")
 
                 val retried =
                     original
@@ -96,7 +102,7 @@ internal class StreamAuthInterceptor(
 
             // Non-token error or we already retried: surface a structured exception.
             firstResponse.close()
-            throw StreamEndpointException("Failed request: ${original.url}", error)
+            throw StreamEndpointException("Failed request: ${original.url}", error, null)
         } else {
             // Couldn’t parse error, still fail in a consistent way.
             firstResponse.close()
@@ -114,4 +120,8 @@ internal class StreamAuthInterceptor(
             .build()
 
     fun isTokenInvalidErrorCode(code: Int): Boolean = code == 40 || code == 41 || code == 42
+
+    private fun <T> Result<T>.getOrEndpointException(message: String = ""): T = getOrElse {
+        throw StreamEndpointException(message, null, it)
+    }
 }

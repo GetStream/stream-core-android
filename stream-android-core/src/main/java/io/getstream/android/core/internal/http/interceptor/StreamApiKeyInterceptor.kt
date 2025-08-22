@@ -15,7 +15,7 @@
  */
 package io.getstream.android.core.internal.http.interceptor
 
-import io.getstream.android.core.api.model.exceptions.StreamClientException
+import io.getstream.android.core.api.model.exceptions.StreamEndpointException
 import io.getstream.android.core.api.model.value.StreamApiKey
 import okhttp3.Interceptor
 import okhttp3.Response
@@ -42,7 +42,7 @@ internal class StreamApiKeyInterceptor(private val apiKey: StreamApiKey) : Inter
 
         if (apiKey.rawValue.isBlank()) {
             // StreamApiKey is self enforced via the fromString, but still we are defensive here
-            throw StreamClientException("API key must not be blank!")
+            throw StreamEndpointException("API key must not be blank!")
         }
 
         val urlWithApiKey =
