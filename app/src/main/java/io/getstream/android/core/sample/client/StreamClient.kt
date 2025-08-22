@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    https://github.com/GetStream/stream-android-base/blob/main/LICENSE
+ *    https://github.com/GetStream/stream-core-android/blob/main/LICENSE
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -54,26 +54,37 @@ fun createStreamClient(
     clientInfoHeader: StreamHttpClientInfoHeader,
     tokenProvider: StreamTokenProvider,
 ): StreamClient {
-    val logProvider = StreamLoggerProvider.Companion.defaultAndroidLogger(
-        minLevel = StreamLogger.LogLevel.Verbose,
-        honorAndroidIsLoggable = false,
-    )
-    val clientSubscriptionManager = StreamSubscriptionManager<StreamClientListener>(
-        logger = logProvider.taggedLogger("SCClientSubscriptions"),
-        maxStrongSubscriptions = 250,
-        maxWeakSubscriptions = 250,
-    )
+    val logProvider =
+        StreamLoggerProvider.Companion.defaultAndroidLogger(
+            minLevel = StreamLogger.LogLevel.Verbose,
+            honorAndroidIsLoggable = false,
+        )
+    val clientSubscriptionManager =
+        StreamSubscriptionManager<StreamClientListener>(
+            logger = logProvider.taggedLogger("SCClientSubscriptions"),
+            maxStrongSubscriptions = 250,
+            maxWeakSubscriptions = 250,
+        )
     val singleFlight = StreamSingleFlightProcessor(scope)
     val tokenManager = StreamTokenManager(userId, tokenProvider, singleFlight)
-    val serialQueue = StreamSerialProcessingQueue(
-        logger = logProvider.taggedLogger("SCSerialProcessing"),
-        scope = scope,
-    )
+    val serialQueue =
+        StreamSerialProcessingQueue(
+            logger = logProvider.taggedLogger("SCSerialProcessing"),
+            scope = scope,
+        )
     val retryProcessor = StreamRetryProcessor(logger = logProvider.taggedLogger("SCRetryProcessor"))
     val connectionIdHolder = StreamConnectionIdHolder()
-    val socketFactory = StreamWebSocketFactory(logger = logProvider.taggedLogger("SCWebSocketFactory"))
-    val healthMonitor = StreamHealthMonitor(logger = logProvider.taggedLogger("SCHealthMonitor"), scope = scope)
-    val batcher = StreamBatcher<String>(scope = scope, batchSize = 10, initialDelayMs = 100L, maxDelayMs = 1_000L)
+    val socketFactory =
+        StreamWebSocketFactory(logger = logProvider.taggedLogger("SCWebSocketFactory"))
+    val healthMonitor =
+        StreamHealthMonitor(logger = logProvider.taggedLogger("SCHealthMonitor"), scope = scope)
+    val batcher =
+        StreamBatcher<String>(
+            scope = scope,
+            batchSize = 10,
+            initialDelayMs = 100L,
+            maxDelayMs = 1_000L,
+        )
 
     return StreamClient(
         scope = scope,

@@ -37,7 +37,7 @@ subprojects {
         val licenseTemplate = file("../config/license/license.template")
         val generatedLicense = file("../config/license/generated/license-$currentYear.txt")
         val detektFile = file("../config/detekt/detekt.yml")
-        val projectName = project.findProperty("projectName")?.toString() ?: "stream-android-base"
+        val projectName = project.findProperty("projectName")?.toString() ?: "stream-core-android"
 
         doLast {
             if (licenseTemplate.exists()) {
