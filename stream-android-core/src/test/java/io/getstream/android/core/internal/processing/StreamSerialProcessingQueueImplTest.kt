@@ -45,7 +45,6 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class StreamSerialProcessingQueueImplTest {
-
     // Helper to construct the queue with the new signature.
     private fun makeQueue(
         scope: CoroutineScope,

@@ -42,7 +42,6 @@ internal class StreamHealthMonitorImpl(
     private val livenessThreshold: Long = ALIVE_THRESHOLD,
     private val clock: Clock = Clock.System,
 ) : StreamHealthMonitor {
-
     companion object {
         const val INTERVAL = 25_000L
         const val ALIVE_THRESHOLD = 60_000L
@@ -50,6 +49,7 @@ internal class StreamHealthMonitorImpl(
 
     private var monitorJob: Job? = null
     private var lastAck: Long = clock.now().toEpochMilliseconds()
+
     // callbacks default to no-op
     private var onIntervalCallback: suspend () -> Unit = {}
     private var onLivenessThresholdCallback: suspend () -> Unit = {}

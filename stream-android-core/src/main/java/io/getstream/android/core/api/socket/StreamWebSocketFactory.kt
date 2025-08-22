@@ -35,7 +35,6 @@ import okhttp3.WebSocketListener
  */
 @StreamCoreApi
 interface StreamWebSocketFactory {
-
     /**
      * Creates a new [WebSocket] instance.
      *
@@ -63,8 +62,4 @@ interface StreamWebSocketFactory {
 fun StreamWebSocketFactory(
     okHttpClient: OkHttpClient = OkHttpClient(),
     logger: StreamLogger,
-): StreamWebSocketFactory =
-    StreamWebSocketFactoryImpl(
-        okHttpClient = okHttpClient,
-        logger = logger,
-    )
+): StreamWebSocketFactory = StreamWebSocketFactoryImpl(okHttpClient = okHttpClient, logger = logger)

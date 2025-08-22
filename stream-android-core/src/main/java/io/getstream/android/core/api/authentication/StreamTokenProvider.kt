@@ -54,7 +54,6 @@ import io.getstream.android.core.api.model.value.StreamUserId
  */
 @StreamCoreApi
 fun interface StreamTokenProvider {
-
     /**
      * Returns a JWT that authenticates the given [userId].
      *

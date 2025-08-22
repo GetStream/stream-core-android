@@ -102,7 +102,7 @@ class StreamSocketSessionTest {
                 healthMonitor = health,
                 batcher = debounce,
                 subscriptionManager = subs,
-                listOf("feeds")
+                listOf("feeds"),
             )
     }
 
@@ -121,9 +121,7 @@ class StreamSocketSessionTest {
         val res = session.disconnect()
 
         assertTrue(res.isSuccess)
-        assertTrue(
-            listener.isCaptured && listener.captured is StreamConnectionState.Disconnected
-        )
+        assertTrue(listener.isCaptured && listener.captured is StreamConnectionState.Disconnected)
         verify { socket.close() }
         verify { debounce.stop() }
         verify { health.stop() }
@@ -145,10 +143,7 @@ class StreamSocketSessionTest {
         val res = session.disconnect(boom)
 
         assertTrue(res.isSuccess)
-        assertTrue(
-            listener.isCaptured &&
-                listener.captured is StreamConnectionState.Disconnected
-        )
+        assertTrue(listener.isCaptured && listener.captured is StreamConnectionState.Disconnected)
         verify { socket.close() }
         verify { debounce.stop() }
         verify { health.stop() }

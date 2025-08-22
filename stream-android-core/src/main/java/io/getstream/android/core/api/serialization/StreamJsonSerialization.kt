@@ -29,7 +29,6 @@ import io.getstream.android.core.annotations.StreamCoreApi
  */
 @StreamCoreApi
 interface StreamJsonSerialization {
-
     /**
      * Converts an object into its JSON string representation.
      *

@@ -48,7 +48,6 @@ import kotlinx.coroutines.channels.Channel
  */
 @StreamCoreApi
 interface StreamSerialProcessingQueue {
-
     /**
      * Submits a suspending [job] for **serialized** execution.
      *
@@ -110,10 +109,11 @@ fun StreamSerialProcessingQueue(
     autoStart: Boolean = true,
     startMode: CoroutineStart = CoroutineStart.DEFAULT,
     capacity: Int = Channel.BUFFERED,
-): StreamSerialProcessingQueue = StreamSerialProcessingQueueImpl(
-    logger = logger,
-    scope = scope,
-    autoStart = autoStart,
-    startMode = startMode,
-    capacity = capacity,
-)
+): StreamSerialProcessingQueue =
+    StreamSerialProcessingQueueImpl(
+        logger = logger,
+        scope = scope,
+        autoStart = autoStart,
+        startMode = startMode,
+        capacity = capacity,
+    )

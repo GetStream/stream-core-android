@@ -55,7 +55,6 @@ import kotlinx.coroutines.CoroutineScope
  */
 @StreamCoreApi
 interface StreamSingleFlightProcessor {
-
     /**
      * Runs [block], ensuring that **at most one execution** for [key] is in flight. Concurrent
      * callers with the same [key] await the same shared execution and receive its [Result].
@@ -103,6 +102,5 @@ interface StreamSingleFlightProcessor {
  * @return A new [StreamSingleFlightProcessor] instance.
  */
 @StreamCoreApi
-fun StreamSingleFlightProcessor(
-    scope: CoroutineScope,
-): StreamSingleFlightProcessor = StreamSingleFlightProcessorImpl(scope)
+fun StreamSingleFlightProcessor(scope: CoroutineScope): StreamSingleFlightProcessor =
+    StreamSingleFlightProcessorImpl(scope)

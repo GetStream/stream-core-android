@@ -56,9 +56,7 @@ private constructor(
     val giveUpFunction: (retry: Int, cause: Throwable) -> Boolean,
     val nextBackOffDelayFunction: (retry: Int, previousDelay: Long) -> Long,
 ) {
-
     companion object {
-
         /**
          * Creates an **exponential back-off** policy.
          *

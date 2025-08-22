@@ -32,7 +32,6 @@ import okhttp3.Response
  *   adding it as a header instead (e.g. "X-Stream-Api-Key").
  */
 internal class StreamApiKeyInterceptor(private val apiKey: StreamApiKey) : Interceptor {
-
     private companion object {
         private const val API_KEY_PARAM = "api_key"
     }

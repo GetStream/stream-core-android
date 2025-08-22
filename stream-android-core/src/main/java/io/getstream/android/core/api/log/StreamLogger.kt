@@ -28,7 +28,6 @@ import io.getstream.android.core.annotations.StreamCoreApi
  */
 @StreamCoreApi
 interface StreamLogger {
-
     /**
      * Represents the severity of a log message.
      *
@@ -36,7 +35,6 @@ interface StreamLogger {
      *   log levels.
      */
     sealed class LogLevel(val level: Int) {
-
         /** Verbose log messages, typically for detailed debugging. */
         object Verbose : LogLevel(1)
 

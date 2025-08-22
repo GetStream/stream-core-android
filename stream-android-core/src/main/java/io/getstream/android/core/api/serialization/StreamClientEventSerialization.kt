@@ -33,8 +33,8 @@ interface StreamClientEventSerialization {
      * Encodes a [StreamClientWsEvent] into a [String] suitable for transport or storage.
      *
      * @param data The event to serialize.
-     * @return `Result.success(String)` when encoding succeeds, or
-     *   `Result.failure(Throwable)` when the process fails.
+     * @return `Result.success(String)` when encoding succeeds, or `Result.failure(Throwable)` when
+     *   the process fails.
      */
     fun serialize(data: StreamClientWsEvent): Result<String>
 
@@ -51,10 +51,11 @@ interface StreamClientEventSerialization {
 /**
  * Creates a new [StreamClientEventSerialization] instance.
  *
- * @param jsonParser The [StreamJsonSerialization] to use for JSON serialization and deserialization.
+ * @param jsonParser The [StreamJsonSerialization] to use for JSON serialization and
+ *   deserialization.
  * @return A new [StreamClientEventSerialization] instance.
  */
 @StreamCoreApi
 fun StreamClientEventSerialization(
-    jsonParser: StreamJsonSerialization,
+    jsonParser: StreamJsonSerialization
 ): StreamClientEventSerialization = StreamClientEventSerializationImpl(jsonParser)

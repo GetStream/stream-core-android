@@ -18,8 +18,8 @@ package io.getstream.android.core.api.socket.monitor
 import io.getstream.android.core.annotations.StreamCoreApi
 import io.getstream.android.core.api.log.StreamLogger
 import io.getstream.android.core.internal.socket.monitor.StreamHealthMonitorImpl
-import kotlinx.coroutines.CoroutineScope
 import kotlin.time.ExperimentalTime
+import kotlinx.coroutines.CoroutineScope
 
 /**
  * Monitors the health and liveness of a system or connection by tracking periodic heartbeats and
@@ -33,7 +33,6 @@ import kotlin.time.ExperimentalTime
  */
 @StreamCoreApi
 interface StreamHealthMonitor {
-
     /**
      * Registers a callback that is invoked at every heartbeat interval.
      *
@@ -69,7 +68,6 @@ interface StreamHealthMonitor {
     fun stop()
 }
 
-
 @OptIn(ExperimentalTime::class)
 @StreamCoreApi
 fun StreamHealthMonitor(
@@ -77,4 +75,4 @@ fun StreamHealthMonitor(
     scope: CoroutineScope,
     interval: Long = StreamHealthMonitorImpl.INTERVAL,
     livenessThreshold: Long = StreamHealthMonitorImpl.ALIVE_THRESHOLD,
-) : StreamHealthMonitor = StreamHealthMonitorImpl(logger, scope, interval, livenessThreshold)
+): StreamHealthMonitor = StreamHealthMonitorImpl(logger, scope, interval, livenessThreshold)

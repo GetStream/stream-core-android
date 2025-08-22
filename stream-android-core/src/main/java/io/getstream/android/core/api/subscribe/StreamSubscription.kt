@@ -31,7 +31,6 @@ import io.getstream.android.core.annotations.StreamCoreApi
  */
 @StreamCoreApi
 interface StreamSubscription {
-
     /**
      * Terminates this subscription.
      *

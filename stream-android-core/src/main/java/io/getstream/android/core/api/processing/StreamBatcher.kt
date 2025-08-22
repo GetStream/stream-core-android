@@ -46,7 +46,6 @@ import kotlinx.coroutines.channels.Channel
  */
 @StreamCoreApi
 interface StreamBatcher<T> {
-
     /**
      * Starts the processor if it's not already running.
      *
@@ -117,7 +116,6 @@ interface StreamBatcher<T> {
  * @param maxDelayMs The maximum delay in milliseconds before processing a batch.
  * @param autoStart Whether the processor should start automatically on the first enqueue.
  * @param channelCapacity The capacity of the underlying channel.
- *
  * @return A new [StreamBatcher] instance.
  */
 @StreamCoreApi

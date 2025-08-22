@@ -24,14 +24,13 @@ import io.getstream.android.core.annotations.StreamCoreApi
  */
 @StreamCoreApi
 data class StreamTypedKey<T>(val id: Any) {
-
     companion object {
         /**
          * Creates a new [StreamTypedKey] with the given [id] and type [T].
          *
          * @param T The type of the key.
-         * @receiver id The unique identifier for the key.
          * @return A new [StreamTypedKey] with the given [id] and type [T].
+         * @receiver id The unique identifier for the key.
          */
         inline fun <reified T> Any.asStreamTypedKey() = StreamTypedKey<T>(this)
 

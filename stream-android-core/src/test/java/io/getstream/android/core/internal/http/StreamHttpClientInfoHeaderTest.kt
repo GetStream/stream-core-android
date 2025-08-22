@@ -166,44 +166,47 @@ class StreamHttpClientInfoHeaderTest {
 
     @Test
     fun `app name and version are included and sanitized`() {
-        val header = StreamHttpClientInfoHeader.Companion.create(
-            product = "android-core",
-            productVersion = "1.2.3",
-            os = "Android",
-            apiLevel = 34,
-            deviceModel = "Pixel 7 Pro",
-            app = "My Super App!™",
-            appVersion = "v1.0.0-beta+exp"
-        )
+        val header =
+            StreamHttpClientInfoHeader.Companion.create(
+                product = "android-core",
+                productVersion = "1.2.3",
+                os = "Android",
+                apiLevel = 34,
+                deviceModel = "Pixel 7 Pro",
+                app = "My Super App!™",
+                appVersion = "v1.0.0-beta+exp",
+            )
         assertTrue(header.rawValue.contains("|app=My-Super-App_|"))
         assertTrue(header.rawValue.contains("|app_version=v1.0.0-beta_exp"))
     }
 
     @Test
     fun `app name with only non-ascii becomes unknown`() {
-        val header = StreamHttpClientInfoHeader.Companion.create(
-            product = "android-core",
-            productVersion = "1.2.3",
-            os = "Android",
-            apiLevel = 34,
-            deviceModel = "Pixel 7 Pro",
-            app = "🤖🤖🤖",
-            appVersion = "2.0.0"
-        )
+        val header =
+            StreamHttpClientInfoHeader.Companion.create(
+                product = "android-core",
+                productVersion = "1.2.3",
+                os = "Android",
+                apiLevel = 34,
+                deviceModel = "Pixel 7 Pro",
+                app = "🤖🤖🤖",
+                appVersion = "2.0.0",
+            )
         assertTrue(header.rawValue.contains("|app=unknown|"))
     }
 
     @Test
     fun `app version with unsafe characters is sanitized`() {
-        val header = StreamHttpClientInfoHeader.Companion.create(
-            product = "android-core",
-            productVersion = "1.2.3",
-            os = "Android",
-            apiLevel = 34,
-            deviceModel = "Pixel 7 Pro",
-            app = "MyApp",
-            appVersion = "v1.0.0/rc+exp"
-        )
+        val header =
+            StreamHttpClientInfoHeader.Companion.create(
+                product = "android-core",
+                productVersion = "1.2.3",
+                os = "Android",
+                apiLevel = 34,
+                deviceModel = "Pixel 7 Pro",
+                app = "MyApp",
+                appVersion = "v1.0.0/rc+exp",
+            )
         assertTrue(header.rawValue.contains("|app_version=v1.0.0_rc_exp"))
     }
 }

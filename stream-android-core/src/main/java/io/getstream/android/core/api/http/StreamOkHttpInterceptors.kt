@@ -26,6 +26,7 @@ import io.getstream.android.core.internal.http.interceptor.StreamConnectionIdInt
 import okhttp3.Interceptor
 
 // TODO: Think about better approach
+
 /**
  * Provides a set of OkHttp interceptors for use with the Stream SDKs.
  *
@@ -35,7 +36,6 @@ import okhttp3.Interceptor
  */
 @StreamCoreApi
 object StreamOkHttpInterceptors {
-
     /**
      * Creates an OkHttp interceptor that adds authentication headers and retries on token errors.
      *
@@ -48,9 +48,7 @@ object StreamOkHttpInterceptors {
         authType: String,
         tokenManager: StreamTokenManager,
         jsonParser: StreamJsonSerialization,
-    ): Interceptor {
-        return StreamAuthInterceptor(tokenManager, jsonParser, authType)
-    }
+    ): Interceptor = StreamAuthInterceptor(tokenManager, jsonParser, authType)
 
     /**
      * Creates an OkHttp interceptor that adds a `connection_id` query parameter to the request URL.
@@ -58,9 +56,8 @@ object StreamOkHttpInterceptors {
      * @param connectionIdHolder The holder that provides the connection ID.
      * @return An OkHttp interceptor.
      */
-    fun connectionId(connectionIdHolder: StreamConnectionIdHolder): Interceptor {
-        return StreamConnectionIdInterceptor(connectionIdHolder)
-    }
+    fun connectionId(connectionIdHolder: StreamConnectionIdHolder): Interceptor =
+        StreamConnectionIdInterceptor(connectionIdHolder)
 
     /**
      * Creates an OkHttp interceptor that adds the Stream API key to the request as a query
@@ -69,7 +66,5 @@ object StreamOkHttpInterceptors {
      * @param apiKey The API key to add.
      * @return An OkHttp interceptor.
      */
-    fun apiKey(apiKey: StreamApiKey): Interceptor {
-        return StreamApiKeyInterceptor(apiKey)
-    }
+    fun apiKey(apiKey: StreamApiKey): Interceptor = StreamApiKeyInterceptor(apiKey)
 }

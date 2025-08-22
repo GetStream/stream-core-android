@@ -45,7 +45,6 @@ import io.getstream.android.core.internal.processing.StreamRetryProcessorImpl
  */
 @StreamCoreApi
 interface StreamRetryProcessor {
-
     /**
      * Executes [block] with the supplied [policy], retrying on failure.
      *
@@ -63,7 +62,6 @@ interface StreamRetryProcessor {
  * @param logger The logger to use for logging retry attempts.
  * @return A new [StreamRetryProcessor] instance.
  */
-fun StreamRetryProcessor(
-    logger: StreamLogger,
-) : StreamRetryProcessor =
+@StreamCoreApi
+fun StreamRetryProcessor(logger: StreamLogger): StreamRetryProcessor =
     StreamRetryProcessorImpl(logger)

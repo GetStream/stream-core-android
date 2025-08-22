@@ -20,7 +20,6 @@ import io.getstream.android.core.api.serialization.StreamJsonSerialization
 
 internal class StreamMoshiJsonSerializationImpl(private val moshi: Moshi) :
     StreamJsonSerialization {
-
     override fun toJson(any: Any): Result<String> = runCatching {
         moshi.adapter(any.javaClass).toJson(any)
     }

@@ -65,7 +65,6 @@ internal class StreamClientImpl(
 
     override suspend fun connect(): Result<StreamConnectedUser> =
         singleFlight.run(connectKey) {
-
             val currentState = connectionState.value
             if (currentState is StreamConnectionState.Connected) {
                 logger.w { "[connect] Already connected!" }
@@ -77,7 +76,6 @@ internal class StreamClientImpl(
                     socketSession
                         .subscribe(
                             object : StreamClientListener {
-
                                 override fun onState(state: StreamConnectionState) {
                                     logger.v { "[client#onState]: $state" }
                                     mutableConnectionState.update(state)
@@ -86,15 +84,12 @@ internal class StreamClientImpl(
 
                                 override fun onEvent(event: StreamClientWsEvent) {
                                     logger.v { "[client#onEvent]: $event" }
-                                    subscriptionManager.forEach {
-                                        it.onEvent(event)
-                                    }
+                                    subscriptionManager.forEach { it.onEvent(event) }
                                 }
                             },
                             StreamSubscriptionManager.Options(
                                 retention =
-                                    StreamSubscriptionManager.Options.Retention
-                                        .KEEP_UNTIL_CANCELLED
+                                    StreamSubscriptionManager.Options.Retention.KEEP_UNTIL_CANCELLED
                             ),
                         )
                         .getOrThrow()

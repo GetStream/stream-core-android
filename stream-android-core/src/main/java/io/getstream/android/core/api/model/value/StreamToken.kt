@@ -16,7 +16,6 @@
 package io.getstream.android.core.api.model.value
 
 import android.annotation.SuppressLint
-import io.getstream.android.core.annotations.StreamCoreApi
 
 /**
  * Authentication token value-object.
@@ -26,9 +25,7 @@ import io.getstream.android.core.annotations.StreamCoreApi
 @SuppressLint("StreamCoreApiMissing")
 @JvmInline
 value class StreamToken private constructor(val rawValue: String) {
-
     companion object {
-
         /**
          * Creates a new [StreamToken] from a string.
          *

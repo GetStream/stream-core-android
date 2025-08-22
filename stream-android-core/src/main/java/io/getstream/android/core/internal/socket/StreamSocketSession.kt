@@ -67,13 +67,10 @@ internal class StreamSocketSession(
     /** Idempotent cleanup guard. */
     private val cleaned = AtomicBoolean(false)
 
-
     private fun notifyState(state: StreamConnectionState): Result<Unit> {
         logger.d { "[notifyState] Notifying state: $state" }
         return subscriptionManager
-            .forEach {
-                it.onState(state)
-            }
+            .forEach { it.onState(state) }
             .onFailure { e ->
                 logger.e(e) { "[notifyState] Failed to notify state=$state. ${e.message}" }
             }
@@ -144,7 +141,6 @@ internal class StreamSocketSession(
     /** Connects the user to the socket. */
     suspend fun connect(data: ConnectUserData): Result<StreamConnectionState.Connected> =
         suspendCancellableCoroutine { continuation ->
-
             var handshakeSubscription: StreamSubscription? = null
 
             // Ensure we clean up if the caller cancels the connect coroutine
@@ -366,9 +362,7 @@ internal class StreamSocketSession(
                 internalSocket.subscribe(
                     connectListener,
                     StreamSubscriptionManager.Options(
-                        retention =
-                            StreamSubscriptionManager.Options.Retention
-                                .KEEP_UNTIL_CANCELLED
+                        retention = StreamSubscriptionManager.Options.Retention.KEEP_UNTIL_CANCELLED
                     ),
                 )
             if (hsRes.isFailure) {

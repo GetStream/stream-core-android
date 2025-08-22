@@ -34,13 +34,13 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import io.getstream.android.core.api.StreamClient
-import io.getstream.android.core.sample.client.createStreamClient
 import io.getstream.android.core.api.authentication.StreamTokenProvider
 import io.getstream.android.core.api.model.value.StreamApiKey
 import io.getstream.android.core.api.model.value.StreamHttpClientInfoHeader
 import io.getstream.android.core.api.model.value.StreamToken
 import io.getstream.android.core.api.model.value.StreamUserId
 import io.getstream.android.core.api.model.value.StreamWsUrl
+import io.getstream.android.core.sample.client.createStreamClient
 import io.getstream.android.core.sample.ui.theme.StreamandroidcoreTheme
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -53,16 +53,20 @@ class SampleActivity : ComponentActivity() {
             scope = lifecycleScope,
             apiKey = StreamApiKey.fromString("pd67s34fzpgw"),
             userId = userId,
-            wsUrl = StreamWsUrl.fromString("wss://chat-edge-frankfurt-ce1.stream-io-api.com/api/v2/connect"),
-            clientInfoHeader = StreamHttpClientInfoHeader.create(
-                product = "android-core",
-                productVersion = "1.0.0",
-                os = "Android",
-                apiLevel = Build.VERSION.SDK_INT,
-                deviceModel = "Pixel 7 Pro",
-                app = "Stream Android Core Sample",
-                appVersion = "1.0.0",
-            ),
+            wsUrl =
+                StreamWsUrl.fromString(
+                    "wss://chat-edge-frankfurt-ce1.stream-io-api.com/api/v2/connect"
+                ),
+            clientInfoHeader =
+                StreamHttpClientInfoHeader.create(
+                    product = "android-core",
+                    productVersion = "1.0.0",
+                    os = "Android",
+                    apiLevel = Build.VERSION.SDK_INT,
+                    deviceModel = "Pixel 7 Pro",
+                    app = "Stream Android Core Sample",
+                    appVersion = "1.0.0",
+                ),
             tokenProvider =
                 object : StreamTokenProvider {
                     override suspend fun loadToken(userId: StreamUserId): StreamToken {

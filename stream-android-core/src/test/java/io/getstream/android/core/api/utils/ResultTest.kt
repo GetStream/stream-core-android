@@ -15,7 +15,6 @@
  */
 package io.getstream.android.core.api.utils
 
-import kotlin.coroutines.cancellation.CancellationException
 import org.junit.Assert.*
 import org.junit.Test
 

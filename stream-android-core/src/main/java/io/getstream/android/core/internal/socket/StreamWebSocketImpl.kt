@@ -37,7 +37,6 @@ internal open class StreamWebSocketImpl<T : StreamWebSocketListener>(
     private val socketFactory: StreamWebSocketFactory,
     private val subscriptionManager: StreamSubscriptionManager<T>,
 ) : WebSocketListener(), StreamWebSocket<T> {
-
     private lateinit var socket: WebSocket
 
     override fun open(config: StreamSocketConfig): Result<Unit> = runCatching {

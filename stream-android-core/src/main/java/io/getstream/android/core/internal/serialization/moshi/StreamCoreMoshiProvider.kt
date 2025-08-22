@@ -27,7 +27,6 @@ import io.getstream.android.core.internal.model.events.StreamHealthCheckEvent
 import java.util.Date
 
 internal class StreamCoreMoshiProvider {
-
     object DateMillisAdapter {
         @ToJson fun toJson(value: Date?): Long? = value?.time
 

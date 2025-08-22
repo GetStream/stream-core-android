@@ -31,7 +31,6 @@ import org.junit.Before
 import org.junit.Test
 
 class StreamConnectionIdInterceptorTest {
-
     private lateinit var server: MockWebServer
 
     @Before
@@ -177,7 +176,6 @@ class StreamConnectionIdInterceptorTest {
         initial: String? = null,
         private val onGet: (() -> Unit)? = null,
     ) : StreamConnectionIdHolder {
-
         @Volatile private var value: String? = initial
 
         override fun clear() = runCatching { value = null }

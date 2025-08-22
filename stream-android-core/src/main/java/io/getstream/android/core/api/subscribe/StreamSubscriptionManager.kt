@@ -39,15 +39,12 @@ import io.getstream.android.core.internal.subscribe.StreamSubscriptionManagerImp
  */
 @StreamCoreApi
 interface StreamSubscriptionManager<T> {
-
     /**
      * Subscription behavior options.
      *
      * @property retention Controls how the manager retains the listener reference.
      */
-    data class Options(
-        val retention: Retention = Retention.AUTO_REMOVE
-    ) {
+    data class Options(val retention: Retention = Retention.AUTO_REMOVE) {
         /** Retention policy for a subscribed listener. */
         enum class Retention {
             /**
@@ -75,11 +72,11 @@ interface StreamSubscriptionManager<T> {
      *   [forEach] iterations.
      *
      * Retention:
-     * - When [options.retention] is [Options.Retention.AUTO_REMOVE] (default),
-     *   you can omit calling `cancel()`. Once your code drops all references to the listener, it is
-     *   removed automatically and will no longer receive events.
-     * - When [options.retention] is [Options.Retention.KEEP_UNTIL_CANCELLED],
-     *   you must call `cancel()` (or invoke [clear]) to stop events.
+     * - When [options.retention] is [Options.Retention.AUTO_REMOVE] (default), you can omit calling
+     *   `cancel()`. Once your code drops all references to the listener, it is removed
+     *   automatically and will no longer receive events.
+     * - When [options.retention] is [Options.Retention.KEEP_UNTIL_CANCELLED], you must call
+     *   `cancel()` (or invoke [clear]) to stop events.
      *
      * @param listener The listener to register.
      * @param options Retention options; defaults to automatic removal when the listener is no
@@ -87,10 +84,7 @@ interface StreamSubscriptionManager<T> {
      * @return `Result.success(StreamSubscription)` when the listener was added;
      *   `Result.failure(Throwable)` if the operation cannot be completed (e.g., capacity limits).
      */
-    fun subscribe(
-        listener: T,
-        options: Options = Options(),
-    ): Result<StreamSubscription>
+    fun subscribe(listener: T, options: Options = Options()): Result<StreamSubscription>
 
     /**
      * Removes **all** listeners and releases related resources.
@@ -134,8 +128,9 @@ fun <T> StreamSubscriptionManager(
     logger: StreamLogger,
     maxStrongSubscriptions: Int = StreamSubscriptionManagerImpl.MAX_LISTENERS,
     maxWeakSubscriptions: Int = StreamSubscriptionManagerImpl.MAX_LISTENERS,
-): StreamSubscriptionManager<T> = StreamSubscriptionManagerImpl(
-    logger = logger,
-    maxStrongSubscriptions = maxStrongSubscriptions,
-    maxWeakSubscriptions = maxWeakSubscriptions
-)
+): StreamSubscriptionManager<T> =
+    StreamSubscriptionManagerImpl(
+        logger = logger,
+        maxStrongSubscriptions = maxStrongSubscriptions,
+        maxWeakSubscriptions = maxWeakSubscriptions,
+    )

@@ -25,7 +25,6 @@ import org.junit.Assert.assertFalse
 import org.junit.Test
 
 class MapUtilsTest {
-
     @Test
     fun `creates value when key is absent`() {
         val map = ConcurrentHashMap<String, Int>()
@@ -82,15 +81,14 @@ class MapUtilsTest {
 
         val fakeMap =
             object : ConcurrentHashMap<String, Int>() {
-                override fun putIfAbsent(key: String, value: Int): Int? {
-                    return if (firstCall) {
+                override fun putIfAbsent(key: String, value: Int): Int? =
+                    if (firstCall) {
                         firstCall = false
-                        /* Pretend another thread just inserted 99 */
+                        // Pretend another thread just inserted 99
                         99
                     } else {
                         super.putIfAbsent(key, value)
                     }
-                }
             }
 
         val result = fakeMap.streamComputeIfAbsent("k") { 1 }

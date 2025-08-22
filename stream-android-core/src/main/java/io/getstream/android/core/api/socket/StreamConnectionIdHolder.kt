@@ -30,7 +30,6 @@ import io.getstream.android.core.internal.socket.connection.StreamConnectionIdHo
  */
 @StreamCoreApi
 interface StreamConnectionIdHolder {
-
     /**
      * Clears the stored connection ID.
      *
@@ -56,8 +55,6 @@ interface StreamConnectionIdHolder {
     fun getConnectionId(): Result<String?>
 }
 
-/**
- * Creates a new [StreamConnectionIdHolder] instance.
- */
+/** Creates a new [StreamConnectionIdHolder] instance. */
 @StreamCoreApi
 fun StreamConnectionIdHolder(): StreamConnectionIdHolder = StreamConnectionIdHolderImpl()

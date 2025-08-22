@@ -44,7 +44,6 @@ import org.junit.Test
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class StreamSingleFlightProcessorImplTest {
-
     class RecordingMap<K, V>(private val delegate: ConcurrentMap<K, V> = ConcurrentHashMap()) :
         ConcurrentMap<K, V> by delegate {
         val installedNonNull = java.util.concurrent.atomic.AtomicBoolean(false)

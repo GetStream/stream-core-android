@@ -35,7 +35,6 @@ internal class StreamSubscriptionManagerImpl<T>(
     private val maxStrongSubscriptions: Int = MAX_LISTENERS,
     private val maxWeakSubscriptions: Int = MAX_LISTENERS,
 ) : StreamSubscriptionManager<T> {
-
     companion object {
         internal const val MAX_LISTENERS = 250
     }
@@ -53,7 +52,9 @@ internal class StreamSubscriptionManagerImpl<T>(
     }
 
     override fun forEach(block: (T) -> Unit): Result<Unit> = runCatching {
-        logger.v { "Notifying subscribers S-(${strongSubscribers.size}: ${strongSubscribers.keys}), W-(${weakSubscribers.size}: ${weakSubscribers.keys})" }
+        logger.v {
+            "Notifying subscribers S-(${strongSubscribers.size}: ${strongSubscribers.keys}), W-(${weakSubscribers.size}: ${weakSubscribers.keys})"
+        }
         val errors = mutableListOf<Throwable>()
         // Strong subscribers: lock-free iteration
         strongSubscribers.keys.forEach { listener ->

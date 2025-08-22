@@ -25,7 +25,6 @@ internal class StreamCompositeMoshiJsonSerialization(
     private val external: StreamJsonSerialization? = null,
     private val internalOnly: Set<Class<*>> = emptySet(),
 ) : StreamJsonSerialization {
-
     override fun toJson(any: Any): Result<String> = runCatching {
         internal
             .toJson(any)
@@ -40,7 +39,10 @@ internal class StreamCompositeMoshiJsonSerialization(
                         "Failed to serialize $any using internal serializer, trying external. ${it.message}"
                     }
                     external?.toJson(any)?.getOrThrow()
-                        ?: throw StreamClientException("No external serializer available", cause = it)
+                        ?: throw StreamClientException(
+                            "No external serializer available",
+                            cause = it,
+                        )
                 }
             }
             .getOrThrow()
@@ -60,8 +62,10 @@ internal class StreamCompositeMoshiJsonSerialization(
                     throw it
                 } else {
                     external?.fromJson(raw, clazz)?.getOrThrow()
-                        ?: throw StreamClientException("No external serializer available", cause = it)
-
+                        ?: throw StreamClientException(
+                            "No external serializer available",
+                            cause = it,
+                        )
                 }
             }
             .getOrThrow()

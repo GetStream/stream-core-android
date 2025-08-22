@@ -27,7 +27,6 @@ import io.getstream.android.core.api.model.event.StreamClientWsEvent
  */
 @StreamCoreApi
 interface StreamClientListener {
-
     /**
      * Called when the socket connection state changes.
      *

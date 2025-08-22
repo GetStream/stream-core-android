@@ -16,7 +16,6 @@
 package io.getstream.android.core.api.model.value
 
 import android.annotation.SuppressLint
-import io.getstream.android.core.annotations.StreamCoreApi
 
 /**
  * Represents an API key for authentication.
@@ -27,7 +26,6 @@ import io.getstream.android.core.annotations.StreamCoreApi
 @JvmInline
 value class StreamApiKey private constructor(val rawValue: String) {
     companion object {
-
         /**
          * Creates a new [StreamApiKey] from a string.
          *

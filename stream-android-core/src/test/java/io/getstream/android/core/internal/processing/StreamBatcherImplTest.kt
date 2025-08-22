@@ -40,7 +40,6 @@ import org.junit.Test
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class StreamBatcherImplTest {
-
     @Test
     fun `collects burst into one batch`() = runTest {
         // given a debounce processor with tiny window so test runs fast
@@ -172,7 +171,7 @@ class StreamBatcherImplTest {
 
         advanceTimeBy(1) // let the worker finish emission
 
-        /* ---------- 2. SECOND (NOT-FULL) BATCH ---------- */
+        // ---------- 2. SECOND (NOT-FULL) BATCH ----------
         processor.enqueue(4) // start collecting next batch
 
         // Need to pass the doubled window (200 ms) PLUS the cool-off delay (200 ms)
@@ -180,13 +179,13 @@ class StreamBatcherImplTest {
         //   2) then up to 200-ms collection window for the new batch
         advanceTimeBy(400) // 200 + 200
 
-        /* ---------- 3. THIRD BATCH (WINDOW BACK TO 100 ms) ---------- */
+        // ---------- 3. THIRD BATCH (WINDOW BACK TO 100 ms) ----------
         processor.enqueue(5) // starts after reset to 100 ms
 
         // Again: 100-ms cool-off  + 100-ms collection window
         advanceTimeBy(250)
 
-        /* ---------- Assertions ---------- */
+        // ---------- Assertions ----------
         assertEquals(
             listOf(
                 listOf(1, 2, 3), // full

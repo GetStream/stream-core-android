@@ -28,7 +28,6 @@ import kotlin.math.min
  */
 @StreamCoreApi
 interface StreamLoggerProvider {
-
     /**
      * Creates a [StreamLogger] instance associated with the given tag.
      *
@@ -61,10 +60,8 @@ interface StreamLoggerProvider {
             honorAndroidIsLoggable: Boolean = false,
         ): StreamLoggerProvider =
             object : StreamLoggerProvider {
-
                 override fun taggedLogger(tag: String): StreamLogger =
                     object : StreamLogger {
-
                         /**
                          * Emits a log message at the given [level].
                          * - Drops the message if below [minLevel].

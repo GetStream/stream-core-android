@@ -38,7 +38,6 @@ import org.junit.Test
 private typealias Listener = () -> Unit
 
 class StreamSubscriptionManagerImplTest {
-
     private fun newManager(
         maxStrong: Int = 10,
         maxWeak: Int = 10,
@@ -72,10 +71,7 @@ class StreamSubscriptionManagerImplTest {
 
         val sub =
             manager
-                .subscribe(
-                    { hit.incrementAndGet() },
-                    Options(Retention.KEEP_UNTIL_CANCELLED),
-                )
+                .subscribe({ hit.incrementAndGet() }, Options(Retention.KEEP_UNTIL_CANCELLED))
                 .getOrThrow()
 
         manager.forEach { it() }.getOrThrow()
@@ -88,24 +84,17 @@ class StreamSubscriptionManagerImplTest {
     fun `cancel removes listener and frees strong capacity`() {
         val manager = newManager(maxStrong = 1, maxWeak = 0) // stress strong path only
 
-        val sub =
-            manager
-                .subscribe({}, Options(Retention.KEEP_UNTIL_CANCELLED))
-                .getOrThrow()
+        val sub = manager.subscribe({}, Options(Retention.KEEP_UNTIL_CANCELLED)).getOrThrow()
 
         // capacity reached
         assertThrows(IllegalStateException::class.java) {
-            manager
-                .subscribe({}, Options(Retention.KEEP_UNTIL_CANCELLED))
-                .getOrThrow()
+            manager.subscribe({}, Options(Retention.KEEP_UNTIL_CANCELLED)).getOrThrow()
         }
 
         sub.cancel()
 
         // should succeed after cancel
-        manager
-            .subscribe({}, Options(Retention.KEEP_UNTIL_CANCELLED))
-            .getOrThrow()
+        manager.subscribe({}, Options(Retention.KEEP_UNTIL_CANCELLED)).getOrThrow()
     }
 
     @Test
@@ -113,25 +102,15 @@ class StreamSubscriptionManagerImplTest {
         val manager = newManager(maxStrong = 1, maxWeak = 0)
         val listener: Listener = {}
 
-        val r1 =
-            manager.subscribe(
-                listener,
-                Options(Retention.KEEP_UNTIL_CANCELLED),
-            )
-        val r2 =
-            manager.subscribe(
-                listener,
-                Options(Retention.KEEP_UNTIL_CANCELLED),
-            )
+        val r1 = manager.subscribe(listener, Options(Retention.KEEP_UNTIL_CANCELLED))
+        val r2 = manager.subscribe(listener, Options(Retention.KEEP_UNTIL_CANCELLED))
 
         assertTrue(r1.isSuccess)
         assertTrue(r2.isSuccess)
 
         // still at capacity, a different listener should fail
         assertThrows(IllegalStateException::class.java) {
-            manager
-                .subscribe({}, Options(Retention.KEEP_UNTIL_CANCELLED))
-                .getOrThrow()
+            manager.subscribe({}, Options(Retention.KEEP_UNTIL_CANCELLED)).getOrThrow()
         }
     }
 
@@ -153,17 +132,11 @@ class StreamSubscriptionManagerImplTest {
     @Test
     fun `exceeding strong capacity throws`() {
         val manager = newManager(maxStrong = 2, maxWeak = 0)
-        manager
-            .subscribe({}, Options(Retention.KEEP_UNTIL_CANCELLED))
-            .getOrThrow()
-        manager
-            .subscribe({}, Options(Retention.KEEP_UNTIL_CANCELLED))
-            .getOrThrow()
+        manager.subscribe({}, Options(Retention.KEEP_UNTIL_CANCELLED)).getOrThrow()
+        manager.subscribe({}, Options(Retention.KEEP_UNTIL_CANCELLED)).getOrThrow()
 
         assertThrows(IllegalStateException::class.java) {
-            manager
-                .subscribe({}, Options(Retention.KEEP_UNTIL_CANCELLED))
-                .getOrThrow()
+            manager.subscribe({}, Options(Retention.KEEP_UNTIL_CANCELLED)).getOrThrow()
         }
     }
 
@@ -180,17 +153,13 @@ class StreamSubscriptionManagerImplTest {
     fun `clear removes all listeners (both weak and strong)`() {
         val manager = newManager()
         manager.subscribe({}).getOrThrow() // weak
-        manager
-            .subscribe({}, Options(Retention.KEEP_UNTIL_CANCELLED))
-            .getOrThrow() // strong
+        manager.subscribe({}, Options(Retention.KEEP_UNTIL_CANCELLED)).getOrThrow() // strong
 
         manager.clear().getOrThrow()
 
         // behaves like fresh instance
         manager.subscribe({}).getOrThrow()
-        manager
-            .subscribe({}, Options(Retention.KEEP_UNTIL_CANCELLED))
-            .getOrThrow()
+        manager.subscribe({}, Options(Retention.KEEP_UNTIL_CANCELLED)).getOrThrow()
     }
 
     @Test
@@ -397,10 +366,7 @@ class StreamSubscriptionManagerImplTest {
         // and one strong listener that succeeds (to ensure others still run)
         val hit = AtomicInteger()
         manager
-            .subscribe(
-                { hit.incrementAndGet() },
-                Options(Retention.KEEP_UNTIL_CANCELLED),
-            )
+            .subscribe({ hit.incrementAndGet() }, Options(Retention.KEEP_UNTIL_CANCELLED))
             .getOrThrow()
 
         val res = manager.forEach { it() }
@@ -474,6 +440,7 @@ class StreamSubscriptionManagerImplTest {
     private class GetGate {
         private val start = CountDownLatch(1)
         private val release = CountDownLatch(1)
+
         @Volatile private var armed = false
 
         fun pauseNextGet() {

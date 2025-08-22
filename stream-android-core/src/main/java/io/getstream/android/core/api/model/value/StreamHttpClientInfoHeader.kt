@@ -27,9 +27,7 @@ import kotlin.text.iterator
 @StreamCoreApi
 @JvmInline
 value class StreamHttpClientInfoHeader private constructor(val rawValue: String) {
-
     companion object {
-
         /**
          * Creates a new [StreamHttpClientInfoHeader] with the given values.
          *

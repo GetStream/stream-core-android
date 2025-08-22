@@ -23,7 +23,6 @@ import io.getstream.android.core.api.model.config.StreamClientSerializationConfi
 import io.getstream.android.core.api.model.config.StreamSocketConfig
 import io.getstream.android.core.api.model.connection.StreamConnectedUser
 import io.getstream.android.core.api.model.connection.StreamConnectionState
-import io.getstream.android.core.api.model.event.StreamClientWsEvent
 import io.getstream.android.core.api.model.value.StreamApiKey
 import io.getstream.android.core.api.model.value.StreamHttpClientInfoHeader
 import io.getstream.android.core.api.model.value.StreamUserId
@@ -33,7 +32,6 @@ import io.getstream.android.core.api.processing.StreamRetryProcessor
 import io.getstream.android.core.api.processing.StreamSerialProcessingQueue
 import io.getstream.android.core.api.processing.StreamSingleFlightProcessor
 import io.getstream.android.core.api.serialization.StreamClientEventSerialization
-import io.getstream.android.core.api.serialization.StreamJsonSerialization
 import io.getstream.android.core.api.socket.StreamConnectionIdHolder
 import io.getstream.android.core.api.socket.StreamWebSocket
 import io.getstream.android.core.api.socket.StreamWebSocketFactory
@@ -45,7 +43,6 @@ import io.getstream.android.core.internal.client.StreamClientImpl
 import io.getstream.android.core.internal.serialization.StreamCompositeMoshiJsonSerialization
 import io.getstream.android.core.internal.serialization.StreamMoshiJsonSerializationImpl
 import io.getstream.android.core.internal.serialization.moshi.StreamCoreMoshiProvider
-import io.getstream.android.core.internal.serialization.StreamClientEventSerializationImpl
 import io.getstream.android.core.internal.socket.StreamSocketSession
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -66,7 +63,8 @@ import kotlinx.coroutines.flow.StateFlow
  *
  * ### Lifecycle
  * - Create → [connect] → use → [disconnect].
- * - After [disconnect], resources are released; [connectionState] continues to reflect the latest status.
+ * - After [disconnect], resources are released; [connectionState] continues to reflect the latest
+ *   status.
  *
  * ### Errors & cancellation
  * - Methods return `Result<…>`: `success` on completion, `failure` on error.
@@ -97,7 +95,6 @@ import kotlinx.coroutines.flow.StateFlow
  */
 @StreamCoreApi
 interface StreamClient {
-
     /**
      * Read-only, hot state holder for this client.
      *
@@ -221,31 +218,36 @@ fun StreamClient(
     healthMonitor: StreamHealthMonitor,
     batcher: StreamBatcher<String>,
     // Serialization
-    serializationConfig: StreamClientSerializationConfig = StreamClientSerializationConfig.defaults(),
-    //Logging
+    serializationConfig: StreamClientSerializationConfig =
+        StreamClientSerializationConfig.defaults(),
+    // Logging
     logProvider: StreamLoggerProvider = StreamLoggerProvider.defaultAndroidLogger(),
 ): StreamClient {
     val clientLogger = logProvider.taggedLogger(tag = "SCClient")
     val parent = scope.coroutineContext[Job]
-    val supervisorJob = if (parent != null) {
-        SupervisorJob(parent)
-    } else {
-        SupervisorJob()
-    }
+    val supervisorJob =
+        if (parent != null) {
+            SupervisorJob(parent)
+        } else {
+            SupervisorJob()
+        }
     val clientScope = CoroutineScope(supervisorJob + scope.coroutineContext)
 
-    val socket = StreamWebSocket(
-        logger = logProvider.taggedLogger("SCSocket"),
-        socketFactory = socketFactory,
-        subscriptionManager = StreamSubscriptionManager(
-            logger = logProvider.taggedLogger("SCSocketSubscriptions"),
-        ),
-    )
-    val compositeSerialization = StreamCompositeMoshiJsonSerialization(
-        logProvider.taggedLogger("SCSerialization"),
-        StreamMoshiJsonSerializationImpl(StreamCoreMoshiProvider().builder {}.build()),
-        serializationConfig.json,
-    )
+    val socket =
+        StreamWebSocket(
+            logger = logProvider.taggedLogger("SCSocket"),
+            socketFactory = socketFactory,
+            subscriptionManager =
+                StreamSubscriptionManager(
+                    logger = logProvider.taggedLogger("SCSocketSubscriptions")
+                ),
+        )
+    val compositeSerialization =
+        StreamCompositeMoshiJsonSerialization(
+            logProvider.taggedLogger("SCSerialization"),
+            StreamMoshiJsonSerializationImpl(StreamCoreMoshiProvider().builder {}.build()),
+            serializationConfig.json,
+        )
     return StreamClientImpl(
         userId = userId,
         scope = clientScope,
@@ -257,22 +259,27 @@ fun StreamClient(
         retryProcessor = retryProcessor,
         mutableConnectionState = MutableStateFlow(StreamConnectionState.Idle),
         subscriptionManager = clientSubscriptionManager,
-        socketSession = StreamSocketSession(
-            logger = logProvider.taggedLogger("SCSocketSession"),
-            products = products,
-            config = StreamSocketConfig.jwt(
-                url = wsUrl.rawValue,
-                apiKey = apiKey,
-                clientInfoHeader = clientInfoHeader,
+        socketSession =
+            StreamSocketSession(
+                logger = logProvider.taggedLogger("SCSocketSession"),
+                products = products,
+                config =
+                    StreamSocketConfig.jwt(
+                        url = wsUrl.rawValue,
+                        apiKey = apiKey,
+                        clientInfoHeader = clientInfoHeader,
+                    ),
+                jsonSerialization = compositeSerialization,
+                eventParser =
+                    serializationConfig.eventParser
+                        ?: StreamClientEventSerialization(compositeSerialization),
+                healthMonitor = healthMonitor,
+                batcher = batcher,
+                internalSocket = socket,
+                subscriptionManager =
+                    StreamSubscriptionManager(
+                        logger = logProvider.taggedLogger("SCSocketSessionSubscriptions")
+                    ),
             ),
-            jsonSerialization = compositeSerialization,
-            eventParser = serializationConfig.eventParser ?: StreamClientEventSerialization(compositeSerialization),
-            healthMonitor = healthMonitor,
-            batcher = batcher,
-            internalSocket = socket,
-            subscriptionManager = StreamSubscriptionManager(
-                logger = logProvider.taggedLogger("SCSocketSessionSubscriptions"),
-            ),
-        ),
     )
 }

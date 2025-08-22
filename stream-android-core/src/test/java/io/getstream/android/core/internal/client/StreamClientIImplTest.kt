@@ -82,23 +82,22 @@ class StreamClientIImplTest {
         connFlow = MutableStateFlow(StreamConnectionState.Disconnected())
 
         every { connectionIdHolder.clear() } returns Result.success(Unit)
-
     }
 
     private fun createClient(scope: CoroutineScope) =
-            StreamClientImpl(
-                userId = userId,
-                tokenManager = tokenManager,
-                singleFlight = singleFlight,
-                serialQueue = serialQueue,
-                connectionIdHolder = connectionIdHolder,
-                socketSession = socketSession,
-                logger = logger,
-                retryProcessor = mockk(relaxed = true),
-                mutableConnectionState = connFlow,
-                scope = scope,
-                subscriptionManager = subscriptionManager,
-            )
+        StreamClientImpl(
+            userId = userId,
+            tokenManager = tokenManager,
+            singleFlight = singleFlight,
+            serialQueue = serialQueue,
+            connectionIdHolder = connectionIdHolder,
+            socketSession = socketSession,
+            logger = logger,
+            retryProcessor = mockk(relaxed = true),
+            mutableConnectionState = connFlow,
+            scope = scope,
+            subscriptionManager = subscriptionManager,
+        )
 
     @Test
     fun `connect short-circuits when already connected`() = runTest {
@@ -121,7 +120,6 @@ class StreamClientIImplTest {
     @Test
     fun `disconnect performs cleanup - updates state, clears ids, cancels handle, stops processors`() =
         runTest {
-
             val client = createClient(backgroundScope)
             // Make singleFlight actually run the provided block and return success
             coEvery { singleFlight.run(any(), any<suspend () -> Any>()) } coAnswers
@@ -178,7 +176,6 @@ class StreamClientIImplTest {
     @Test
     fun `connect success - subscribes once, calls session connect, updates state and connectionId, returns user`() =
         runTest {
-
             val client = createClient(backgroundScope)
             // single-flight executes block and returns its result
             coEvery { singleFlight.run(any(), any<suspend () -> StreamConnectedUser>()) } coAnswers

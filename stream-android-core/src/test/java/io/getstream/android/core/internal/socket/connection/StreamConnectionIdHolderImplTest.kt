@@ -26,7 +26,6 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class StreamConnectionIdHolderImplTest {
-
     private fun newHolder(): StreamConnectionIdHolder = StreamConnectionIdHolderImpl()
 
     @Test
@@ -122,7 +121,7 @@ class StreamConnectionIdHolderImplTest {
                     startGate.await()
                     repeat(iterations) { i ->
                         // Always valid non-blank IDs
-                        holder.setConnectionId("t${t}_i${i}").getOrThrow()
+                        holder.setConnectionId("t${t}_i$i").getOrThrow()
                     }
                 } finally {
                     doneGate.countDown()

@@ -63,7 +63,8 @@ class MustBeInternalDetector : Detector(), Detector.UastScanner {
                 val isProtected =
                     kt.hasModifier(
                         KtTokens.PROTECTED_KEYWORD
-                    ) // top-level protected is invalid in Kotlin, but just in case
+                    ) // top-level protected is invalid in Kotlin, but just in
+                // case
 
                 if (isInternal || isPrivate) return // OK
                 // Default (no modifier) behaves as public in Kotlin → flag

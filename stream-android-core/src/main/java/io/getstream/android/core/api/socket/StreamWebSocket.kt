@@ -32,7 +32,6 @@ import io.getstream.android.core.internal.socket.StreamWebSocketImpl
  */
 @StreamCoreApi
 interface StreamWebSocket<T : StreamWebSocketListener> : StreamSubscriptionManager<T> {
-
     /**
      * Opens the WebSocket connection using the provided configuration.
      *
@@ -83,8 +82,9 @@ fun <T : StreamWebSocketListener> StreamWebSocket(
     logger: StreamLogger,
     socketFactory: StreamWebSocketFactory,
     subscriptionManager: StreamSubscriptionManager<T>,
-): StreamWebSocket<T> = StreamWebSocketImpl(
-    logger = logger,
-    socketFactory = socketFactory,
-    subscriptionManager = subscriptionManager,
-)
+): StreamWebSocket<T> =
+    StreamWebSocketImpl(
+        logger = logger,
+        socketFactory = socketFactory,
+        subscriptionManager = subscriptionManager,
+    )

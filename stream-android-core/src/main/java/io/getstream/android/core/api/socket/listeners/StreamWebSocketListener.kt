@@ -51,7 +51,6 @@ import okio.ByteString
  */
 @StreamCoreApi
 interface StreamWebSocketListener {
-
     /**
      * Called when the socket connection is established.
      *

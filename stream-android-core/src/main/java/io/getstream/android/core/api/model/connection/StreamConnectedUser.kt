@@ -15,7 +15,6 @@
  */
 package io.getstream.android.core.api.model.connection
 
-import android.annotation.SuppressLint
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 import io.getstream.android.core.annotations.StreamCoreApi
@@ -54,15 +53,13 @@ class StreamConnectedUser(
     @Json(name = "deleted_at") val deletedAt: Date? = null,
     @Json(name = "image") val image: String? = null,
     @Json(name = "last_active") val lastActive: Date? = null,
-    @Json(name = "name") val name: String? = null
+    @Json(name = "name") val name: String? = null,
 ) {
-
     /**
      * Returns a string representation of the [StreamConnectedUser] object.
      *
      * @return A string.
      */
-    override fun toString(): String {
-        return "StreamConnectedUser(createdAt=$createdAt, id=$id, language=$language, role=$role, updatedAt=$updatedAt, blockedUserIds=$blockedUserIds, teams=$teams, custom=$custom, deactivatedAt=$deactivatedAt, deletedAt=$deletedAt, image=$image, lastActive=$lastActive, name=$name)"
-    }
+    override fun toString(): String =
+        "StreamConnectedUser(createdAt=$createdAt, id=$id, language=$language, role=$role, updatedAt=$updatedAt, blockedUserIds=$blockedUserIds, teams=$teams, custom=$custom, deactivatedAt=$deactivatedAt, deletedAt=$deletedAt, image=$image, lastActive=$lastActive, name=$name)"
 }

@@ -19,7 +19,6 @@ import kotlin.test.assertFailsWith
 import org.junit.Test
 
 class StreamValueClassesTest {
-
     @Test
     fun `StreamApiKey fromString throws when blank`() {
         assertFailsWith<IllegalArgumentException> { StreamApiKey.fromString("") }

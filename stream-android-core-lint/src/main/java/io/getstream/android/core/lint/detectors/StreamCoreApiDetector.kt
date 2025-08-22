@@ -48,13 +48,11 @@ import org.jetbrains.uast.UMethod
  * value="io.getstream.android.core.api,io.getstream.other.api" /> </issue>
  */
 class StreamCoreApiDetector : Detector(), Detector.UastScanner {
-
     override fun getApplicableUastTypes(): List<Class<out UElement>> =
         listOf(UClass::class.java, UMethod::class.java, UField::class.java)
 
     override fun createUastHandler(context: JavaContext): UElementHandler =
         object : UElementHandler() {
-
             override fun visitClass(node: UClass) {
                 // Only top-level declarations
                 val uFile = node.uastParent as? UFile ?: return
@@ -191,9 +189,9 @@ class StreamCoreApiDetector : Detector(), Detector.UastScanner {
         // top-level: public if no visibility modifier or explicit `public`
         val isPublic =
             hasModifier(KtTokens.PUBLIC_KEYWORD) ||
-                    (!hasModifier(KtTokens.INTERNAL_KEYWORD) &&
-                            !hasModifier(KtTokens.PRIVATE_KEYWORD) &&
-                            !hasModifier(KtTokens.PROTECTED_KEYWORD))
+                (!hasModifier(KtTokens.INTERNAL_KEYWORD) &&
+                    !hasModifier(KtTokens.PRIVATE_KEYWORD) &&
+                    !hasModifier(KtTokens.PROTECTED_KEYWORD))
         return isPublic
     }
 
@@ -252,19 +250,19 @@ class StreamCoreApiDetector : Detector(), Detector.UastScanner {
         @JvmField
         val ISSUE: Issue =
             Issue.create(
-                id = "StreamCoreApiMissing",
-                briefDescription = "Missing @StreamCoreApi on public API",
-                explanation =
-                    """
-                    Top-level public declarations in configured packages must be annotated \
-                    with @StreamCoreApi to indicate they are part of the Stream Core API surface.
-                    """
-                        .trimIndent(),
-                category = Category.CORRECTNESS,
-                priority = 7,
-                severity = Severity.ERROR,
-                implementation = IMPLEMENTATION,
-            )
+                    id = "StreamCoreApiMissing",
+                    briefDescription = "Missing @StreamCoreApi on public API",
+                    explanation =
+                        """
+                        Top-level public declarations in configured packages must be annotated \
+                        with @StreamCoreApi to indicate they are part of the Stream Core API surface.
+                        """
+                            .trimIndent(),
+                    category = Category.CORRECTNESS,
+                    priority = 7,
+                    severity = Severity.ERROR,
+                    implementation = IMPLEMENTATION,
+                )
                 .setOptions(listOf(OPTION_PACKAGES, OPTION_PACKAGES_EXCLUDE))
     }
 }

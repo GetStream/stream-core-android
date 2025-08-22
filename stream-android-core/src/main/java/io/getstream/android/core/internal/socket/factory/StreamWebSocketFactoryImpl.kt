@@ -32,7 +32,6 @@ internal class StreamWebSocketFactoryImpl(
     private val okHttpClient: OkHttpClient = OkHttpClient(),
     private val logger: StreamLogger,
 ) : StreamWebSocketFactory {
-
     override fun create(
         streamSocketConfig: StreamSocketConfig,
         listener: WebSocketListener,

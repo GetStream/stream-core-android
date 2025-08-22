@@ -30,7 +30,6 @@ import okhttp3.Response
 import org.junit.Test
 
 class StreamApiKeyInterceptorTest {
-
     @Test
     fun `appends api_key when missing and non-blank`() {
         val apiKey: StreamApiKey = StreamApiKey.fromString("key123")

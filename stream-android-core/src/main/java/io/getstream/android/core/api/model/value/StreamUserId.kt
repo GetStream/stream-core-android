@@ -16,7 +16,6 @@
 package io.getstream.android.core.api.model.value
 
 import android.annotation.SuppressLint
-import io.getstream.android.core.annotations.StreamCoreApi
 
 /**
  * Represents a user ID.
@@ -26,9 +25,7 @@ import io.getstream.android.core.annotations.StreamCoreApi
 @SuppressLint("StreamCoreApiMissing")
 @JvmInline
 value class StreamUserId private constructor(val rawValue: String) {
-
     companion object {
-
         /**
          * Creates a [StreamUserId] from a [rawValue].
          *

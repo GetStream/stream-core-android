@@ -51,7 +51,6 @@ internal class StreamAuthInterceptor(
     private val jsonParser: StreamJsonSerialization,
     private val authType: String,
 ) : Interceptor {
-
     private companion object {
         const val HEADER_STREAM_AUTH_TYPE = "stream-auth-type"
         const val HEADER_AUTHORIZATION = "Authorization"
@@ -114,7 +113,5 @@ internal class StreamAuthInterceptor(
             .addHeader(HEADER_AUTHORIZATION, bearer)
             .build()
 
-    fun isTokenInvalidErrorCode(code: Int): Boolean {
-        return code == 40 || code == 41 || code == 42
-    }
+    fun isTokenInvalidErrorCode(code: Int): Boolean = code == 40 || code == 41 || code == 42
 }

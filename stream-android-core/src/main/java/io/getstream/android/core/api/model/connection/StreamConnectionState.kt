@@ -15,17 +15,16 @@
  */
 package io.getstream.android.core.api.model.connection
 
-import android.annotation.SuppressLint
 import io.getstream.android.core.annotations.StreamCoreApi
 
 @StreamCoreApi
 sealed class StreamConnectionState {
-
     /** The client is not connected and not trying to connect. Initial state for fresh objects. */
     data object Idle : StreamConnectionState()
 
     /** The client was connected and is now disconnected. */
     data class Disconnected(val cause: Throwable? = null) : StreamConnectionState()
+
     /**
      * The client is connected and authenticated.
      *
@@ -37,7 +36,6 @@ sealed class StreamConnectionState {
 
     /** The client is trying to connect. */
     sealed class Connecting : StreamConnectionState() {
-
         /**
          * Opening a new connection
          *

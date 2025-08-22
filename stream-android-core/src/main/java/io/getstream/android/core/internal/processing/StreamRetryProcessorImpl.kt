@@ -23,7 +23,6 @@ import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.delay
 
 internal class StreamRetryProcessorImpl(private val logger: StreamLogger) : StreamRetryProcessor {
-
     override suspend fun <T> retry(policy: StreamRetryPolicy, block: suspend () -> T): Result<T> =
         runCatchingCancellable {
             var delayMs = policy.initialDelayMillis

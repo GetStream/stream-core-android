@@ -51,7 +51,6 @@ import kotlinx.coroutines.flow.StateFlow
  */
 @StreamCoreApi
 interface StreamTokenManager {
-
     /**
      * A hot stream of the current authentication token.
      *

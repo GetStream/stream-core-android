@@ -28,7 +28,6 @@ import okhttp3.Response
 import org.junit.Test
 
 class StreamClientInfoInterceptorTest {
-
     @Test
     fun `adds X-Stream-Client header from provider`() {
         val clientInfo =

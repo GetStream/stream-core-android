@@ -31,10 +31,8 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 import okhttp3.Interceptor
-import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.junit.After
@@ -42,10 +40,10 @@ import org.junit.Before
 import org.junit.Test
 
 class StreamAuthInterceptorTest {
-
     private lateinit var server: MockWebServer
 
     @MockK lateinit var tokenManager: StreamTokenManager
+
     @MockK lateinit var json: StreamJsonSerialization
 
     @Before
@@ -128,7 +126,7 @@ class StreamAuthInterceptorTest {
 
         val errorData = tokenErrorData(41)
         every { json.fromJson(any(), StreamEndpointErrorData::class.java) } returns
-                Result.success(errorData)
+            Result.success(errorData)
 
         val interceptor = StreamAuthInterceptor(tokenManager, json, authType = "jwt")
         val client = client(interceptor)
@@ -163,7 +161,7 @@ class StreamAuthInterceptorTest {
 
         val errorData = tokenErrorData(42)
         every { json.fromJson(any(), StreamEndpointErrorData::class.java) } returns
-                Result.success(errorData)
+            Result.success(errorData)
 
         val interceptor = StreamAuthInterceptor(tokenManager, json, authType = "jwt")
         val client = client(interceptor)
