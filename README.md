@@ -116,7 +116,17 @@ val client = StreamClient(
 Public interfaces ship with convenience factory functions that return the default internal implementation (e.g., `StreamSerialProcessingQueue(...)` → `StreamSerialProcessingQueueImpl`). Prefer these factories in internal code; they keep call-sites stable while impls evolve. You can also provide custom implementations for testing or specialized behavior.
 
 ## License
-Copyright (c) 2014-2025 Stream.io Inc.
 
-Licensed under the Stream License; see [LICENSE](https://github.com/GetStream/stream-android-base/blob/main/LICENSE).  
-Unless required by applicable law or agreed to in writing, software distributed under the License is provided **“as is”**, without warranties or conditions of any kind.
+Copyright (c) 2014-2025 Stream.io Inc. All rights reserved.
+
+Licensed under the Stream License;
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+https://github.com/GetStream/stream-android-base/blob/main/LICENSE
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
