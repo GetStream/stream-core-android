@@ -44,7 +44,6 @@ import kotlinx.coroutines.CoroutineScope
  * @param wsUrl The WebSocket URL.
  * @param clientInfoHeader The client info header.
  * @param tokenProvider The token provider.
- * @param module The client module.
  * @return A new [createStreamClient] instance.
  */
 fun createStreamClient(
@@ -54,9 +53,29 @@ fun createStreamClient(
     wsUrl: StreamWsUrl,
     clientInfoHeader: StreamHttpClientInfoHeader,
     tokenProvider: StreamTokenProvider,
-    module: StreamClientModule = StreamClientModule.defaults(scope, userId, tokenProvider),
-): StreamClient =
-    StreamClient(
+): StreamClient {
+    val logProvider = StreamLoggerProvider.Companion.defaultAndroidLogger(
+        minLevel = StreamLogger.LogLevel.Verbose,
+        honorAndroidIsLoggable = false,
+    )
+    val clientSubscriptionManager = StreamSubscriptionManager<StreamClientListener>(
+        logger = logProvider.taggedLogger("SCClientSubscriptions"),
+        maxStrongSubscriptions = 250,
+        maxWeakSubscriptions = 250,
+    )
+    val singleFlight = StreamSingleFlightProcessor(scope)
+    val tokenManager = StreamTokenManager(userId, tokenProvider, singleFlight)
+    val serialQueue = StreamSerialProcessingQueue(
+        logger = logProvider.taggedLogger("SCSerialProcessing"),
+        scope = scope,
+    )
+    val retryProcessor = StreamRetryProcessor(logger = logProvider.taggedLogger("SCRetryProcessor"))
+    val connectionIdHolder = StreamConnectionIdHolder()
+    val socketFactory = StreamWebSocketFactory(logger = logProvider.taggedLogger("SCWebSocketFactory"))
+    val healthMonitor = StreamHealthMonitor(logger = logProvider.taggedLogger("SCHealthMonitor"), scope = scope)
+    val batcher = StreamBatcher<String>(scope = scope, batchSize = 10, initialDelayMs = 100L, maxDelayMs = 1_000L)
+
+    return StreamClient(
         scope = scope,
         apiKey = apiKey,
         userId = userId,
@@ -64,90 +83,15 @@ fun createStreamClient(
         products = listOf("feeds"),
         clientInfoHeader = clientInfoHeader,
         tokenProvider = tokenProvider,
-        logProvider = module.logProvider,
-        clientSubscriptionManager = module.clientSubscriptionManager,
-        tokenManager = module.tokenManager,
-        singleFlight = module.singleFlight,
-        serialQueue = module.serialQueue,
-        retryProcessor = module.retryProcessor,
-        connectionIdHolder = module.connectionIdHolder,
-        socketFactory = module.socketFactory,
-        healthMonitor = module.healthMonitor,
-        batcher = module.batcher,
+        logProvider = logProvider,
+        clientSubscriptionManager = clientSubscriptionManager,
+        tokenManager = tokenManager,
+        singleFlight = singleFlight,
+        serialQueue = serialQueue,
+        retryProcessor = retryProcessor,
+        connectionIdHolder = connectionIdHolder,
+        socketFactory = socketFactory,
+        healthMonitor = healthMonitor,
+        batcher = batcher,
     )
-
-/**
- * Holds configuration and dependencies for the Stream client, including logging, coroutine scope,
- * subscription managers, token management, processing queues, retry logic, connection handling,
- * socket factory, health monitoring, event debouncing, and JSON serialization.
- *
- * This module is intended to be used as a central place for client-wide resources and processors.
- *
- * @property logProvider Provides logging functionality for the client.
- * @property scope Coroutine scope used for async operations.
- * @property clientSubscriptionManager Manages subscriptions for client listeners.
- * @property tokenManager Handles authentication tokens.
- * @property singleFlight Ensures single execution of concurrent requests.
- * @property serialQueue Serializes processing of tasks.
- * @property retryProcessor Handles retry logic for failed operations.
- * @property connectionIdHolder Stores the current connection ID.
- * @property socketFactory Creates WebSocket connections.
- * @property healthMonitor Monitors connection health.
- * @property batcher Batches socket events for batch processing.
- */
-@ConsistentCopyVisibility
-data class StreamClientModule
-private constructor(
-    val logProvider: StreamLoggerProvider =
-        StreamLoggerProvider.Companion.defaultAndroidLogger(
-            minLevel = StreamLogger.LogLevel.Verbose,
-            honorAndroidIsLoggable = false,
-        ),
-    val scope: CoroutineScope,
-    val clientSubscriptionManager: StreamSubscriptionManager<StreamClientListener> =
-        StreamSubscriptionManager(
-            logger = logProvider.taggedLogger("SCClientSubscriptions"),
-            maxStrongSubscriptions = 250,
-            maxWeakSubscriptions = 250,
-        ),
-    val tokenManager: StreamTokenManager,
-    val singleFlight: StreamSingleFlightProcessor = StreamSingleFlightProcessor(scope = scope),
-    val serialQueue: StreamSerialProcessingQueue =
-        StreamSerialProcessingQueue(
-            logger = logProvider.taggedLogger("SCSerialProcessing"),
-            scope = scope,
-        ),
-    val retryProcessor: StreamRetryProcessor =
-        StreamRetryProcessor(logger = logProvider.taggedLogger("SCRetryProcessor")),
-    val connectionIdHolder: StreamConnectionIdHolder = StreamConnectionIdHolder(),
-    val socketFactory: StreamWebSocketFactory =
-        StreamWebSocketFactory(logger = logProvider.taggedLogger("SCWebSocketFactory")),
-    val healthMonitor: StreamHealthMonitor =
-        StreamHealthMonitor(logger = logProvider.taggedLogger("SCHealthMonitor"), scope = scope),
-    val batcher: StreamBatcher<String> =
-        StreamBatcher(scope = scope, batchSize = 10, initialDelayMs = 100L, maxDelayMs = 1_000L),
-) {
-    companion object {
-        /**
-         * Creates a default [StreamClientModule] instance with recommended settings and
-         * dependencies.
-         *
-         * @param scope Coroutine scope for async operations.
-         * @param userId The user ID for authentication.
-         * @param tokenProvider Provider for authentication tokens.
-         * @return A configured [StreamClientModule] instance.
-         */
-        fun defaults(
-            scope: CoroutineScope,
-            userId: StreamUserId,
-            tokenProvider: StreamTokenProvider,
-        ): StreamClientModule {
-            val singleFlight = StreamSingleFlightProcessor(scope)
-            return StreamClientModule(
-                scope = scope,
-                singleFlight = singleFlight,
-                tokenManager = StreamTokenManager(userId, tokenProvider, singleFlight),
-            )
-        }
-    }
 }
