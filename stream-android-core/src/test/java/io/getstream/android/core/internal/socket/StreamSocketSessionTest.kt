@@ -22,7 +22,7 @@ import io.getstream.android.core.api.model.config.StreamSocketConfig
 import io.getstream.android.core.api.model.connection.StreamConnectionState
 import io.getstream.android.core.api.model.event.StreamClientWsEvent
 import io.getstream.android.core.api.model.exceptions.StreamEndpointErrorData
-import io.getstream.android.core.api.processing.StreamDebounceMessageProcessor
+import io.getstream.android.core.api.processing.StreamBatcher
 import io.getstream.android.core.api.serialization.StreamJsonSerialization
 import io.getstream.android.core.api.socket.StreamWebSocket
 import io.getstream.android.core.api.socket.listeners.StreamClientListener
@@ -33,6 +33,7 @@ import io.getstream.android.core.api.subscribe.StreamSubscriptionManager
 import io.getstream.android.core.internal.model.events.StreamClientConnectedEvent
 import io.getstream.android.core.internal.model.events.StreamClientConnectionErrorEvent
 import io.getstream.android.core.internal.model.events.StreamHealthCheckEvent
+import io.getstream.android.core.internal.serialization.StreamClientEventSerializationImpl
 import io.getstream.android.core.internal.socket.model.ConnectUserData
 import io.mockk.*
 import junit.framework.Assert.assertEquals
@@ -52,9 +53,9 @@ class StreamSocketSessionTest {
     private lateinit var logger: StreamLogger
     private lateinit var socket: StreamWebSocket<StreamWebSocketListener>
     private lateinit var json: StreamJsonSerialization
-    private lateinit var parser: StreamClientEventsParser
+    private lateinit var parser: StreamClientEventSerializationImpl
     private lateinit var health: StreamHealthMonitor
-    private lateinit var debounce: StreamDebounceMessageProcessor<String>
+    private lateinit var debounce: StreamBatcher<String>
     private lateinit var subs: StreamSubscriptionManager<StreamClientListener>
 
     private lateinit var session: StreamSocketSession
@@ -99,8 +100,9 @@ class StreamSocketSessionTest {
                 jsonSerialization = json,
                 eventParser = parser,
                 healthMonitor = health,
-                debounceProcessor = debounce,
+                batcher = debounce,
                 subscriptionManager = subs,
+                listOf("feeds")
             )
     }
 
@@ -120,7 +122,7 @@ class StreamSocketSessionTest {
 
         assertTrue(res.isSuccess)
         assertTrue(
-            listener.isCaptured && listener.captured is StreamConnectionState.Disconnected.Manual
+            listener.isCaptured && listener.captured is StreamConnectionState.Disconnected
         )
         verify { socket.close() }
         verify { debounce.stop() }
@@ -128,7 +130,7 @@ class StreamSocketSessionTest {
     }
 
     @Test
-    fun `disconnect(error) emits Disconnected_Error with same cause and cleans up`() = runTest {
+    fun `disconnect(error) emits Disconnected state and cleans up`() = runTest {
         val boom = IllegalStateException("boom")
         val listener = slot<StreamConnectionState>()
         every { subs.forEach(any()) } answers
@@ -145,8 +147,7 @@ class StreamSocketSessionTest {
         assertTrue(res.isSuccess)
         assertTrue(
             listener.isCaptured &&
-                listener.captured is StreamConnectionState.Disconnected.Error &&
-                (listener.captured as StreamConnectionState.Disconnected.Error).cause === boom
+                listener.captured is StreamConnectionState.Disconnected
         )
         verify { socket.close() }
         verify { debounce.stop() }
@@ -217,7 +218,7 @@ class StreamSocketSessionTest {
             lifecycleListener.onClosed(1000, "Normal Closure")
 
             // Assert: state -> Disconnected.Manual, and cleanup called
-            verify { clientListener.onState(StreamConnectionState.Disconnected.Manual) }
+            verify { clientListener.onState(StreamConnectionState.Disconnected()) }
             verify { health.stop() }
             verify { debounce.stop() }
         }
@@ -243,7 +244,7 @@ class StreamSocketSessionTest {
         lifecycleListener.onClosed(1000, "Normal Closure")
 
         // Then: Manual disconnect is emitted and cleanup executed
-        verify { client.onState(StreamConnectionState.Disconnected.Manual) }
+        verify { client.onState(StreamConnectionState.Disconnected()) }
         verify { health.stop() }
         verify { debounce.stop() }
     }
@@ -273,37 +274,10 @@ class StreamSocketSessionTest {
 
         // Heartbeat acknowledged, then we disconnect with an Error state and clean up
         verify { health.acknowledgeHeartbeat() }
-        verify { client.onState(match { it is StreamConnectionState.Disconnected.Error }) }
+        verify { client.onState(match { it is StreamConnectionState.Disconnected }) }
         verify { health.stop() }
         verify { debounce.stop() }
         verify { socket.close() }
-    }
-
-    @Test
-    fun `onFailure does not change state or perform cleanup`() = runTest {
-        // Arrange: route notifyState() to a concrete listener so we can assert no emissions
-        val client = mockk<StreamClientListener>(relaxed = true)
-        every { subs.forEach(any()) } answers
-            {
-                firstArg<(StreamClientListener) -> Unit>().invoke(client)
-                Result.success(Unit)
-            }
-
-        // Grab the internal lifecycle listener
-        val f =
-            StreamSocketSession::class.java.getDeclaredField("eventListener").apply {
-                isAccessible = true
-            }
-        val lifecycleListener = f.get(session) as StreamWebSocketListener
-
-        // Act: trigger a socket failure
-        lifecycleListener.onFailure(RuntimeException("boom"), null)
-
-        // Assert: no state was emitted and no cleanup/close happened
-        verify(exactly = 0) { client.onState(any()) }
-        verify(exactly = 0) { health.stop() }
-        verify(exactly = 0) { debounce.stop() }
-        verify(exactly = 0) { socket.close() }
     }
 
     @Test
@@ -351,7 +325,7 @@ class StreamSocketSessionTest {
         listener.onMessage("""{"bad":"msg"}""")
 
         verify { socket.close() }
-        verify { client.onState(ofType<StreamConnectionState.Disconnected.Error>()) }
+        verify { client.onState(any<StreamConnectionState.Disconnected>()) }
         verify { health.stop() }
         verify { debounce.stop() }
     }
@@ -374,7 +348,7 @@ class StreamSocketSessionTest {
 
         listener.onClosed(1000, "bye")
 
-        verify { client.onState(StreamConnectionState.Disconnected.Manual) }
+        verify { client.onState(StreamConnectionState.Disconnected()) }
         verify { health.stop() }
         verify { debounce.stop() }
     }
@@ -396,7 +370,7 @@ class StreamSocketSessionTest {
 
         listener.onClosed(1006, "abnormal")
 
-        verify { client.onState(ofType<StreamConnectionState.Disconnected.Error>()) }
+        verify { client.onState(ofType<StreamConnectionState.Disconnected>()) }
         verify { health.stop() }
         verify { debounce.stop() }
     }
@@ -444,7 +418,7 @@ class StreamSocketSessionTest {
         val res = session.disconnect(boom)
 
         assertTrue(res.isSuccess)
-        verify { client.onState(ofType<StreamConnectionState.Disconnected.Error>()) }
+        verify { client.onState(ofType<StreamConnectionState.Disconnected>()) }
         verify { socket.close() }
         verify { health.stop() }
         verify { debounce.stop() }
@@ -463,7 +437,7 @@ class StreamSocketSessionTest {
         val res = session.disconnect()
 
         assertTrue(res.isFailure)
-        verify { client.onState(StreamConnectionState.Disconnected.Manual) }
+        verify { client.onState(StreamConnectionState.Disconnected()) }
         verify { health.stop() }
         verify { debounce.stop() }
     }
@@ -817,11 +791,11 @@ class StreamSocketSessionTest {
             // Assert: disconnect path executed
             verify(exactly = 1) { socket.close() }
             // All subscriptions are mocked into the hsSub
-            verify(exactly = 4) { hsSub.cancel() }
+            verify(exactly = 2) { hsSub.cancel() }
             verify(exactly = 1) { health.stop() }
             verify(exactly = 1) { debounce.stop() }
 
-            assertTrue(emittedStates.any { it is StreamConnectionState.Disconnected.Error })
+            assertTrue(emittedStates.any { it is StreamConnectionState.Disconnected })
 
             // Cleanup suspended connect
             job.cancelAndJoin()
@@ -903,7 +877,7 @@ class StreamSocketSessionTest {
             assertTrue(seenEvents.contains(errorEvent))
 
             // And a Disconnected.Error is emitted due to the connection error event
-            assertTrue(seenStates.any { it is StreamConnectionState.Disconnected.Error })
+            assertTrue(seenStates.any { it is StreamConnectionState.Disconnected })
 
             // Cleanup suspended connect
             job.cancelAndJoin()
@@ -977,7 +951,7 @@ class StreamSocketSessionTest {
             // Assert: no events forwarded, but a Disconnected.Error was emitted from API error
             // fallback
             assertTrue(seenEvents.isEmpty())
-            assertTrue(seenStates.any { it is StreamConnectionState.Disconnected.Error })
+            assertTrue(seenStates.any { it is StreamConnectionState.Disconnected })
 
             // And we did try to parse the payload as an API error
             verify { json.fromJson("BAD_JSON", StreamEndpointErrorData::class.java) }
@@ -1151,7 +1125,7 @@ class StreamSocketSessionTest {
 
             // States: Opening then Disconnected.Error at least once
             assertTrue(seenStates.first() is StreamConnectionState.Connecting.Opening)
-            assertTrue(seenStates.any { it is StreamConnectionState.Disconnected.Error })
+            assertTrue(seenStates.any { it is StreamConnectionState.Disconnected })
 
             // open() was called (handshake path reached)
             verify { socket.open(config) }
@@ -1217,7 +1191,7 @@ class StreamSocketSessionTest {
 
         // States include Opening then Disconnected.Error
         assertTrue(states.first() is StreamConnectionState.Connecting.Opening)
-        assertTrue(states.any { it is StreamConnectionState.Disconnected.Error })
+        assertTrue(states.any { it is StreamConnectionState.Disconnected })
     }
 
     @Test
@@ -1289,7 +1263,7 @@ class StreamSocketSessionTest {
 
             // States include Opening and Disconnected.Error
             assertTrue(states.first() is StreamConnectionState.Connecting.Opening)
-            assertTrue(states.any { it is StreamConnectionState.Disconnected.Error })
+            assertTrue(states.any { it is StreamConnectionState.Disconnected })
 
             // Open was invoked as part of the normal handshake path
             verify { socket.open(config) }

@@ -16,7 +16,9 @@
 package io.getstream.android.core.api.processing
 
 import io.getstream.android.core.annotations.StreamCoreApi
+import io.getstream.android.core.api.log.StreamLogger
 import io.getstream.android.core.api.model.StreamRetryPolicy
+import io.getstream.android.core.internal.processing.StreamRetryProcessorImpl
 
 /**
  * Strategy-based retry executor used inside the Stream SDK.
@@ -54,3 +56,14 @@ interface StreamRetryProcessor {
      */
     suspend fun <T> retry(policy: StreamRetryPolicy, block: suspend () -> T): Result<T>
 }
+
+/**
+ * Creates a [StreamRetryProcessor] instance.
+ *
+ * @param logger The logger to use for logging retry attempts.
+ * @return A new [StreamRetryProcessor] instance.
+ */
+fun StreamRetryProcessor(
+    logger: StreamLogger,
+) : StreamRetryProcessor =
+    StreamRetryProcessorImpl(logger)

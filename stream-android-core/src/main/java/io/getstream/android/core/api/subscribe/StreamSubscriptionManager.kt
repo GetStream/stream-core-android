@@ -16,6 +16,8 @@
 package io.getstream.android.core.api.subscribe
 
 import io.getstream.android.core.annotations.StreamCoreApi
+import io.getstream.android.core.api.log.StreamLogger
+import io.getstream.android.core.internal.subscribe.StreamSubscriptionManagerImpl
 
 /**
  * Registry that owns a set of listeners and provides minimal lifecycle control over them.
@@ -43,11 +45,11 @@ interface StreamSubscriptionManager<T> {
      *
      * @property retention Controls how the manager retains the listener reference.
      */
-    data class SubscribeOptions(
-        val retention: SubscriptionRetention = SubscriptionRetention.AUTO_REMOVE
+    data class Options(
+        val retention: Retention = Retention.AUTO_REMOVE
     ) {
         /** Retention policy for a subscribed listener. */
-        enum class SubscriptionRetention {
+        enum class Retention {
             /**
              * The manager keeps only an ephemeral reference. If caller code drops all references to
              * the listener (and does not call `cancel()`), the listener is automatically removed
@@ -73,10 +75,10 @@ interface StreamSubscriptionManager<T> {
      *   [forEach] iterations.
      *
      * Retention:
-     * - When [options.retention] is [SubscribeOptions.SubscriptionRetention.AUTO_REMOVE] (default),
+     * - When [options.retention] is [Options.Retention.AUTO_REMOVE] (default),
      *   you can omit calling `cancel()`. Once your code drops all references to the listener, it is
      *   removed automatically and will no longer receive events.
-     * - When [options.retention] is [SubscribeOptions.SubscriptionRetention.KEEP_UNTIL_CANCELLED],
+     * - When [options.retention] is [Options.Retention.KEEP_UNTIL_CANCELLED],
      *   you must call `cancel()` (or invoke [clear]) to stop events.
      *
      * @param listener The listener to register.
@@ -87,7 +89,7 @@ interface StreamSubscriptionManager<T> {
      */
     fun subscribe(
         listener: T,
-        options: SubscribeOptions = SubscribeOptions(),
+        options: Options = Options(),
     ): Result<StreamSubscription>
 
     /**
@@ -117,3 +119,23 @@ interface StreamSubscriptionManager<T> {
      */
     fun forEach(block: (T) -> Unit): Result<Unit>
 }
+
+/**
+ * Creates a new [StreamSubscriptionManager] instance.
+ *
+ * @param T The listener type (often a function type, e.g. `(Event) -> Unit`).
+ * @param logger The logger to use for logging.
+ * @param maxStrongSubscriptions The maximum number of strong (non-weak) listeners.
+ * @param maxWeakSubscriptions The maximum number of weak listeners.
+ * @return A new [StreamSubscriptionManager] instance.
+ */
+@StreamCoreApi
+fun <T> StreamSubscriptionManager(
+    logger: StreamLogger,
+    maxStrongSubscriptions: Int = StreamSubscriptionManagerImpl.MAX_LISTENERS,
+    maxWeakSubscriptions: Int = StreamSubscriptionManagerImpl.MAX_LISTENERS,
+): StreamSubscriptionManager<T> = StreamSubscriptionManagerImpl(
+    logger = logger,
+    maxStrongSubscriptions = maxStrongSubscriptions,
+    maxWeakSubscriptions = maxWeakSubscriptions
+)

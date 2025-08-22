@@ -16,6 +16,11 @@
 package io.getstream.android.core.api.processing
 
 import io.getstream.android.core.annotations.StreamCoreApi
+import io.getstream.android.core.api.log.StreamLogger
+import io.getstream.android.core.internal.processing.StreamSerialProcessingQueueImpl
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.channels.Channel
 
 /**
  * A simple **serial execution** queue for suspending tasks.
@@ -87,3 +92,28 @@ interface StreamSerialProcessingQueue {
      */
     suspend fun stop(timeout: Long? = null): Result<Unit>
 }
+
+/**
+ * Creates a new [StreamSerialProcessingQueue] instance.
+ *
+ * @param logger The logger to use for logging.
+ * @param scope The coroutine scope to use for running the processor.
+ * @param autoStart Whether to automatically start the processor when a job is submitted.
+ * @param startMode The coroutine start mode to use when starting the processor.
+ * @param capacity The capacity of the internal queue.
+ * @return A new [StreamSerialProcessingQueue] instance.
+ */
+@StreamCoreApi
+fun StreamSerialProcessingQueue(
+    logger: StreamLogger,
+    scope: CoroutineScope,
+    autoStart: Boolean = true,
+    startMode: CoroutineStart = CoroutineStart.DEFAULT,
+    capacity: Int = Channel.BUFFERED,
+): StreamSerialProcessingQueue = StreamSerialProcessingQueueImpl(
+    logger = logger,
+    scope = scope,
+    autoStart = autoStart,
+    startMode = startMode,
+    capacity = capacity,
+)

@@ -30,7 +30,7 @@ data class StreamTypedKey<T>(val id: Any) {
          * Creates a new [StreamTypedKey] with the given [id] and type [T].
          *
          * @param T The type of the key.
-         * @param id The unique identifier for the key.
+         * @receiver id The unique identifier for the key.
          * @return A new [StreamTypedKey] with the given [id] and type [T].
          */
         inline fun <reified T> Any.asStreamTypedKey() = StreamTypedKey<T>(this)

@@ -24,7 +24,8 @@ import io.getstream.android.core.api.model.connection.StreamConnectionState
 import io.getstream.android.core.api.model.exceptions.StreamClientException
 import io.getstream.android.core.api.model.exceptions.StreamEndpointErrorData
 import io.getstream.android.core.api.model.exceptions.StreamEndpointException
-import io.getstream.android.core.api.processing.StreamDebounceMessageProcessor
+import io.getstream.android.core.api.processing.StreamBatcher
+import io.getstream.android.core.api.serialization.StreamClientEventSerialization
 import io.getstream.android.core.api.serialization.StreamJsonSerialization
 import io.getstream.android.core.api.socket.StreamWebSocket
 import io.getstream.android.core.api.socket.listeners.StreamClientListener
@@ -51,34 +52,39 @@ internal class StreamSocketSession(
     private var config: StreamSocketConfig,
     private val internalSocket: StreamWebSocket<StreamWebSocketListener>,
     private val jsonSerialization: StreamJsonSerialization,
-    private val eventParser: StreamClientEventsParser,
+    private val eventParser: StreamClientEventSerialization,
     private val healthMonitor: StreamHealthMonitor,
-    private val debounceProcessor: StreamDebounceMessageProcessor<String>,
+    private val batcher: StreamBatcher<String>,
     private val subscriptionManager: StreamSubscriptionManager<StreamClientListener>,
+    private val products: List<String>,
 ) : StreamSubscriptionManager<StreamClientListener> by subscriptionManager {
-
     private var socketSubscription: StreamSubscription? = null
-    private var handshakeSubscription: StreamSubscription? = null
     private var streamClientConnectedEvent: StreamClientConnectedEvent? = null
 
     /** Prevent duplicate notifications/cleanup cascades when we closed the socket ourselves. */
     private val closingByUs = AtomicBoolean(false)
+
     /** Idempotent cleanup guard. */
     private val cleaned = AtomicBoolean(false)
 
-    private fun notifyState(state: StreamConnectionState): Result<Unit> =
-        subscriptionManager
-            .forEach { it.onState(state) }
+
+    private fun notifyState(state: StreamConnectionState): Result<Unit> {
+        logger.d { "[notifyState] Notifying state: $state" }
+        return subscriptionManager
+            .forEach {
+                it.onState(state)
+            }
             .onFailure { e ->
                 logger.e(e) { "[notifyState] Failed to notify state=$state. ${e.message}" }
             }
+    }
 
     private val eventListener =
         object : StreamWebSocketListener {
             override fun onMessage(text: String) {
                 logger.v { "[onMessage] Socket message: $text" }
                 healthMonitor.acknowledgeHeartbeat()
-                val accepted = debounceProcessor.offer(text)
+                val accepted = batcher.offer(text)
                 if (!accepted) {
                     val error =
                         IllegalStateException(
@@ -93,17 +99,17 @@ internal class StreamSocketSession(
 
             override fun onFailure(t: Throwable, response: Response?) {
                 logger.e(t) { "[onFailure] Socket failure. ${t.message}" }
-                // Socket remains; state isn't changed here.
+                notifyState(StreamConnectionState.Disconnected(t))
             }
 
             override fun onClosed(code: Int, reason: String) {
                 logger.e { "[onClosed] Socket closed. Code: $code, Reason: $reason" }
                 if (!closingByUs.get()) {
                     if (code == 1000) {
-                        notifyState(StreamConnectionState.Disconnected.Manual)
+                        notifyState(StreamConnectionState.Disconnected())
                     } else {
                         notifyState(
-                            StreamConnectionState.Disconnected.Error(
+                            StreamConnectionState.Disconnected(
                                 IOException("Socket closed. Code: $code, Reason: $reason")
                             )
                         )
@@ -119,18 +125,17 @@ internal class StreamSocketSession(
         if (!closingByUs.getAndSet(true)) {
             val newState =
                 if (error == null) {
-                    StreamConnectionState.Disconnected.Manual
+                    StreamConnectionState.Disconnected()
                 } else {
-                    StreamConnectionState.Disconnected.Error(error)
+                    StreamConnectionState.Disconnected(error)
                 }
             notifyState(newState)
         }
         // Cancel subscriptions before closing to avoid duplicate callbacks.
         socketSubscription?.cancel()
-        handshakeSubscription?.cancel()
         val closeRes =
             internalSocket.close().onFailure { throwable ->
-                logger.wtf { "[disconnect] Failed to close socket. ${throwable.message}" }
+                logger.e { "[disconnect] Failed to close socket. ${throwable.message}" }
             }
         cleanup()
         return closeRes
@@ -139,6 +144,9 @@ internal class StreamSocketSession(
     /** Connects the user to the socket. */
     suspend fun connect(data: ConnectUserData): Result<StreamConnectionState.Connected> =
         suspendCancellableCoroutine { continuation ->
+
+            var handshakeSubscription: StreamSubscription? = null
+
             // Ensure we clean up if the caller cancels the connect coroutine
             continuation.invokeOnCancellation { cause ->
                 logger.d { "[connect] Cancelled: ${cause?.message}" }
@@ -150,7 +158,7 @@ internal class StreamSocketSession(
 
             val completeFailure: (t: Throwable) -> Unit = { t ->
                 logger.e(t) { "[connect] Failed to connect. ${t.message}" }
-                notifyState(StreamConnectionState.Disconnected.Error(t))
+                notifyState(StreamConnectionState.Disconnected(t))
                 if (continuation.isActive) {
                     continuation.resume(Result.failure(t))
                 }
@@ -162,7 +170,6 @@ internal class StreamSocketSession(
 
             // Health hooks
             healthMonitor.onHeartbeat {
-                logger.v { "[onInterval] Socket health check" }
                 val healthCheckEvent = streamClientConnectedEvent?.copy()
                 if (healthCheckEvent != null) {
                     logger.v {
@@ -182,11 +189,10 @@ internal class StreamSocketSession(
             }
 
             healthMonitor.onUnhealthy {
-                logger.e { "[onLivenessThreshold] Socket liveness threshold reached" }
                 disconnect(StreamClientException("Socket did not receive any events."))
             }
             // Batch processing of incoming messages
-            debounceProcessor.onBatch { batch, delay, count ->
+            batcher.onBatch { batch, delay, count ->
                 logger.v {
                     "[onBatch] Socket batch (delay: $delay ms, buffer size: $count): $batch"
                 }
@@ -200,7 +206,7 @@ internal class StreamSocketSession(
                             }
                             if (event is StreamClientConnectionErrorEvent) {
                                 notifyState(
-                                    StreamConnectionState.Disconnected.Error(
+                                    StreamConnectionState.Disconnected(
                                         StreamEndpointException("Connection error", event.error)
                                     )
                                 )
@@ -216,7 +222,7 @@ internal class StreamSocketSession(
                                 .onSuccess { apiError ->
                                     logger.e { "[onBatch] Parsed error event: $apiError" }
                                     notifyState(
-                                        StreamConnectionState.Disconnected.Error(
+                                        StreamConnectionState.Disconnected(
                                             StreamEndpointException("Connection error", apiError)
                                         )
                                     )
@@ -272,7 +278,7 @@ internal class StreamSocketSession(
                             )
                             val authRequest =
                                 StreamWSAuthMessageRequest(
-                                    products = listOf("feeds"),
+                                    products = products,
                                     token = data.token,
                                     userDetails =
                                         StreamConnectUserDetailsRequest(
@@ -338,6 +344,7 @@ internal class StreamSocketSession(
                                         streamClientConnectedEvent = authResponse
                                         success(connectedUser, authResponse.connectionId)
                                     }
+
                                     is StreamClientConnectionErrorEvent -> {
                                         logger.e {
                                             "[onMessage] Socket connection recoverable error: $authResponse"
@@ -358,9 +365,9 @@ internal class StreamSocketSession(
             val hsRes =
                 internalSocket.subscribe(
                     connectListener,
-                    StreamSubscriptionManager.SubscribeOptions(
+                    StreamSubscriptionManager.Options(
                         retention =
-                            StreamSubscriptionManager.SubscribeOptions.SubscriptionRetention
+                            StreamSubscriptionManager.Options.Retention
                                 .KEEP_UNTIL_CANCELLED
                     ),
                 )
@@ -384,10 +391,8 @@ internal class StreamSocketSession(
         }
         logger.d { "[cleanup] Cleaning up socket" }
         healthMonitor.stop()
-        debounceProcessor.stop()
-        handshakeSubscription?.cancel()
+        batcher.stop()
         socketSubscription?.cancel()
-        handshakeSubscription = null
         socketSubscription = null
         streamClientConnectedEvent = null
     }

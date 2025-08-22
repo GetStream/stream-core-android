@@ -16,6 +16,7 @@
 package io.getstream.android.core.api.model.exceptions
 
 import io.getstream.android.core.annotations.StreamCoreApi
+import okio.IOException
 
 /**
  * Base exception for all Stream client errors.
@@ -27,7 +28,7 @@ import io.getstream.android.core.annotations.StreamCoreApi
  */
 @StreamCoreApi
 open class StreamClientException(message: String = "", cause: Throwable? = null) :
-    Exception(message)
+    Exception(message, cause)
 
 /**
  * Exception representing an error response from the Stream API.
@@ -41,7 +42,7 @@ open class StreamClientException(message: String = "", cause: Throwable? = null)
  */
 @StreamCoreApi
 class StreamEndpointException(message: String = "", val apiError: StreamEndpointErrorData?) :
-    StreamClientException(message)
+    IOException(message, null)
 
 /**
  * Exception representing multiple errors that occurred during a single operation.

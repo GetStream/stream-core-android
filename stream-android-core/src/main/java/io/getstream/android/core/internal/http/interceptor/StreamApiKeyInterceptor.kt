@@ -41,7 +41,7 @@ internal class StreamApiKeyInterceptor(private val apiKey: StreamApiKey) : Inter
         val request = chain.request()
         val url = request.url
 
-        if (url.queryParameter(API_KEY_PARAM) != null || apiKey.rawValue.isBlank()) {
+        if (apiKey.rawValue.isBlank()) {
             // StreamApiKey is self enforced via the fromString, but still we are defensive here
             throw StreamClientException("API key must not be blank!")
         }

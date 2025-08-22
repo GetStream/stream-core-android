@@ -317,9 +317,9 @@ class StreamWebSocketImplTest {
         val listener = mockk<StreamWebSocketListener>(relaxed = true)
         val sub = mockk<StreamSubscription>(relaxed = true)
         val opts =
-            StreamSubscriptionManager.SubscribeOptions(
+            StreamSubscriptionManager.Options(
                 retention =
-                    StreamSubscriptionManager.SubscribeOptions.SubscriptionRetention
+                    StreamSubscriptionManager.Options.Retention
                         .KEEP_UNTIL_CANCELLED
             )
         every { subs.subscribe(listener, opts) } returns Result.success(sub)

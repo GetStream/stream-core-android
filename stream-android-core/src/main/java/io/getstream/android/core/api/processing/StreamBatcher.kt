@@ -16,9 +16,12 @@
 package io.getstream.android.core.api.processing
 
 import io.getstream.android.core.annotations.StreamCoreApi
+import io.getstream.android.core.internal.processing.StreamBatcherImpl
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.channels.Channel
 
 /**
- * Debounces a bursty stream of items into **batches** delivered at controlled intervals.
+ * Batches a bursty stream of items into **batches** delivered at controlled intervals.
  *
  * Implementations buffer items submitted via [enqueue] and periodically invoke the registered
  * [onBatch] handler with the items collected so far (in arrival order). A batch is typically
@@ -42,7 +45,7 @@ import io.getstream.android.core.annotations.StreamCoreApi
  * - Rate-limiting downstream work (parsing, I/O, UI recomposition).
  */
 @StreamCoreApi
-interface StreamDebounceMessageProcessor<T> {
+interface StreamBatcher<T> {
 
     /**
      * Starts the processor if it's not already running.
@@ -103,3 +106,34 @@ interface StreamDebounceMessageProcessor<T> {
      */
     fun stop(): Result<Unit>
 }
+
+/**
+ * Creates a new [StreamBatcher] instance.
+ *
+ * @param T The type of items to be processed.
+ * @param scope The coroutine scope.
+ * @param batchSize The maximum number of items to be processed in a batch.
+ * @param initialDelayMs The initial delay in milliseconds before processing a batch.
+ * @param maxDelayMs The maximum delay in milliseconds before processing a batch.
+ * @param autoStart Whether the processor should start automatically on the first enqueue.
+ * @param channelCapacity The capacity of the underlying channel.
+ *
+ * @return A new [StreamBatcher] instance.
+ */
+@StreamCoreApi
+fun <T> StreamBatcher(
+    scope: CoroutineScope,
+    batchSize: Int = 10,
+    initialDelayMs: Long = 100L,
+    maxDelayMs: Long = 1_000L,
+    autoStart: Boolean = true,
+    channelCapacity: Int = Channel.UNLIMITED,
+): StreamBatcher<T> =
+    StreamBatcherImpl<T>(
+        scope = scope,
+        batchSize = batchSize,
+        initialDelayMs = initialDelayMs,
+        maxDelayMs = maxDelayMs,
+        autoStart = autoStart,
+        channelCapacity = channelCapacity,
+    )

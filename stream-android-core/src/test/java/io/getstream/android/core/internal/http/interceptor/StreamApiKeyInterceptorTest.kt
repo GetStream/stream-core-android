@@ -48,15 +48,19 @@ class StreamApiKeyInterceptorTest {
     }
 
     @Test
-    fun `throws when api_key already present in url`() {
+    fun `ignores when api_key already present in url`() {
         val apiKey: StreamApiKey = StreamApiKey.fromString("key123")
-        val request =
-            Request.Builder().url("https://example.com/v1/resources?api_key=existing").build()
-
         val interceptor = StreamApiKeyInterceptor(apiKey)
-        val chain = mockChain(request)
+        val request =
+            Request.Builder().url("https://example.com/v1/resources?api_key=existing&x=1").build()
 
-        assertFailsWith<StreamClientException> { interceptor.intercept(chain) }
+        val chain = mockChain(request)
+        interceptor.intercept(chain)
+
+        val captured = captureRequest(chain)
+        val url = captured.url
+        assertEquals("existing", url.queryParameter("api_key"))
+        assertEquals("1", url.queryParameter("x"))
     }
 
     @Test

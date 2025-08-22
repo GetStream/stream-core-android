@@ -125,7 +125,7 @@ internal open class StreamWebSocketImpl<T : StreamWebSocketListener>(
 
     override fun subscribe(
         listener: T,
-        options: StreamSubscriptionManager.SubscribeOptions,
+        options: StreamSubscriptionManager.Options,
     ): Result<StreamSubscription> = subscriptionManager.subscribe(listener, options)
 
     override fun clear(): Result<Unit> = subscriptionManager.clear()

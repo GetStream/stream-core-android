@@ -15,13 +15,14 @@
  */
 package io.getstream.android.core.internal.processing
 
+import io.getstream.android.core.api.log.StreamLogger
 import io.getstream.android.core.api.model.StreamRetryPolicy
 import io.getstream.android.core.api.processing.StreamRetryProcessor
 import io.getstream.android.core.api.utils.runCatchingCancellable
 import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.delay
 
-internal class StreamRetryProcessorImpl : StreamRetryProcessor {
+internal class StreamRetryProcessorImpl(private val logger: StreamLogger) : StreamRetryProcessor {
 
     override suspend fun <T> retry(policy: StreamRetryPolicy, block: suspend () -> T): Result<T> =
         runCatchingCancellable {
@@ -36,10 +37,12 @@ internal class StreamRetryProcessorImpl : StreamRetryProcessor {
                 } catch (c: CancellationException) {
                     throw c
                 } catch (t: Throwable) {
+                    logger.v { "Retry attempt $attempt failed: ${t.message}" }
                     val checkGiveUp = attempt >= policy.minRetries
                     val shouldGiveUp = checkGiveUp && policy.giveUpFunction(attempt, t)
                     val isLastAttempt = attempt == policy.maxRetries
                     if (shouldGiveUp || isLastAttempt) {
+                        logger.v { "Retry attempt $attempt failed: ${t.message}. Giving up." }
                         throw t
                     }
                     delayMs =
@@ -50,6 +53,7 @@ internal class StreamRetryProcessorImpl : StreamRetryProcessor {
                 attempt++
             }
 
+            logger.e { "Retry loop completed without success or failure. Policy: $policy" }
             throw IllegalStateException("Check your policy: $policy")
         }
 }

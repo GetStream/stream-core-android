@@ -17,7 +17,6 @@
 
 package io.getstream.android.core.internal.client
 
-import io.getstream.android.core.api.StreamClient
 import io.getstream.android.core.api.authentication.StreamTokenManager
 import io.getstream.android.core.api.log.StreamLogger
 import io.getstream.android.core.api.model.connection.StreamConnectedUser
@@ -32,9 +31,10 @@ import io.getstream.android.core.api.socket.listeners.StreamClientListener
 import io.getstream.android.core.api.subscribe.StreamSubscription
 import io.getstream.android.core.api.subscribe.StreamSubscriptionManager
 import io.getstream.android.core.internal.socket.StreamSocketSession
-import io.getstream.android.core.internal.state.MutableStreamClientState
 import io.mockk.*
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.*
@@ -49,11 +49,11 @@ class StreamClientIImplTest {
     private lateinit var serialQueue: StreamSerialProcessingQueue
     private lateinit var connectionIdHolder: StreamConnectionIdHolder
     private lateinit var socketSession: StreamSocketSession
-    private lateinit var mutableClientState: MutableStreamClientState
     private lateinit var logger: StreamLogger
+
     private lateinit var subscriptionManager: StreamSubscriptionManager<StreamClientListener>
 
-    private lateinit var client: StreamClient<*>
+    // private lateinit var client: StreamClient
 
     // Backing state flow for MutableStreamClientState.connectionState
     private lateinit var connFlow: MutableStateFlow<StreamConnectionState>
@@ -79,36 +79,33 @@ class StreamClientIImplTest {
             }
 
         // Mutable client state: expose a real StateFlow that update() mutates
-        connFlow =
-            MutableStateFlow<StreamConnectionState>(StreamConnectionState.Disconnected.Manual)
-        mutableClientState = mockk(relaxed = true)
-        every { mutableClientState.connectionState } returns connFlow
-        every { mutableClientState.update(any()) } answers
-            {
-                connFlow.value = firstArg()
-                Result.success(Unit)
-            }
+        connFlow = MutableStateFlow(StreamConnectionState.Disconnected())
 
         every { connectionIdHolder.clear() } returns Result.success(Unit)
 
-        client =
-            StreamClientIImpl(
+    }
+
+    private fun createClient(scope: CoroutineScope) =
+            StreamClientImpl(
                 userId = userId,
                 tokenManager = tokenManager,
                 singleFlight = singleFlight,
                 serialQueue = serialQueue,
                 connectionIdHolder = connectionIdHolder,
                 socketSession = socketSession,
-                mutableClientState = mutableClientState,
                 logger = logger,
+                retryProcessor = mockk(relaxed = true),
+                mutableConnectionState = connFlow,
+                scope = scope,
                 subscriptionManager = subscriptionManager,
             )
-    }
 
     @Test
     fun `connect short-circuits when already connected`() = runTest {
+        backgroundScope
         val connectedUser = mockk<StreamConnectedUser>(relaxed = true)
         connFlow.value = StreamConnectionState.Connected(connectedUser, "cid-123")
+        val client = createClient(backgroundScope)
 
         val res = client.connect()
 
@@ -124,6 +121,8 @@ class StreamClientIImplTest {
     @Test
     fun `disconnect performs cleanup - updates state, clears ids, cancels handle, stops processors`() =
         runTest {
+
+            val client = createClient(backgroundScope)
             // Make singleFlight actually run the provided block and return success
             coEvery { singleFlight.run(any(), any<suspend () -> Any>()) } coAnswers
                 {
@@ -149,7 +148,7 @@ class StreamClientIImplTest {
             assertTrue(result.isSuccess)
 
             // State moved to Manual
-            assertTrue(connFlow.value is StreamConnectionState.Disconnected.Manual)
+            assertTrue(connFlow.value is StreamConnectionState.Disconnected)
 
             verify { connectionIdHolder.clear() }
             verify { socketSession.disconnect() }
@@ -163,10 +162,11 @@ class StreamClientIImplTest {
         }
 
     @Test
-    fun `subscribe delegates to subscriptionManager`() {
+    fun `subscribe delegates to subscriptionManager`() = runTest {
         val listener = mockk<StreamClientListener>(relaxed = true)
         val sub = mockk<StreamSubscription>(relaxed = true)
         every { subscriptionManager.subscribe(listener) } returns Result.success(sub)
+        val client = createClient(backgroundScope)
 
         val res = client.subscribe(listener)
 
@@ -178,6 +178,8 @@ class StreamClientIImplTest {
     @Test
     fun `connect success - subscribes once, calls session connect, updates state and connectionId, returns user`() =
         runTest {
+
+            val client = createClient(backgroundScope)
             // single-flight executes block and returns its result
             coEvery { singleFlight.run(any(), any<suspend () -> StreamConnectedUser>()) } coAnswers
                 {
@@ -220,6 +222,7 @@ class StreamClientIImplTest {
     @Test
     fun `connect early-exit when already connected - returns existing user and does not hit session or token`() =
         runTest {
+            val client = createClient(backgroundScope)
             // Make single-flight run the block
             coEvery { singleFlight.run(any(), any<suspend () -> StreamConnectedUser>()) } coAnswers
                 {
@@ -229,9 +232,7 @@ class StreamClientIImplTest {
 
             // Pretend we are already connected
             val existingUser = mockk<StreamConnectedUser>(relaxed = true)
-            mutableClientState.update(
-                StreamConnectionState.Connected(existingUser, "existing-conn")
-            )
+            connFlow.update { StreamConnectionState.Connected(existingUser, "existing-conn") }
 
             val result = client.connect()
 
@@ -246,8 +247,9 @@ class StreamClientIImplTest {
         }
 
     @Test
-    fun `connect fails when token manager fails - emits Disconnected_Error and returns failure`() =
+    fun `connect fails when token manager fails - emits Disconnected state and returns failure`() =
         runTest {
+            val client = createClient(backgroundScope)
             // single-flight executes block
             coEvery { singleFlight.run(any(), any<suspend () -> StreamConnectedUser>()) } coAnswers
                 {
@@ -269,9 +271,9 @@ class StreamClientIImplTest {
             val result = client.connect()
 
             assertTrue(result.isFailure)
-            // state should be Disconnected.Error
+            // state should be Disconnected (error case)
             val state = connFlow.value
-            assertTrue(state is StreamConnectionState.Disconnected.Error)
+            assertTrue(state is StreamConnectionState.Disconnected)
 
             // verify no session connect or connection id set
             verify(exactly = 1) { socketSession.subscribe(any<StreamClientListener>(), any()) }
@@ -281,8 +283,9 @@ class StreamClientIImplTest {
         }
 
     @Test
-    fun `connect fails when socket session connect fails - emits Disconnected_Error and returns failure`() =
+    fun `connect fails when socket session connect fails - emits Disconnected state and returns failure`() =
         runTest {
+            val client = createClient(backgroundScope)
             // single-flight executes block
             coEvery { singleFlight.run(any(), any<suspend () -> StreamConnectedUser>()) } coAnswers
                 {
@@ -309,9 +312,9 @@ class StreamClientIImplTest {
             val result = client.connect()
 
             assertTrue(result.isFailure)
-            // state should be Disconnected.Error
+            // state should be Disconnected (error case)
             val state = connFlow.value
-            assertTrue(state is StreamConnectionState.Disconnected.Error)
+            assertTrue(state is StreamConnectionState.Disconnected)
 
             // verify interactions
             verify(exactly = 1) { socketSession.subscribe(any<StreamClientListener>(), any()) }
@@ -322,6 +325,7 @@ class StreamClientIImplTest {
 
     @Test
     fun `subscription onState updates client state and forwards to subscribers`() = runTest {
+        val client = createClient(backgroundScope)
         // Make single-flight execute the block
         coEvery { singleFlight.run(any(), any<suspend () -> StreamConnectedUser>()) } coAnswers
             {
@@ -365,17 +369,18 @@ class StreamClientIImplTest {
         advanceUntilIdle()
 
         // Act: invoke onState on the captured internal listener
-        val state = StreamConnectionState.Disconnected.Manual
+        val state = StreamConnectionState.Disconnected()
         capturedListener!!.onState(state)
 
         // Assert client state updated and callback forwarded
-        assertTrue(client.state.connectionState.value is StreamConnectionState.Disconnected.Manual)
+        assertTrue(client.connectionState.value is StreamConnectionState.Disconnected)
         assertTrue(receivedStates.contains(state))
         verify(atLeast = 1) { subscriptionManager.forEach(any()) }
     }
 
     @Test
     fun `subscription onEvent forwards to subscribers`() = runTest {
+        val client = createClient(backgroundScope)
         // Make single-flight execute the block
         coEvery { singleFlight.run(any(), any<suspend () -> StreamConnectedUser>()) } coAnswers
             {

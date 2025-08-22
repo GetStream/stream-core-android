@@ -16,12 +16,13 @@
 package io.getstream.android.core.internal.serialization
 
 import io.getstream.android.core.api.log.StreamLogger
+import io.getstream.android.core.api.model.exceptions.StreamClientException
 import io.getstream.android.core.api.serialization.StreamJsonSerialization
 
 internal class StreamCompositeMoshiJsonSerialization(
     private val logger: StreamLogger,
     private val internal: StreamJsonSerialization,
-    private val external: StreamJsonSerialization,
+    private val external: StreamJsonSerialization? = null,
     private val internalOnly: Set<Class<*>> = emptySet(),
 ) : StreamJsonSerialization {
 
@@ -38,7 +39,8 @@ internal class StreamCompositeMoshiJsonSerialization(
                     logger.v {
                         "Failed to serialize $any using internal serializer, trying external. ${it.message}"
                     }
-                    external.toJson(any).getOrThrow()
+                    external?.toJson(any)?.getOrThrow()
+                        ?: throw StreamClientException("No external serializer available", cause = it)
                 }
             }
             .getOrThrow()
@@ -57,7 +59,9 @@ internal class StreamCompositeMoshiJsonSerialization(
                     }
                     throw it
                 } else {
-                    external.fromJson(raw, clazz).getOrThrow()
+                    external?.fromJson(raw, clazz)?.getOrThrow()
+                        ?: throw StreamClientException("No external serializer available", cause = it)
+
                 }
             }
             .getOrThrow()

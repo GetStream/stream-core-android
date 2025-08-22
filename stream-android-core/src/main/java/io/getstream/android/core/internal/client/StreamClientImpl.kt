@@ -23,53 +23,50 @@ import io.getstream.android.core.api.model.connection.StreamConnectedUser
 import io.getstream.android.core.api.model.connection.StreamConnectionState
 import io.getstream.android.core.api.model.event.StreamClientWsEvent
 import io.getstream.android.core.api.model.value.StreamUserId
+import io.getstream.android.core.api.processing.StreamRetryProcessor
 import io.getstream.android.core.api.processing.StreamSerialProcessingQueue
 import io.getstream.android.core.api.processing.StreamSingleFlightProcessor
 import io.getstream.android.core.api.socket.StreamConnectionIdHolder
 import io.getstream.android.core.api.socket.listeners.StreamClientListener
-import io.getstream.android.core.api.state.StreamClientState
 import io.getstream.android.core.api.subscribe.StreamSubscription
 import io.getstream.android.core.api.subscribe.StreamSubscriptionManager
 import io.getstream.android.core.api.utils.flatMap
 import io.getstream.android.core.internal.socket.StreamSocketSession
 import io.getstream.android.core.internal.socket.model.ConnectUserData
-import io.getstream.android.core.internal.state.MutableStreamClientState
-import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.update
 
-internal class StreamClientIImpl(
+internal class StreamClientImpl(
     private val userId: StreamUserId,
     private val tokenManager: StreamTokenManager,
     private val singleFlight: StreamSingleFlightProcessor,
     private val serialQueue: StreamSerialProcessingQueue,
+    private val retryProcessor: StreamRetryProcessor,
     private val connectionIdHolder: StreamConnectionIdHolder,
     private val socketSession: StreamSocketSession,
-    private val mutableClientState: MutableStreamClientState,
+    private val mutableConnectionState: MutableStateFlow<StreamConnectionState>,
     private val logger: StreamLogger,
     private val subscriptionManager: StreamSubscriptionManager<StreamClientListener>,
-) : StreamClient<StreamClientState> {
+    private val scope: CoroutineScope,
+) : StreamClient {
     companion object {
         private val connectKey = randomExecutionKey<StreamConnectedUser>()
         private val disconnectKey = randomExecutionKey<Unit>()
     }
 
     private var handle: StreamSubscription? = null
-    private val internalEvents =
-        MutableSharedFlow<StreamClientWsEvent>(
-            replay = 1,
-            extraBufferCapacity = 50,
-            onBufferOverflow = BufferOverflow.DROP_OLDEST,
-        )
-
-    override val state: StreamClientState
-        get() = mutableClientState
+    override val connectionState: StateFlow<StreamConnectionState>
+        get() = mutableConnectionState
 
     override fun subscribe(listener: StreamClientListener): Result<StreamSubscription> =
         subscriptionManager.subscribe(listener)
 
     override suspend fun connect(): Result<StreamConnectedUser> =
         singleFlight.run(connectKey) {
-            val currentState = state.connectionState.value
+
+            val currentState = connectionState.value
             if (currentState is StreamConnectionState.Connected) {
                 logger.w { "[connect] Already connected!" }
                 return@run currentState.connectedUser
@@ -83,19 +80,20 @@ internal class StreamClientIImpl(
 
                                 override fun onState(state: StreamConnectionState) {
                                     logger.v { "[client#onState]: $state" }
-                                    mutableClientState.update(state)
+                                    mutableConnectionState.update(state)
                                     subscriptionManager.forEach { it.onState(state) }
                                 }
 
                                 override fun onEvent(event: StreamClientWsEvent) {
                                     logger.v { "[client#onEvent]: $event" }
-                                    subscriptionManager.forEach { it.onEvent(event) }
-                                    event.let(internalEvents::tryEmit)
+                                    subscriptionManager.forEach {
+                                        it.onEvent(event)
+                                    }
                                 }
                             },
-                            StreamSubscriptionManager.SubscribeOptions(
+                            StreamSubscriptionManager.Options(
                                 retention =
-                                    StreamSubscriptionManager.SubscribeOptions.SubscriptionRetention
+                                    StreamSubscriptionManager.Options.Retention
                                         .KEEP_UNTIL_CANCELLED
                             ),
                         )
@@ -119,14 +117,14 @@ internal class StreamClientIImpl(
                 .fold(
                     onSuccess = { connected ->
                         logger.d { "Connected to socket: $connected" }
-                        mutableClientState.update(connected)
+                        mutableConnectionState.update(connected)
                         connectionIdHolder.setConnectionId(connected.connectionId).map {
                             connected.connectedUser
                         }
                     },
                     onFailure = { error ->
                         logger.e(error) { "Failed to connect to socket: $error" }
-                        mutableClientState.update(StreamConnectionState.Disconnected.Error(error))
+                        mutableConnectionState.update(StreamConnectionState.Disconnected(error))
                         Result.failure(error)
                     },
                 )
@@ -136,7 +134,7 @@ internal class StreamClientIImpl(
     override suspend fun disconnect(): Result<Unit> =
         singleFlight.run(disconnectKey) {
             logger.d { "Disconnecting from socket" }
-            mutableClientState.update(StreamConnectionState.Disconnected.Manual)
+            mutableConnectionState.update(StreamConnectionState.Disconnected())
             connectionIdHolder.clear()
             socketSession.disconnect()
             handle?.cancel()
@@ -145,4 +143,8 @@ internal class StreamClientIImpl(
             serialQueue.stop()
             singleFlight.clear(true)
         }
+
+    private fun MutableStateFlow<StreamConnectionState>.update(state: StreamConnectionState) {
+        this.update { state }
+    }
 }

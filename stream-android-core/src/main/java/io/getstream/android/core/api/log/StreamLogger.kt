@@ -51,9 +51,6 @@ interface StreamLogger {
 
         /** Error log messages, representing recoverable failures. */
         object Error : LogLevel(5)
-
-        /** Critical log messages, representing severe unrecoverable errors. */
-        object WhatATerribleFailure : LogLevel(6)
     }
 
     /**
@@ -99,13 +96,6 @@ interface StreamLogger {
      * @param message A lambda returning the message to log.
      */
     fun v(message: () -> String) = log(LogLevel.Verbose, null, message)
-
-    /**
-     * Logs a critical error message (WTF).
-     *
-     * @param message A lambda returning the message to log.
-     */
-    fun wtf(message: () -> String) = log(LogLevel.WhatATerribleFailure, null, message)
 
     /**
      * Logs a message at the given severity level.

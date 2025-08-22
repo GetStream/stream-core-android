@@ -15,6 +15,7 @@
  */
 package io.getstream.android.core.api.model.exceptions
 
+import com.squareup.moshi.JsonClass
 import io.getstream.android.core.annotations.StreamCoreApi
 
 /**
@@ -37,6 +38,7 @@ import io.getstream.android.core.annotations.StreamCoreApi
  *   Null if not provided.
  */
 @StreamCoreApi
+@JsonClass(generateAdapter = true)
 public data class StreamEndpointErrorData(
     val code: Int,
     val duration: String,

@@ -39,13 +39,13 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class StreamDebounceProcessorImplTest {
+class StreamBatcherImplTest {
 
     @Test
     fun `collects burst into one batch`() = runTest {
         // given a debounce processor with tiny window so test runs fast
         val processor =
-            StreamDebounceProcessorImpl<Int>(
+            StreamBatcherImpl<Int>(
                 scope = backgroundScope,
                 batchSize = 10, // big enough so size threshold won’t trigger
                 initialDelayMs = 100, // 100-ms debounce window
@@ -83,7 +83,7 @@ class StreamDebounceProcessorImplTest {
         val parent = TestScope(StandardTestDispatcher())
 
         val processor =
-            StreamDebounceProcessorImpl<Int>(
+            StreamBatcherImpl<Int>(
                     scope = parent,
                     batchSize = 10,
                     initialDelayMs = 100,
@@ -112,7 +112,7 @@ class StreamDebounceProcessorImplTest {
     @Test
     fun `batch emitted on size threshold and next window is doubled`() = runTest {
         val processor =
-            StreamDebounceProcessorImpl<Int>(
+            StreamBatcherImpl<Int>(
                 scope = backgroundScope,
                 batchSize = 3, // small threshold so we can hit it easily
                 initialDelayMs = 100,
@@ -150,7 +150,7 @@ class StreamDebounceProcessorImplTest {
     @Test
     fun `window doubles once after full batch then resets`() = runTest {
         val processor =
-            StreamDebounceProcessorImpl<Int>(
+            StreamBatcherImpl<Int>(
                 scope = backgroundScope,
                 batchSize = 3,
                 initialDelayMs = 100,
@@ -204,7 +204,7 @@ class StreamDebounceProcessorImplTest {
     @Test
     fun `stop() cancels the worker, drains pending items, and rejects new enqueues`() = runTest {
         val processor =
-            StreamDebounceProcessorImpl<Int>(
+            StreamBatcherImpl<Int>(
                 scope = backgroundScope,
                 batchSize = 5, // anything
                 initialDelayMs = 100,
@@ -235,7 +235,7 @@ class StreamDebounceProcessorImplTest {
     @Test
     fun `stop() finishes gracefully if worker is already null`() = runTest {
         val processor =
-            StreamDebounceProcessorImpl<Int>(
+            StreamBatcherImpl<Int>(
                 scope = backgroundScope,
                 batchSize = 5, // anything
                 initialDelayMs = 100,
@@ -263,7 +263,7 @@ class StreamDebounceProcessorImplTest {
         val scope = CoroutineScope(parent + dispatcher)
 
         val processor =
-            StreamDebounceProcessorImpl<Int>(
+            StreamBatcherImpl<Int>(
                 scope = scope,
                 batchSize = 3,
                 initialDelayMs = 100,
@@ -286,7 +286,7 @@ class StreamDebounceProcessorImplTest {
     @Test
     fun `offer backpressures when autoStart=false and capacity is 1`() = runTest {
         val processor =
-            StreamDebounceProcessorImpl<Int>(
+            StreamBatcherImpl<Int>(
                 scope = backgroundScope,
                 batchSize = 5,
                 initialDelayMs = 100,
@@ -314,7 +314,7 @@ class StreamDebounceProcessorImplTest {
         val scope = CoroutineScope(SupervisorJob() + dispatcher)
 
         val processor =
-            StreamDebounceProcessorImpl<Int>(
+            StreamBatcherImpl<Int>(
                 scope = scope,
                 batchSize = 4,
                 initialDelayMs = 50,
@@ -344,7 +344,7 @@ class StreamDebounceProcessorImplTest {
     fun `offer - locked false branch (tryLock fails) does NOT start worker`() = runTest {
         val scope = testScope()
         val proc =
-            StreamDebounceProcessorImpl<Int>(
+            StreamBatcherImpl<Int>(
                 scope = scope,
                 batchSize = 10,
                 initialDelayMs = 100,
@@ -383,7 +383,7 @@ class StreamDebounceProcessorImplTest {
         runTest {
             val scope = testScope()
             val proc =
-                StreamDebounceProcessorImpl<Int>(
+                StreamBatcherImpl<Int>(
                     scope = scope,
                     batchSize = 3,
                     initialDelayMs = 50,
@@ -411,15 +411,15 @@ class StreamDebounceProcessorImplTest {
         }
 
     @Suppress("UNCHECKED_CAST")
-    private fun <T> workerOf(p: StreamDebounceProcessorImpl<T>): Any? {
-        val f: Field = StreamDebounceProcessorImpl::class.java.getDeclaredField("worker")
+    private fun <T> workerOf(p: StreamBatcherImpl<T>): Any? {
+        val f: Field = StreamBatcherImpl::class.java.getDeclaredField("worker")
         f.isAccessible = true
         return f.get(p)
     }
 
     @Suppress("UNCHECKED_CAST")
-    private fun <T> startMutexOf(p: StreamDebounceProcessorImpl<T>): Mutex {
-        val f: Field = StreamDebounceProcessorImpl::class.java.getDeclaredField("startMutex")
+    private fun <T> startMutexOf(p: StreamBatcherImpl<T>): Mutex {
+        val f: Field = StreamBatcherImpl::class.java.getDeclaredField("startMutex")
         f.isAccessible = true
         return f.get(p) as Mutex
     }

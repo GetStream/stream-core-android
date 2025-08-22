@@ -16,7 +16,10 @@
 package io.getstream.android.core.api.socket
 
 import io.getstream.android.core.annotations.StreamCoreApi
+import io.getstream.android.core.api.log.StreamLogger
 import io.getstream.android.core.api.model.config.StreamSocketConfig
+import io.getstream.android.core.internal.socket.factory.StreamWebSocketFactoryImpl
+import okhttp3.OkHttpClient
 import okhttp3.WebSocket
 import okhttp3.WebSocketListener
 
@@ -48,3 +51,20 @@ interface StreamWebSocketFactory {
         listener: WebSocketListener,
     ): Result<WebSocket>
 }
+
+/**
+ * Creates a [StreamWebSocketFactory] instance.
+ *
+ * @param okHttpClient The OkHttpClient instance to use for creating WebSocket connections.
+ * @param logger The logger to use for logging.
+ * @return A [StreamWebSocketFactory] instance.
+ */
+@StreamCoreApi
+fun StreamWebSocketFactory(
+    okHttpClient: OkHttpClient = OkHttpClient(),
+    logger: StreamLogger,
+): StreamWebSocketFactory =
+    StreamWebSocketFactoryImpl(
+        okHttpClient = okHttpClient,
+        logger = logger,
+    )

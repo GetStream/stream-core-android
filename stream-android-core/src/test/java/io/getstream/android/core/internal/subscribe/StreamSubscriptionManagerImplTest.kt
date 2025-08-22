@@ -17,8 +17,9 @@ package io.getstream.android.core.internal.subscribe
 
 import io.getstream.android.core.api.model.exceptions.StreamAggregateException
 import io.getstream.android.core.api.subscribe.StreamSubscription
-import io.getstream.android.core.api.subscribe.StreamSubscriptionManager.SubscribeOptions
-import io.getstream.android.core.api.subscribe.StreamSubscriptionManager.SubscribeOptions.SubscriptionRetention
+import io.getstream.android.core.api.subscribe.StreamSubscriptionManager.Options
+import io.getstream.android.core.api.subscribe.StreamSubscriptionManager.Options.Retention
+import io.mockk.mockk
 import java.util.WeakHashMap
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CountDownLatch
@@ -49,6 +50,7 @@ class StreamSubscriptionManagerImplTest {
             weakSubscribers = weakMap,
             maxStrongSubscriptions = maxStrong,
             maxWeakSubscriptions = maxWeak,
+            logger = mockk(relaxed = true),
         )
 
     @Test
@@ -72,7 +74,7 @@ class StreamSubscriptionManagerImplTest {
             manager
                 .subscribe(
                     { hit.incrementAndGet() },
-                    SubscribeOptions(SubscriptionRetention.KEEP_UNTIL_CANCELLED),
+                    Options(Retention.KEEP_UNTIL_CANCELLED),
                 )
                 .getOrThrow()
 
@@ -88,13 +90,13 @@ class StreamSubscriptionManagerImplTest {
 
         val sub =
             manager
-                .subscribe({}, SubscribeOptions(SubscriptionRetention.KEEP_UNTIL_CANCELLED))
+                .subscribe({}, Options(Retention.KEEP_UNTIL_CANCELLED))
                 .getOrThrow()
 
         // capacity reached
         assertThrows(IllegalStateException::class.java) {
             manager
-                .subscribe({}, SubscribeOptions(SubscriptionRetention.KEEP_UNTIL_CANCELLED))
+                .subscribe({}, Options(Retention.KEEP_UNTIL_CANCELLED))
                 .getOrThrow()
         }
 
@@ -102,7 +104,7 @@ class StreamSubscriptionManagerImplTest {
 
         // should succeed after cancel
         manager
-            .subscribe({}, SubscribeOptions(SubscriptionRetention.KEEP_UNTIL_CANCELLED))
+            .subscribe({}, Options(Retention.KEEP_UNTIL_CANCELLED))
             .getOrThrow()
     }
 
@@ -114,12 +116,12 @@ class StreamSubscriptionManagerImplTest {
         val r1 =
             manager.subscribe(
                 listener,
-                SubscribeOptions(SubscriptionRetention.KEEP_UNTIL_CANCELLED),
+                Options(Retention.KEEP_UNTIL_CANCELLED),
             )
         val r2 =
             manager.subscribe(
                 listener,
-                SubscribeOptions(SubscriptionRetention.KEEP_UNTIL_CANCELLED),
+                Options(Retention.KEEP_UNTIL_CANCELLED),
             )
 
         assertTrue(r1.isSuccess)
@@ -128,7 +130,7 @@ class StreamSubscriptionManagerImplTest {
         // still at capacity, a different listener should fail
         assertThrows(IllegalStateException::class.java) {
             manager
-                .subscribe({}, SubscribeOptions(SubscriptionRetention.KEEP_UNTIL_CANCELLED))
+                .subscribe({}, Options(Retention.KEEP_UNTIL_CANCELLED))
                 .getOrThrow()
         }
     }
@@ -152,15 +154,15 @@ class StreamSubscriptionManagerImplTest {
     fun `exceeding strong capacity throws`() {
         val manager = newManager(maxStrong = 2, maxWeak = 0)
         manager
-            .subscribe({}, SubscribeOptions(SubscriptionRetention.KEEP_UNTIL_CANCELLED))
+            .subscribe({}, Options(Retention.KEEP_UNTIL_CANCELLED))
             .getOrThrow()
         manager
-            .subscribe({}, SubscribeOptions(SubscriptionRetention.KEEP_UNTIL_CANCELLED))
+            .subscribe({}, Options(Retention.KEEP_UNTIL_CANCELLED))
             .getOrThrow()
 
         assertThrows(IllegalStateException::class.java) {
             manager
-                .subscribe({}, SubscribeOptions(SubscriptionRetention.KEEP_UNTIL_CANCELLED))
+                .subscribe({}, Options(Retention.KEEP_UNTIL_CANCELLED))
                 .getOrThrow()
         }
     }
@@ -179,7 +181,7 @@ class StreamSubscriptionManagerImplTest {
         val manager = newManager()
         manager.subscribe({}).getOrThrow() // weak
         manager
-            .subscribe({}, SubscribeOptions(SubscriptionRetention.KEEP_UNTIL_CANCELLED))
+            .subscribe({}, Options(Retention.KEEP_UNTIL_CANCELLED))
             .getOrThrow() // strong
 
         manager.clear().getOrThrow()
@@ -187,7 +189,7 @@ class StreamSubscriptionManagerImplTest {
         // behaves like fresh instance
         manager.subscribe({}).getOrThrow()
         manager
-            .subscribe({}, SubscribeOptions(SubscriptionRetention.KEEP_UNTIL_CANCELLED))
+            .subscribe({}, Options(Retention.KEEP_UNTIL_CANCELLED))
             .getOrThrow()
     }
 
@@ -216,6 +218,7 @@ class StreamSubscriptionManagerImplTest {
             StreamSubscriptionManagerImpl<Listener>(
                 maxStrongSubscriptions = 50,
                 maxWeakSubscriptions = 0,
+                logger = mockk(relaxed = true),
             )
 
         val jobs =
@@ -223,7 +226,7 @@ class StreamSubscriptionManagerImplTest {
                 scope.async {
                     manager.subscribe(
                         { if (i == -1) println() },
-                        SubscribeOptions(SubscriptionRetention.KEEP_UNTIL_CANCELLED),
+                        Options(Retention.KEEP_UNTIL_CANCELLED),
                     )
                 }
             }
@@ -244,7 +247,7 @@ class StreamSubscriptionManagerImplTest {
                 scope.async {
                     manager.subscribe(
                         { if (i == -1) println() },
-                        SubscribeOptions(SubscriptionRetention.KEEP_UNTIL_CANCELLED),
+                        Options(Retention.KEEP_UNTIL_CANCELLED),
                     )
                 }
             }
@@ -266,6 +269,7 @@ class StreamSubscriptionManagerImplTest {
                 weakSubscribers = weakMap,
                 maxStrongSubscriptions = 0,
                 maxWeakSubscriptions = 5,
+                logger = mockk(relaxed = true),
             )
 
         repeat(5) { manager.subscribe({}).getOrThrow() }
@@ -379,13 +383,14 @@ class StreamSubscriptionManagerImplTest {
             StreamSubscriptionManagerImpl<Listener>(
                 maxStrongSubscriptions = 10,
                 maxWeakSubscriptions = 0,
+                logger = mockk(relaxed = true),
             )
 
         // one strong listener that throws
         manager
             .subscribe(
                 { throw IllegalStateException("strong boom") },
-                SubscribeOptions(SubscriptionRetention.KEEP_UNTIL_CANCELLED),
+                Options(Retention.KEEP_UNTIL_CANCELLED),
             )
             .getOrThrow()
 
@@ -394,7 +399,7 @@ class StreamSubscriptionManagerImplTest {
         manager
             .subscribe(
                 { hit.incrementAndGet() },
-                SubscribeOptions(SubscriptionRetention.KEEP_UNTIL_CANCELLED),
+                Options(Retention.KEEP_UNTIL_CANCELLED),
             )
             .getOrThrow()
 
@@ -417,6 +422,7 @@ class StreamSubscriptionManagerImplTest {
                 weakSubscribers = weakMap, // <<< NOT Collections.synchronizedMap
                 maxStrongSubscriptions = 0,
                 maxWeakSubscriptions = 2,
+                logger = mockk(relaxed = true),
             )
 
         val listener: Listener = {}

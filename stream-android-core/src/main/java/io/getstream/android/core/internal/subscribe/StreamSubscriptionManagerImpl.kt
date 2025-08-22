@@ -15,11 +15,12 @@
  */
 package io.getstream.android.core.internal.subscribe
 
+import io.getstream.android.core.api.log.StreamLogger
 import io.getstream.android.core.api.model.exceptions.StreamAggregateException
 import io.getstream.android.core.api.subscribe.StreamSubscription
 import io.getstream.android.core.api.subscribe.StreamSubscriptionManager
-import io.getstream.android.core.api.subscribe.StreamSubscriptionManager.SubscribeOptions
-import io.getstream.android.core.api.subscribe.StreamSubscriptionManager.SubscribeOptions.SubscriptionRetention
+import io.getstream.android.core.api.subscribe.StreamSubscriptionManager.Options
+import io.getstream.android.core.api.subscribe.StreamSubscriptionManager.Options.Retention
 import io.getstream.android.core.api.utils.streamComputeIfAbsent
 import java.lang.ref.WeakReference
 import java.util.Collections
@@ -27,6 +28,7 @@ import java.util.WeakHashMap
 import java.util.concurrent.ConcurrentHashMap
 
 internal class StreamSubscriptionManagerImpl<T>(
+    private val logger: StreamLogger,
     private val strongSubscribers: ConcurrentHashMap<T, StreamSubscription> = ConcurrentHashMap(),
     private val weakSubscribers: MutableMap<T, StreamSubscription> =
         Collections.synchronizedMap(WeakHashMap()),
@@ -38,40 +40,44 @@ internal class StreamSubscriptionManagerImpl<T>(
         internal const val MAX_LISTENERS = 250
     }
 
-    override fun subscribe(listener: T, options: SubscribeOptions): Result<StreamSubscription> =
+    override fun subscribe(listener: T, options: Options): Result<StreamSubscription> =
         when (options.retention) {
-            SubscriptionRetention.AUTO_REMOVE -> subscribeWeak(listener)
-            SubscriptionRetention.KEEP_UNTIL_CANCELLED -> subscribeStrong(listener)
+            Retention.AUTO_REMOVE -> subscribeWeak(listener)
+            Retention.KEEP_UNTIL_CANCELLED -> subscribeStrong(listener)
         }
 
     override fun clear(): Result<Unit> = runCatching {
+        logger.d { "Clearing all listeners" }
         strongSubscribers.clear()
         synchronized(weakSubscribers) { weakSubscribers.clear() }
     }
 
     override fun forEach(block: (T) -> Unit): Result<Unit> = runCatching {
+        logger.v { "Notifying subscribers S-(${strongSubscribers.size}: ${strongSubscribers.keys}), W-(${weakSubscribers.size}: ${weakSubscribers.keys})" }
         val errors = mutableListOf<Throwable>()
-
         // Strong subscribers: lock-free iteration
         strongSubscribers.keys.forEach { listener ->
             runCatching { block(listener) }.onFailure(errors::add)
         }
-
         // Weak subscribers: snapshot keys under lock, then invoke outside lock
         val weakKeys: List<T> = synchronized(weakSubscribers) { weakSubscribers.keys.toList() }
         weakKeys.forEach { listener -> runCatching { block(listener) }.onFailure(errors::add) }
 
         if (errors.isNotEmpty()) {
-            throw StreamAggregateException("", errors)
+            logger.v { "Listener errors: $errors" }
+            throw StreamAggregateException("Failed to notify all listeners", errors)
         }
     }
 
     private fun subscribeStrong(listener: T): Result<StreamSubscription> = runCatching {
+        logger.v { "Subscribing strong listener" }
         strongSubscribers[listener]?.let {
+            logger.v { "Strong listener already exists" }
             return@runCatching it
         }
 
         if (strongSubscribers.size >= maxStrongSubscriptions) {
+            logger.e { "Max strong listeners reached" }
             throw IllegalStateException(
                 "Max strong listeners ($maxStrongSubscriptions) reached; unsubscribe some listeners."
             )
@@ -87,15 +93,20 @@ internal class StreamSubscriptionManagerImpl<T>(
     }
 
     private fun subscribeWeak(listener: T): Result<StreamSubscription> = runCatching {
+        logger.v { "Subscribing weak listener" }
         weakSubscribers[listener]?.let {
+            logger.v { "Weak listener already exists" }
             return@runCatching it
         }
         synchronized(weakSubscribers) {
+            logger.v { "Weak listener does not exist, creating new subscription" }
             val subscription = weakSubscribers[listener]
             if (subscription != null) {
+                logger.v { "Weak listener already exists after synchronized check" }
                 return@runCatching subscription
             }
             if (weakSubscribers.size >= maxWeakSubscriptions) {
+                logger.e { "Max weak listeners reached" }
                 throw IllegalStateException(
                     "Max weak listeners ($maxWeakSubscriptions) reached; unsubscribe some listeners."
                 )

@@ -18,6 +18,7 @@
 package io.getstream.android.core.internal.processing
 
 import io.getstream.android.core.api.model.StreamRetryPolicy
+import io.mockk.mockk
 import java.util.concurrent.atomic.AtomicInteger
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
@@ -29,7 +30,7 @@ import org.junit.Test
 
 class StreamRetryProcessorImplTest {
 
-    private val retry = StreamRetryProcessorImpl()
+    private val retry = StreamRetryProcessorImpl(mockk(relaxed = true))
 
     @Test
     fun `returns success immediately when block succeeds on first attempt`() = runTest {

@@ -16,9 +16,11 @@
 package io.getstream.android.core.api.socket
 
 import io.getstream.android.core.annotations.StreamCoreApi
+import io.getstream.android.core.api.log.StreamLogger
 import io.getstream.android.core.api.model.config.StreamSocketConfig
 import io.getstream.android.core.api.socket.listeners.StreamWebSocketListener
 import io.getstream.android.core.api.subscribe.StreamSubscriptionManager
+import io.getstream.android.core.internal.socket.StreamWebSocketImpl
 
 /**
  * Represents a WebSocket connection used for real-time communication with the Stream API.
@@ -67,3 +69,22 @@ interface StreamWebSocket<T : StreamWebSocketListener> : StreamSubscriptionManag
      */
     fun send(text: String): Result<String>
 }
+
+/**
+ * Creates a new [StreamWebSocket] instance.
+ *
+ * @param logger The [StreamLogger] to use for logging.
+ * @param socketFactory The [StreamWebSocketFactory] to use for creating WebSocket connections.
+ * @param subscriptionManager The [StreamSubscriptionManager] to use for managing subscriptions.
+ * @return A new [StreamWebSocket] instance.
+ */
+@StreamCoreApi
+fun <T : StreamWebSocketListener> StreamWebSocket(
+    logger: StreamLogger,
+    socketFactory: StreamWebSocketFactory,
+    subscriptionManager: StreamSubscriptionManager<T>,
+): StreamWebSocket<T> = StreamWebSocketImpl(
+    logger = logger,
+    socketFactory = socketFactory,
+    subscriptionManager = subscriptionManager,
+)

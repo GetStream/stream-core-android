@@ -91,7 +91,6 @@ interface StreamLoggerProvider {
                                     StreamLogger.LogLevel.Info -> Log.INFO
                                     StreamLogger.LogLevel.Warning -> Log.WARN
                                     StreamLogger.LogLevel.Error -> Log.ERROR
-                                    StreamLogger.LogLevel.WhatATerribleFailure -> Log.ASSERT
                                 }
 
                             if (honorAndroidIsLoggable && !Log.isLoggable(tag, priority)) return

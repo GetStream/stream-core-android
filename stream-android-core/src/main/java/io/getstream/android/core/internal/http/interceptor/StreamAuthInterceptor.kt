@@ -115,6 +115,6 @@ internal class StreamAuthInterceptor(
             .build()
 
     fun isTokenInvalidErrorCode(code: Int): Boolean {
-        return code == 401 || code == 403
+        return code == 40 || code == 41 || code == 42
     }
 }

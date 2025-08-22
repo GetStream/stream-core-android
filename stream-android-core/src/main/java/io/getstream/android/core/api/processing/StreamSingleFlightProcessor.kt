@@ -17,7 +17,9 @@ package io.getstream.android.core.api.processing
 
 import io.getstream.android.core.annotations.StreamCoreApi
 import io.getstream.android.core.api.model.StreamTypedKey
+import io.getstream.android.core.internal.processing.StreamSingleFlightProcessorImpl
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
 
 /**
  * A concurrency construction that implements the **single-flight** pattern (à la Go's
@@ -93,3 +95,14 @@ interface StreamSingleFlightProcessor {
      */
     fun stop(): Result<Unit>
 }
+
+/**
+ * Creates a new [StreamSingleFlightProcessor] instance.
+ *
+ * @param scope The coroutine scope to use for running the in-flight executions.
+ * @return A new [StreamSingleFlightProcessor] instance.
+ */
+@StreamCoreApi
+fun StreamSingleFlightProcessor(
+    scope: CoroutineScope,
+): StreamSingleFlightProcessor = StreamSingleFlightProcessorImpl(scope)

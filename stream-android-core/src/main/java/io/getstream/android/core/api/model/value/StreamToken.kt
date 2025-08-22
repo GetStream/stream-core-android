@@ -15,6 +15,7 @@
  */
 package io.getstream.android.core.api.model.value
 
+import android.annotation.SuppressLint
 import io.getstream.android.core.annotations.StreamCoreApi
 
 /**
@@ -22,12 +23,19 @@ import io.getstream.android.core.annotations.StreamCoreApi
  *
  * Always construct it with [fromString] so we can enforce invariants.
  */
-@StreamCoreApi
+@SuppressLint("StreamCoreApiMissing")
 @JvmInline
 value class StreamToken private constructor(val rawValue: String) {
 
     companion object {
-        /** Factory that checks the token is not blank. */
+
+        /**
+         * Creates a new [StreamToken] from a string.
+         *
+         * @param token The string value of the token.
+         * @return The created [StreamToken].
+         * @throws IllegalArgumentException If the token is blank.
+         */
         fun fromString(token: String): StreamToken {
             require(token.isNotBlank()) { "Token must not be blank" }
             return StreamToken(token)

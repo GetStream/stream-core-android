@@ -15,6 +15,7 @@
  */
 package io.getstream.android.core.api.model.connection
 
+import android.annotation.SuppressLint
 import io.getstream.android.core.annotations.StreamCoreApi
 
 @StreamCoreApi
@@ -24,27 +25,7 @@ sealed class StreamConnectionState {
     data object Idle : StreamConnectionState()
 
     /** The client was connected and is now disconnected. */
-    sealed class Disconnected : StreamConnectionState() {
-        /**
-         * The client was disconnected manually. i.e.
-         * [io.getstream.android.core.api.StreamClient#disconnect]
-         */
-        data object Manual : Disconnected()
-
-        /**
-         * The client was disconnected due to an error.
-         *
-         * @property cause The error that caused the disconnection.
-         */
-        data class Error(val cause: Throwable) : Disconnected()
-
-        /**
-         * The client was disconnected because the app was suspended or put in the background, or
-         * the network was lost.
-         */
-        data object Suspended : Disconnected()
-    }
-
+    data class Disconnected(val cause: Throwable? = null) : StreamConnectionState()
     /**
      * The client is connected and authenticated.
      *
@@ -70,8 +51,5 @@ sealed class StreamConnectionState {
          * @property userId The user ID that is being connected.
          */
         data class Authenticating(val userId: String) : Connecting()
-
-        /** Recovering a connection that was lost. */
-        data object Reconnecting : Connecting()
     }
 }

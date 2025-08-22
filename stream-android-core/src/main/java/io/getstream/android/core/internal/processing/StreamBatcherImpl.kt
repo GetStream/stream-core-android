@@ -15,7 +15,7 @@
  */
 package io.getstream.android.core.internal.processing
 
-import io.getstream.android.core.api.processing.StreamDebounceMessageProcessor
+import io.getstream.android.core.api.processing.StreamBatcher
 import io.getstream.android.core.api.utils.runCatchingCancellable
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.min
@@ -25,14 +25,14 @@ import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
-internal class StreamDebounceProcessorImpl<T>(
+internal class StreamBatcherImpl<T>(
     private val scope: CoroutineScope,
     private val batchSize: Int = 10,
     private val initialDelayMs: Long = 100L,
     private val maxDelayMs: Long = 1_000L,
     private val autoStart: Boolean = true,
     channelCapacity: Int = Channel.UNLIMITED,
-) : StreamDebounceMessageProcessor<T> {
+) : StreamBatcher<T> {
     private val inbox = StreamRestartableChannel<T>(channelCapacity)
     private val started = AtomicBoolean(false)
     private var worker: Job? = null

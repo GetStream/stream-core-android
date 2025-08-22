@@ -84,14 +84,14 @@ class StreamAuthInterceptorTest {
     }
 
     @Test
-    fun `refreshes once on 401 and retries with new token`() {
+    fun `refreshes once on 40 and retries with new token`() {
         val initial = streamToken("expired")
         val refreshed = streamToken("fresh")
         coEvery { tokenManager.loadIfAbsent() } returns Result.success(initial)
         every { tokenManager.invalidate() } returns Result.success(Unit)
         coEvery { tokenManager.refresh() } returns Result.success(refreshed)
 
-        val errorData = tokenErrorData(401)
+        val errorData = tokenErrorData(40)
         every { json.fromJson(any(), StreamEndpointErrorData::class.java) } returns
             Result.success(errorData)
 
@@ -119,38 +119,69 @@ class StreamAuthInterceptorTest {
     }
 
     @Test
-    fun `refreshes once on 403 and retries with new token`() {
-        val initial = streamToken("bad")
-        val refreshed = streamToken("good")
+    fun `refreshes once on 41 and retries with new token`() {
+        val initial = streamToken("expired")
+        val refreshed = streamToken("fresh")
         coEvery { tokenManager.loadIfAbsent() } returns Result.success(initial)
         every { tokenManager.invalidate() } returns Result.success(Unit)
         coEvery { tokenManager.refresh() } returns Result.success(refreshed)
 
-        val errorData = tokenErrorData(403)
+        val errorData = tokenErrorData(41)
         every { json.fromJson(any(), StreamEndpointErrorData::class.java) } returns
-            Result.success(errorData)
+                Result.success(errorData)
 
         val interceptor = StreamAuthInterceptor(tokenManager, json, authType = "jwt")
         val client = client(interceptor)
 
-        server.enqueue(MockResponse().setResponseCode(403).setBody("""{"error":"forbidden"}"""))
+        server.enqueue(MockResponse().setResponseCode(401).setBody("""{"error":"token invalid"}"""))
         server.enqueue(MockResponse().setResponseCode(200))
 
-        val body = "payload".toRequestBody("text/plain".toMediaType())
-        val url = server.url("/v1/post")
-        client.newCall(Request.Builder().url(url).post(body).build()).execute().use { resp ->
+        val url = server.url("/v1/protected")
+        client.newCall(Request.Builder().url(url).build()).execute().use { resp ->
             assertTrue(resp.isSuccessful)
         }
 
-        val first = server.takeRequest(2, TimeUnit.SECONDS)!!
-        assertEquals("POST", first.method)
-        assertEquals("payload", first.body.readUtf8())
+        val firstReq = server.takeRequest(2, TimeUnit.SECONDS)!!
+        assertEquals("expired", firstReq.getHeader("Authorization"))
 
-        val second = server.takeRequest(2, TimeUnit.SECONDS)!!
-        assertEquals("POST", second.method)
-        assertEquals("payload", second.body.readUtf8())
-        assertEquals("good", second.getHeader("Authorization"))
-        assertEquals("present", second.getHeader("x-stream-retried-on-auth"))
+        val secondReq = server.takeRequest(2, TimeUnit.SECONDS)!!
+        assertEquals("fresh", secondReq.getHeader("Authorization"))
+        assertEquals("present", secondReq.getHeader("x-stream-retried-on-auth"))
+
+        coVerify(exactly = 1) { tokenManager.loadIfAbsent() }
+        verify(exactly = 1) { tokenManager.invalidate() }
+        coVerify(exactly = 1) { tokenManager.refresh() }
+    }
+
+    @Test
+    fun `refreshes once on 42 and retries with new token`() {
+        val initial = streamToken("expired")
+        val refreshed = streamToken("fresh")
+        coEvery { tokenManager.loadIfAbsent() } returns Result.success(initial)
+        every { tokenManager.invalidate() } returns Result.success(Unit)
+        coEvery { tokenManager.refresh() } returns Result.success(refreshed)
+
+        val errorData = tokenErrorData(42)
+        every { json.fromJson(any(), StreamEndpointErrorData::class.java) } returns
+                Result.success(errorData)
+
+        val interceptor = StreamAuthInterceptor(tokenManager, json, authType = "jwt")
+        val client = client(interceptor)
+
+        server.enqueue(MockResponse().setResponseCode(401).setBody("""{"error":"token invalid"}"""))
+        server.enqueue(MockResponse().setResponseCode(200))
+
+        val url = server.url("/v1/protected")
+        client.newCall(Request.Builder().url(url).build()).execute().use { resp ->
+            assertTrue(resp.isSuccessful)
+        }
+
+        val firstReq = server.takeRequest(2, TimeUnit.SECONDS)!!
+        assertEquals("expired", firstReq.getHeader("Authorization"))
+
+        val secondReq = server.takeRequest(2, TimeUnit.SECONDS)!!
+        assertEquals("fresh", secondReq.getHeader("Authorization"))
+        assertEquals("present", secondReq.getHeader("x-stream-retried-on-auth"))
 
         coVerify(exactly = 1) { tokenManager.loadIfAbsent() }
         verify(exactly = 1) { tokenManager.invalidate() }

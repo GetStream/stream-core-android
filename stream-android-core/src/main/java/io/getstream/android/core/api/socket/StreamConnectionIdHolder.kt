@@ -16,6 +16,7 @@
 package io.getstream.android.core.api.socket
 
 import io.getstream.android.core.annotations.StreamCoreApi
+import io.getstream.android.core.internal.socket.connection.StreamConnectionIdHolderImpl
 
 /**
  * Holds and manages the connection ID for the Stream client.
@@ -54,3 +55,9 @@ interface StreamConnectionIdHolder {
      */
     fun getConnectionId(): Result<String?>
 }
+
+/**
+ * Creates a new [StreamConnectionIdHolder] instance.
+ */
+@StreamCoreApi
+fun StreamConnectionIdHolder(): StreamConnectionIdHolder = StreamConnectionIdHolderImpl()
