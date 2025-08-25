@@ -15,6 +15,7 @@
  */
 package io.getstream.android.core.api.model.exceptions
 
+import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 import io.getstream.android.core.annotations.StreamCoreApi
 
@@ -40,12 +41,12 @@ import io.getstream.android.core.annotations.StreamCoreApi
 @StreamCoreApi
 @JsonClass(generateAdapter = true)
 public data class StreamEndpointErrorData(
-    val code: Int,
-    val duration: String,
-    val message: String,
-    val moreInfo: String,
-    val statusCode: Int,
-    val details: List<Int>,
-    val unrecoverable: Boolean? = null,
-    val exceptionFields: Map<String, String>? = null,
+    @Json(name = "code") val code: Int,
+    @Json(name = "duration") val duration: String? = null,
+    @Json(name = "message") val message: String? = null,
+    @Json(name = "more_info") val moreInfo: String? = null,
+    @Json(name = "StatusCode") val statusCode: Int? = null,
+    @Json(name = "details") val details: List<Int>? = null,
+    @Json(name = "unrecoverable") val unrecoverable: Boolean? = null,
+    @Json(name = "exception_fields") val exceptionFields: Map<String, String>? = null,
 )
