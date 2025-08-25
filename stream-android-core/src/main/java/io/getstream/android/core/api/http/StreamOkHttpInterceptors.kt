@@ -18,10 +18,12 @@ package io.getstream.android.core.api.http
 import io.getstream.android.core.annotations.StreamCoreApi
 import io.getstream.android.core.api.authentication.StreamTokenManager
 import io.getstream.android.core.api.model.value.StreamApiKey
+import io.getstream.android.core.api.model.value.StreamHttpClientInfoHeader
 import io.getstream.android.core.api.serialization.StreamJsonSerialization
 import io.getstream.android.core.api.socket.StreamConnectionIdHolder
 import io.getstream.android.core.internal.http.interceptor.StreamApiKeyInterceptor
 import io.getstream.android.core.internal.http.interceptor.StreamAuthInterceptor
+import io.getstream.android.core.internal.http.interceptor.StreamClientInfoInterceptor
 import io.getstream.android.core.internal.http.interceptor.StreamConnectionIdInterceptor
 import io.getstream.android.core.internal.http.interceptor.StreamEndpointErrorInterceptor
 import okhttp3.Interceptor
@@ -59,6 +61,15 @@ object StreamOkHttpInterceptors {
      */
     fun connectionId(connectionIdHolder: StreamConnectionIdHolder): Interceptor =
         StreamConnectionIdInterceptor(connectionIdHolder)
+
+    /**
+     * Creates an OkHttp interceptor that adds the client info header to the request.
+     *
+     * @param clientInfoHeader The client info header to add.
+     * @return An OkHttp interceptor.
+     */
+    fun clientInfo(clientInfoHeader: StreamHttpClientInfoHeader): Interceptor =
+        StreamClientInfoInterceptor(clientInfoHeader)
 
     /**
      * Creates an OkHttp interceptor that adds the Stream API key to the request as a query

@@ -18,8 +18,10 @@ package io.getstream.android.core.api
 import io.getstream.android.core.annotations.StreamCoreApi
 import io.getstream.android.core.api.authentication.StreamTokenManager
 import io.getstream.android.core.api.authentication.StreamTokenProvider
+import io.getstream.android.core.api.http.StreamOkHttpInterceptors
 import io.getstream.android.core.api.log.StreamLoggerProvider
 import io.getstream.android.core.api.model.config.StreamClientSerializationConfig
+import io.getstream.android.core.api.model.config.StreamHttpConfig
 import io.getstream.android.core.api.model.config.StreamSocketConfig
 import io.getstream.android.core.api.model.connection.StreamConnectedUser
 import io.getstream.android.core.api.model.connection.StreamConnectionState
@@ -40,6 +42,9 @@ import io.getstream.android.core.api.socket.monitor.StreamHealthMonitor
 import io.getstream.android.core.api.subscribe.StreamSubscription
 import io.getstream.android.core.api.subscribe.StreamSubscriptionManager
 import io.getstream.android.core.internal.client.StreamClientImpl
+import io.getstream.android.core.internal.http.interceptor.StreamApiKeyInterceptor
+import io.getstream.android.core.internal.http.interceptor.StreamAuthInterceptor
+import io.getstream.android.core.internal.http.interceptor.StreamConnectionIdInterceptor
 import io.getstream.android.core.internal.serialization.StreamCompositeEventSerializationImpl
 import io.getstream.android.core.internal.serialization.StreamCompositeMoshiJsonSerialization
 import io.getstream.android.core.internal.serialization.StreamMoshiJsonSerializationImpl
@@ -50,6 +55,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import okhttp3.OkHttpClient
 
 /**
  * Entry point for establishing and managing a connection to Stream services.
@@ -190,6 +196,7 @@ interface StreamClient {
  * @param tokenManager The token manager.
  * @param singleFlight The single-flight processor.
  * @param serialQueue The serial processing queue.
+ * @param httpConfig The HTTP configuration.
  * @param retryProcessor The retry processor.
  * @param connectionIdHolder The connection ID holder.
  * @param socketFactory The WebSocket factory.
@@ -218,6 +225,8 @@ fun StreamClient(
     socketFactory: StreamWebSocketFactory,
     healthMonitor: StreamHealthMonitor,
     batcher: StreamBatcher<String>,
+    // Http
+    httpConfig: StreamHttpConfig? = null,
     // Serialization
     serializationConfig: StreamClientSerializationConfig,
     // Logging
@@ -248,6 +257,21 @@ fun StreamClient(
             StreamMoshiJsonSerializationImpl(StreamCoreMoshiProvider().builder {}.build()),
             serializationConfig.json,
         )
+
+    httpConfig?.apply {
+        if (automaticInterceptors) {
+            httpBuilder.apply {
+                addInterceptor(StreamOkHttpInterceptors.clientInfo(clientInfoHeader))
+                addInterceptor(StreamOkHttpInterceptors.apiKey(apiKey))
+                addInterceptor(StreamOkHttpInterceptors.auth( "jwt", tokenManager, compositeSerialization))
+                addInterceptor(StreamOkHttpInterceptors.connectionId(connectionIdHolder))
+            }
+        }
+        configuredInterceptors.forEach {
+            httpBuilder.addInterceptor(it)
+        }
+    }
+
     return StreamClientImpl(
         userId = userId,
         scope = clientScope,
