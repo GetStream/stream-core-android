@@ -23,6 +23,7 @@ import io.getstream.android.core.api.socket.StreamConnectionIdHolder
 import io.getstream.android.core.internal.http.interceptor.StreamApiKeyInterceptor
 import io.getstream.android.core.internal.http.interceptor.StreamAuthInterceptor
 import io.getstream.android.core.internal.http.interceptor.StreamConnectionIdInterceptor
+import io.getstream.android.core.internal.http.interceptor.StreamEndpointErrorInterceptor
 import okhttp3.Interceptor
 
 // TODO: Think about better approach
@@ -67,4 +68,14 @@ object StreamOkHttpInterceptors {
      * @return An OkHttp interceptor.
      */
     fun apiKey(apiKey: StreamApiKey): Interceptor = StreamApiKeyInterceptor(apiKey)
+
+    /**
+     * Creates an OkHttp interceptor that parses and throws
+     * [io.getstream.android.core.api.model.exceptions.StreamEndpointException] for error responses.
+     *
+     * @param jsonParser JSON parser used to decode error payloads when requests fail.
+     * @return An OkHttp interceptor.
+     */
+    fun error(jsonParser: StreamJsonSerialization): Interceptor =
+        StreamEndpointErrorInterceptor(jsonParser)
 }
