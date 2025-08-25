@@ -16,6 +16,7 @@
 package io.getstream.android.core.internal.serialization
 
 import io.getstream.android.core.api.log.StreamLogger
+import io.getstream.android.core.api.model.exceptions.StreamClientException
 import io.getstream.android.core.api.serialization.StreamJsonSerialization
 import io.mockk.every
 import io.mockk.mockk
@@ -199,5 +200,121 @@ class StreamCompositeMoshiJsonSerializationTest {
         assertTrue(result.isSuccess)
         assertEquals(Bar(9), result.getOrThrow())
         verify(exactly = 0) { external.fromJson(any(), Bar::class.java) }
+    }
+
+    @Test
+    fun `toJson succeeds with internal when external is null`() {
+        val logger = mockk<StreamLogger>(relaxed = true)
+        val internal = mockk<StreamJsonSerialization>()
+        // external = null
+
+        every { internal.toJson(any()) } returns Result.success("""{"x":10}""")
+
+        val composite =
+            StreamCompositeMoshiJsonSerialization(
+                logger = logger,
+                internal = internal,
+                external = null, // <— no external
+            )
+
+        val result = composite.toJson(Foo(10))
+
+        assertTrue(result.isSuccess)
+        assertEquals("""{"x":10}""", result.getOrThrow())
+    }
+
+    @Test
+    fun `toJson fails with StreamClientException when internal fails and external is null`() {
+        val logger = mockk<StreamLogger>(relaxed = true)
+        val internal = mockk<StreamJsonSerialization>()
+        val boom = RuntimeException("internal fail")
+
+        every { internal.toJson(any()) } returns Result.failure(boom)
+
+        val composite =
+            StreamCompositeMoshiJsonSerialization(
+                logger = logger,
+                internal = internal,
+                external = null, // <— no external
+            )
+
+        val result = composite.toJson(Foo(11))
+
+        assertTrue(result.isFailure)
+        val ex = result.exceptionOrNull()
+        assertTrue(ex is StreamClientException)
+        assertEquals("No external serializer available", ex!!.message)
+        assertEquals(boom, ex.cause)
+        // we logged the fallback attempt
+        verify { logger.v(any()) }
+    }
+
+    @Test
+    fun `fromJson succeeds with internal when external is null`() {
+        val logger = mockk<StreamLogger>(relaxed = true)
+        val internal = mockk<StreamJsonSerialization>()
+
+        every { internal.fromJson(any(), Foo::class.java) } returns Result.success(Foo(42))
+
+        val composite =
+            StreamCompositeMoshiJsonSerialization(
+                logger = logger,
+                internal = internal,
+                external = null, // <— no external
+            )
+
+        val result = composite.fromJson("""{"x":42}""", Foo::class.java)
+
+        assertTrue(result.isSuccess)
+        assertEquals(Foo(42), result.getOrThrow())
+    }
+
+    @Test
+    fun `fromJson fails with StreamClientException when internal fails and external is null`() {
+        val logger = mockk<StreamLogger>(relaxed = true)
+        val internal = mockk<StreamJsonSerialization>()
+        val boom = IllegalStateException("internal parse fail")
+
+        every { internal.fromJson(any(), Foo::class.java) } returns Result.failure(boom)
+
+        val composite =
+            StreamCompositeMoshiJsonSerialization(
+                logger = logger,
+                internal = internal,
+                external = null, // <— no external
+            )
+
+        val result = composite.fromJson("""{"x":-1}""", Foo::class.java)
+
+        assertTrue(result.isFailure)
+        val ex = result.exceptionOrNull()
+        assertTrue(ex is StreamClientException)
+        assertEquals("No external serializer available", ex!!.message)
+        assertEquals(boom, ex.cause)
+        verify { logger.v(any()) }
+    }
+
+    @Test
+    fun `fromJson internalOnly class still fails without fallback when external is null`() {
+        val logger = mockk<StreamLogger>(relaxed = true)
+        val internal = mockk<StreamJsonSerialization>()
+        val boom = RuntimeException("strict internal only fail")
+
+        every { internal.fromJson(any(), Bar::class.java) } returns Result.failure(boom)
+
+        val composite =
+            StreamCompositeMoshiJsonSerialization(
+                logger = logger,
+                internal = internal,
+                external = null, // <— no external
+                internalOnly = setOf(Bar::class.java),
+            )
+
+        val result = composite.fromJson("""{"y":1}""", Bar::class.java)
+
+        // should surface the ORIGINAL internal exception (no fallback attempted)
+        assertTrue(result.isFailure)
+        assertEquals(boom, result.exceptionOrNull())
+        verify { logger.v(any()) }
     }
 }

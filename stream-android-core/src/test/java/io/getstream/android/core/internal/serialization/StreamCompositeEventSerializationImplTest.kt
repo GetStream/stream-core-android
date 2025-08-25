@@ -1,3 +1,18 @@
+/*
+ * Copyright (c) 2014-2025 Stream.io Inc. All rights reserved.
+ *
+ * Licensed under the Stream License;
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    https://github.com/GetStream/stream-core-android/blob/main/LICENSE
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package io.getstream.android.core.internal.serialization
 
 import io.getstream.android.core.api.model.event.StreamClientWsEvent
@@ -24,13 +39,14 @@ class StreamCompositeEventSerializationImplTest {
 
     private fun newSut(
         internalTypes: Set<String> = setOf("connection.ok", "connection.error", "health.check"),
-        alsoExternal: Set<String> = emptySet()
-    ) = StreamCompositeEventSerializationImpl(
-        internal = internalSer,
-        external = externalSer,
-        internalTypes = internalTypes,
-        alsoExternal = alsoExternal
-    )
+        alsoExternal: Set<String> = emptySet(),
+    ) =
+        StreamCompositeEventSerializationImpl(
+            internal = internalSer,
+            external = externalSer,
+            internalTypes = internalTypes,
+            alsoExternal = alsoExternal,
+        )
 
     // --- serialize() ---
 
@@ -121,7 +137,8 @@ class StreamCompositeEventSerializationImplTest {
     @Test
     fun `deserialize - internalTypes hit routes to internal`() {
         val sut = newSut(internalTypes = setOf("connection.ok"))
-        every { internalSer.deserialize("""{"type":"connection.ok"}""") } returns Result.success(coreEvent)
+        every { internalSer.deserialize("""{"type":"connection.ok"}""") } returns
+            Result.success(coreEvent)
 
         val res = sut.deserialize("""{"type":"connection.ok"}""").getOrThrow()
 
@@ -163,7 +180,8 @@ class StreamCompositeEventSerializationImplTest {
     @Test
     fun `deserialize - external failure when type is null propagates failure`() {
         val sut = newSut()
-        every { externalSer.deserialize("[]") } returns Result.failure(IllegalStateException("ext fail"))
+        every { externalSer.deserialize("[]") } returns
+            Result.failure(IllegalStateException("ext fail"))
 
         val res = sut.deserialize("[]")
 
@@ -177,7 +195,7 @@ class StreamCompositeEventSerializationImplTest {
     fun `deserialize - internal failure when type is internal propagates failure`() {
         val sut = newSut(internalTypes = setOf("connection.error"))
         every { internalSer.deserialize("""{"type":"connection.error"}""") } returns
-                Result.failure(IllegalArgumentException("int fail"))
+            Result.failure(IllegalArgumentException("int fail"))
 
         val res = sut.deserialize("""{"type":"connection.error"}""")
 
@@ -190,7 +208,8 @@ class StreamCompositeEventSerializationImplTest {
     @Test
     fun `deserialize - alsoExternal branch internal failure throws, whole call fails (ext not called)`() {
         val sut = newSut(internalTypes = setOf("dual"), alsoExternal = setOf("dual"))
-        every { internalSer.deserialize("""{"type":"dual"}""") } returns Result.failure(RuntimeException("core boom"))
+        every { internalSer.deserialize("""{"type":"dual"}""") } returns
+            Result.failure(RuntimeException("core boom"))
 
         val res = sut.deserialize("""{"type":"dual"}""")
 
@@ -205,7 +224,8 @@ class StreamCompositeEventSerializationImplTest {
     fun `deserialize - alsoExternal branch external failure throws, whole call fails`() {
         val sut = newSut(internalTypes = setOf("dual"), alsoExternal = setOf("dual"))
         every { internalSer.deserialize("""{"type":"dual"}""") } returns Result.success(coreEvent)
-        every { externalSer.deserialize("""{"type":"dual"}""") } returns Result.failure(IllegalStateException("ext boom"))
+        every { externalSer.deserialize("""{"type":"dual"}""") } returns
+            Result.failure(IllegalStateException("ext boom"))
 
         val res = sut.deserialize("""{"type":"dual"}""")
 
@@ -249,7 +269,7 @@ class StreamCompositeEventSerializationImplTest {
     fun `deserialize - malformed json triggers peekType catch path and routes external`() {
         // Missing closing brace -> JsonReader throws -> peekType catches -> returns null
         val sut = newSut()
-        val malformed = """{"type":"connection.ok" """   // intentionally invalid JSON
+        val malformed = """{"type":"connection.ok" """ // intentionally invalid JSON
         every { externalSer.deserialize(malformed) } returns Result.success("OK")
 
         val res = sut.deserialize(malformed).getOrThrow()
@@ -284,5 +304,4 @@ class StreamCompositeEventSerializationImplTest {
         verify(exactly = 1) { internalSer.deserialize(json) }
         verify(exactly = 1) { externalSer.deserialize(json) }
     }
-
 }
