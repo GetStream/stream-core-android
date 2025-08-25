@@ -39,7 +39,7 @@ interface StreamClientListener {
      *
      * @param event The event received from the WebSocket.
      */
-    fun onEvent(event: StreamClientWsEvent) {}
+    fun onEvent(event: Any) {}
 
     /**
      * Called when an error occurs on the client.

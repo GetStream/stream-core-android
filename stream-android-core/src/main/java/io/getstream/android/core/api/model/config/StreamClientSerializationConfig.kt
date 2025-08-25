@@ -18,6 +18,7 @@ package io.getstream.android.core.api.model.config
 import io.getstream.android.core.annotations.StreamCoreApi
 import io.getstream.android.core.api.serialization.StreamClientEventSerialization
 import io.getstream.android.core.api.serialization.StreamJsonSerialization
+import io.getstream.android.core.api.serialization.StreamProductEventSerialization
 
 /**
  * Configuration for serialization and deserialization in the Stream client.
@@ -31,31 +32,41 @@ data class StreamClientSerializationConfig
 private constructor(
     val json: StreamJsonSerialization? = null,
     val eventParser: StreamClientEventSerialization? = null,
+    val productEventSerializers: StreamProductEventSerialization<*>,
+    val internalTypes: Set<String> = setOf("connection.ok", "connection.error", "health.check"),
+    val alsoExternal: Set<String> = emptySet(),
 ) {
     companion object {
         /**
          * Creates a default [StreamClientSerializationConfig]. Using the internal implementations.
          *
+         * @param productEvents The product event serializers.
+         * @param alsoExternal The event types to also parse as external.
          * @return A default [StreamClientSerializationConfig].
          */
-        fun defaults() = StreamClientSerializationConfig()
+        fun <T> default(productEvents: StreamProductEventSerialization<T>, alsoExternal: Set<String> = emptySet()) =
+            StreamClientSerializationConfig(productEventSerializers = productEvents, alsoExternal = alsoExternal)
 
         /**
          * Creates a [StreamClientSerializationConfig] with the given JSON serialization.
          *
          * @param serialization The JSON serialization implementation.
+         * @param productEvents The product event serializers.
+         * @param alsoExternal The event types to also parse as external.
          * @return A [StreamClientSerializationConfig] with the given JSON serialization.
          */
-        fun json(serialization: StreamJsonSerialization) =
-            StreamClientSerializationConfig(json = serialization)
+        fun <T> json(serialization: StreamJsonSerialization, productEvents: StreamProductEventSerialization<T>, alsoExternal: Set<String> = emptySet()) =
+            StreamClientSerializationConfig(json = serialization, productEventSerializers = productEvents, alsoExternal = alsoExternal)
 
         /**
          * Creates a [StreamClientSerializationConfig] with the given event parsing.
          *
          * @param serialization The event parsing implementation.
+         * @param productEvents The product event serializers.
+         * @param alsoExternal The event types to also parse as external.
          * @return A [StreamClientSerializationConfig] with the given event parsing.
          */
-        fun event(serialization: StreamClientEventSerialization) =
-            StreamClientSerializationConfig(eventParser = serialization)
+        fun <T> event(serialization: StreamClientEventSerialization, productEvents: StreamProductEventSerialization<T>, alsoExternal: Set<String> = emptySet()) =
+            StreamClientSerializationConfig(eventParser = serialization, productEventSerializers = productEvents, alsoExternal = alsoExternal)
     }
 }

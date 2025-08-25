@@ -32,6 +32,7 @@ import io.getstream.android.core.api.processing.StreamRetryProcessor
 import io.getstream.android.core.api.processing.StreamSerialProcessingQueue
 import io.getstream.android.core.api.processing.StreamSingleFlightProcessor
 import io.getstream.android.core.api.serialization.StreamClientEventSerialization
+import io.getstream.android.core.api.serialization.StreamProductEventSerialization
 import io.getstream.android.core.api.socket.StreamConnectionIdHolder
 import io.getstream.android.core.api.socket.StreamWebSocket
 import io.getstream.android.core.api.socket.StreamWebSocketFactory
@@ -40,6 +41,7 @@ import io.getstream.android.core.api.socket.monitor.StreamHealthMonitor
 import io.getstream.android.core.api.subscribe.StreamSubscription
 import io.getstream.android.core.api.subscribe.StreamSubscriptionManager
 import io.getstream.android.core.internal.client.StreamClientImpl
+import io.getstream.android.core.internal.serialization.StreamCompositeEventSerializationImpl
 import io.getstream.android.core.internal.serialization.StreamCompositeMoshiJsonSerialization
 import io.getstream.android.core.internal.serialization.StreamMoshiJsonSerializationImpl
 import io.getstream.android.core.internal.serialization.moshi.StreamCoreMoshiProvider
@@ -218,8 +220,7 @@ fun StreamClient(
     healthMonitor: StreamHealthMonitor,
     batcher: StreamBatcher<String>,
     // Serialization
-    serializationConfig: StreamClientSerializationConfig =
-        StreamClientSerializationConfig.defaults(),
+    serializationConfig: StreamClientSerializationConfig,
     // Logging
     logProvider: StreamLoggerProvider = StreamLoggerProvider.defaultAndroidLogger(),
 ): StreamClient {
@@ -256,7 +257,6 @@ fun StreamClient(
         serialQueue = serialQueue,
         connectionIdHolder = connectionIdHolder,
         logger = clientLogger,
-        retryProcessor = retryProcessor,
         mutableConnectionState = MutableStateFlow(StreamConnectionState.Idle),
         subscriptionManager = clientSubscriptionManager,
         socketSession =
@@ -271,8 +271,12 @@ fun StreamClient(
                     ),
                 jsonSerialization = compositeSerialization,
                 eventParser =
-                    serializationConfig.eventParser
-                        ?: StreamClientEventSerialization(compositeSerialization),
+                    StreamCompositeEventSerializationImpl(
+                        internal = serializationConfig.eventParser
+                            ?: StreamClientEventSerialization(compositeSerialization),
+                        external = serializationConfig.productEventSerializers,
+                    )
+                    ,
                 healthMonitor = healthMonitor,
                 batcher = batcher,
                 internalSocket = socket,

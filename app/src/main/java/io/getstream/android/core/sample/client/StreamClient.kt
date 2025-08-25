@@ -20,6 +20,7 @@ import io.getstream.android.core.api.authentication.StreamTokenManager
 import io.getstream.android.core.api.authentication.StreamTokenProvider
 import io.getstream.android.core.api.log.StreamLogger
 import io.getstream.android.core.api.log.StreamLoggerProvider
+import io.getstream.android.core.api.model.config.StreamClientSerializationConfig
 import io.getstream.android.core.api.model.value.StreamApiKey
 import io.getstream.android.core.api.model.value.StreamHttpClientInfoHeader
 import io.getstream.android.core.api.model.value.StreamUserId
@@ -28,6 +29,7 @@ import io.getstream.android.core.api.processing.StreamBatcher
 import io.getstream.android.core.api.processing.StreamRetryProcessor
 import io.getstream.android.core.api.processing.StreamSerialProcessingQueue
 import io.getstream.android.core.api.processing.StreamSingleFlightProcessor
+import io.getstream.android.core.api.serialization.StreamProductEventSerialization
 import io.getstream.android.core.api.socket.StreamConnectionIdHolder
 import io.getstream.android.core.api.socket.StreamWebSocketFactory
 import io.getstream.android.core.api.socket.listeners.StreamClientListener
@@ -103,6 +105,11 @@ fun createStreamClient(
         connectionIdHolder = connectionIdHolder,
         socketFactory = socketFactory,
         healthMonitor = healthMonitor,
+        serializationConfig = StreamClientSerializationConfig.default(object :
+            StreamProductEventSerialization<Unit> {
+            override fun serialize(data: Unit): Result<String> = Result.success("")
+            override fun deserialize(raw: String): Result<Unit> = Result.success(Unit)
+        }),
         batcher = batcher,
     )
 }
