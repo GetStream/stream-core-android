@@ -17,7 +17,6 @@ package io.getstream.android.core.api.socket.listeners
 
 import io.getstream.android.core.annotations.StreamCoreApi
 import io.getstream.android.core.api.model.connection.StreamConnectionState
-import io.getstream.android.core.api.model.event.StreamClientWsEvent
 
 /**
  * Listener interface for Feeds socket events.

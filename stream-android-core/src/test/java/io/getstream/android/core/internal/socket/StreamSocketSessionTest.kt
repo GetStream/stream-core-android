@@ -33,7 +33,8 @@ import io.getstream.android.core.api.subscribe.StreamSubscriptionManager
 import io.getstream.android.core.internal.model.events.StreamClientConnectedEvent
 import io.getstream.android.core.internal.model.events.StreamClientConnectionErrorEvent
 import io.getstream.android.core.internal.model.events.StreamHealthCheckEvent
-import io.getstream.android.core.internal.serialization.StreamClientEventSerializationImpl
+import io.getstream.android.core.internal.serialization.StreamCompositeEventSerializationImpl
+import io.getstream.android.core.internal.serialization.StreamCompositeSerializationEvent
 import io.getstream.android.core.internal.socket.model.ConnectUserData
 import io.mockk.*
 import junit.framework.Assert.assertEquals
@@ -53,12 +54,12 @@ class StreamSocketSessionTest {
     private lateinit var logger: StreamLogger
     private lateinit var socket: StreamWebSocket<StreamWebSocketListener>
     private lateinit var json: StreamJsonSerialization
-    private lateinit var parser: StreamClientEventSerializationImpl
+    private lateinit var parser: StreamCompositeEventSerializationImpl<Unit>
     private lateinit var health: StreamHealthMonitor
     private lateinit var debounce: StreamBatcher<String>
     private lateinit var subs: StreamSubscriptionManager<StreamClientListener>
 
-    private lateinit var session: StreamSocketSession
+    private lateinit var session: StreamSocketSession<Unit>
 
     private val config =
         StreamSocketConfig.jwt(
@@ -102,7 +103,7 @@ class StreamSocketSessionTest {
                 healthMonitor = health,
                 batcher = debounce,
                 subscriptionManager = subs,
-                listOf("feeds"),
+                products = listOf("feeds"),
             )
     }
 
@@ -152,7 +153,6 @@ class StreamSocketSessionTest {
     @Test
     fun `disconnect() remains idempotent - state notified once, close can be called twice`() =
         runTest {
-            // Count state notifications
             val l = mockk<StreamClientListener>(relaxed = true)
             every { subs.forEach(any()) } answers
                 {
@@ -161,39 +161,32 @@ class StreamSocketSessionTest {
                     Result.success(Unit)
                 }
 
-            session.disconnect() // first call
-            session.disconnect() // second call
+            session.disconnect()
+            session.disconnect()
 
-            // onState called only once due to closingByUs guard
             verify(exactly = 1) { l.onState(ofType(StreamConnectionState.Disconnected::class)) }
-            // but socket.close still invoked on both calls
             verify(exactly = 2) { socket.close() }
-            // cleanup is safe across both calls
             verify(atLeast = 1) { debounce.stop() }
             verify(atLeast = 1) { health.stop() }
         }
 
     @Test
     fun `when notifyState fails, disconnect still closes socket and logs error`() = runTest {
-        // Simulate failure of subscription manager; do NOT invoke block
         val notifyFailure = RuntimeException("forEach failed")
         every { subs.forEach(any()) } returns Result.failure(notifyFailure)
 
         val res = session.disconnect()
 
         assertTrue(res.isSuccess)
-        // Still closed & cleaned up
         verify { socket.close() }
         verify { debounce.stop() }
         verify { health.stop() }
-        // Error was logged from notifyState onFailure
         verify { logger.e(notifyFailure, any()) }
     }
 
     @Test
     fun `onClosed(1000) emits Disconnected_Manual and performs cleanup when not closingByUs`() =
         runTest {
-            // Arrange a listener that will receive notifyState() callbacks
             val clientListener = mockk<StreamClientListener>(relaxed = true)
             every { subs.forEach(any()) } answers
                 {
@@ -202,17 +195,14 @@ class StreamSocketSessionTest {
                     Result.success(Unit)
                 }
 
-            // Grab the internal lifecycle listener via reflection so we can call onClosed directly
             val f =
                 StreamSocketSession::class.java.getDeclaredField("eventListener").apply {
                     isAccessible = true
                 }
             val lifecycleListener = f.get(session) as StreamWebSocketListener
 
-            // Act: simulate the socket closing normally (code 1000)
             lifecycleListener.onClosed(1000, "Normal Closure")
 
-            // Assert: state -> Disconnected.Manual, and cleanup called
             verify { clientListener.onState(StreamConnectionState.Disconnected()) }
             verify { health.stop() }
             verify { debounce.stop() }
@@ -220,7 +210,6 @@ class StreamSocketSessionTest {
 
     @Test
     fun `onClosed(1000) emits Disconnected_Manual and performs cleanup`() = runTest {
-        // Route notifyState() to a real listener we can assert against
         val client = mockk<StreamClientListener>(relaxed = true)
         every { subs.forEach(any()) } answers
             {
@@ -229,7 +218,6 @@ class StreamSocketSessionTest {
                 Result.success(Unit)
             }
 
-        // Grab the internal lifecycle listener and simulate a normal close (1000)
         val f =
             StreamSocketSession::class.java.getDeclaredField("eventListener").apply {
                 isAccessible = true
@@ -238,7 +226,6 @@ class StreamSocketSessionTest {
 
         lifecycleListener.onClosed(1000, "Normal Closure")
 
-        // Then: Manual disconnect is emitted and cleanup executed
         verify { client.onState(StreamConnectionState.Disconnected()) }
         verify { health.stop() }
         verify { debounce.stop() }
@@ -246,7 +233,6 @@ class StreamSocketSessionTest {
 
     @Test
     fun `onMessage - when offer returns false, disconnects with Error and cleans up`() = runTest {
-        // Route notifyState() into a concrete listener so we can assert emissions.
         val client = mockk<StreamClientListener>(relaxed = true)
         every { subs.forEach(any()) } answers
             {
@@ -254,11 +240,9 @@ class StreamSocketSessionTest {
                 Result.success(Unit)
             }
 
-        // Make the debounce reject the message so the session calls disconnect(error)
         every { debounce.offer(any()) } returns false
         every { socket.close() } returns Result.success(Unit)
 
-        // Grab the internal lifecycle listener and fire onMessage
         val f =
             StreamSocketSession::class.java.getDeclaredField("eventListener").apply {
                 isAccessible = true
@@ -267,7 +251,6 @@ class StreamSocketSessionTest {
 
         lifecycleListener.onMessage("""{"ignored":"payload"}""")
 
-        // Heartbeat acknowledged, then we disconnect with an Error state and clean up
         verify { health.acknowledgeHeartbeat() }
         verify { client.onState(match { it is StreamConnectionState.Disconnected }) }
         verify { health.stop() }
@@ -277,7 +260,6 @@ class StreamSocketSessionTest {
 
     @Test
     fun `lifecycle onMessage - accepted by debounce acknowledges heartbeat and does not disconnect`() {
-        // route state calls to a concrete listener (we'll assert none happen)
         val client = mockk<StreamClientListener>(relaxed = true)
         every { subs.forEach(any()) } answers
             {
@@ -379,7 +361,6 @@ class StreamSocketSessionTest {
                 Result.success(Unit)
             }
 
-        // Force the flag so branch is exercised
         val flag =
             StreamSocketSession::class.java.getDeclaredField("closingByUs").apply {
                 isAccessible = true
@@ -499,7 +480,6 @@ class StreamSocketSessionTest {
             }
         every { socket.open(config) } answers
             {
-                // Trigger onOpen with a bad code AFTER subscribe has happened.
                 val badResp =
                     Response.Builder()
                         .request(Request.Builder().url("https://x").build())
@@ -515,7 +495,7 @@ class StreamSocketSessionTest {
 
         assertTrue(result.isFailure)
         verify(exactly = 1) { socket.open(config) }
-        verify(exactly = 0) { parser.serialize(any()) }
+        verify(exactly = 0) { parser.serialize(any<StreamCompositeSerializationEvent<Unit>>()) }
         verify(exactly = 0) { socket.send(any<String>()) }
         verify(exactly = 0) { health.start() }
         verify(atLeast = 1) { subs.forEach(any()) } // Opening + Disconnected.Error
@@ -544,16 +524,17 @@ class StreamSocketSessionTest {
                         .code(101)
                         .message("OK")
                         .build()
-                hsListener!!.onOpen(okResp) // triggers auth flow inside session
+                hsListener!!.onOpen(okResp)
                 Result.success(Unit)
             }
-        every { parser.serialize(any()) } returns Result.failure(IllegalStateException("ser fail"))
+        every { parser.serialize(any<StreamCompositeSerializationEvent<Unit>>()) } returns
+            Result.failure(IllegalStateException("ser fail"))
 
         val result = session.connect(connectUserData())
 
         assertTrue(result.isFailure)
         verify(exactly = 1) { socket.open(config) }
-        verify(exactly = 1) { parser.serialize(any()) }
+        verify(exactly = 1) { parser.serialize(any<StreamCompositeSerializationEvent<Unit>>()) }
         verify(exactly = 0) { socket.send(any<String>()) }
         verify(exactly = 0) { health.start() }
         verify(atLeast = 1) { subs.forEach(any()) } // Opening + Authenticating + Disconnected.Error
@@ -562,40 +543,31 @@ class StreamSocketSessionTest {
     @Test
     fun `connect fails when lifecycle subscribe fails - no handshake subscribe, no open`() =
         runTest {
-            // Both subscribe overloads route to the 2-arg form; stub that to FAIL on the first
-            // (lifecycle) call.
             every { socket.subscribe(any<StreamWebSocketListener>(), any()) } returns
                 Result.failure(RuntimeException("lifecycle sub failed"))
 
             val result = session.connect(connectUserData())
 
             assertTrue(result.isFailure)
-
-            // Only one subscribe attempt (the lifecycle one), then we bail out.
             verify(exactly = 1) { socket.subscribe(any<StreamWebSocketListener>(), any()) }
             verify(exactly = 0) { socket.open(any()) }
             verify(exactly = 0) { socket.send(any<String>()) }
             verify(exactly = 0) { health.start() }
-
-            // Opening + Disconnected.Error are emitted, but we don't assert exact count
             verify(atLeast = 1) { subs.forEach(any()) }
         }
 
     @Test
     fun `connect fails when open fails - no health start, no auth send`() = runTest {
-        // Both subscriptions succeed
         every { socket.subscribe(any<StreamWebSocketListener>(), any()) } returnsMany
             listOf(
                 Result.success(mockk(relaxed = true)), // lifecycle
                 Result.success(mockk(relaxed = true)), // handshake
             )
-        // Open fails
         every { socket.open(config) } returns Result.failure(RuntimeException("open failed"))
 
         val result = session.connect(connectUserData())
 
         assertTrue(result.isFailure)
-
         verify(exactly = 2) { socket.subscribe(any<StreamWebSocketListener>(), any()) }
         verify(exactly = 1) { socket.open(config) }
         verify(exactly = 0) { socket.send(any<String>()) }
@@ -615,16 +587,13 @@ class StreamSocketSessionTest {
 
             val job = async { session.connect(connectUserData()) }
 
-            // Make sure connect() progressed far enough to set up subs & the cancel hook
             advanceUntilIdle()
             verify { socket.subscribe(any<StreamWebSocketListener>()) }
             verify { socket.subscribe(any<StreamWebSocketListener>(), any()) }
 
-            // Cancel and wait for the cancellation handler to run
             job.cancelAndJoin()
             advanceUntilIdle()
 
-            // Cleanup side-effects
             verify(atLeast = 2) { sub.cancel() }
             verify { socket.close() }
             verify { health.stop() }
@@ -633,12 +602,10 @@ class StreamSocketSessionTest {
 
     @Test
     fun `onHeartbeat sends serialized health-check when already connected`() = runTest {
-        // Arrange: capture the heartbeat callback via answers (no slots)
         var heartbeatCb: (suspend () -> Unit)? = null
         every { health.onHeartbeat(any()) } answers { heartbeatCb = arg(0) }
         every { health.onUnhealthy(any()) } just Runs
 
-        // Wire simple happy-path socket behavior so connect() can run until it suspends
         every { socket.subscribe(any<StreamWebSocketListener>()) } returns
             Result.success(mockk(relaxed = true))
         every { socket.subscribe(any<StreamWebSocketListener>(), any()) } returns
@@ -646,7 +613,6 @@ class StreamSocketSessionTest {
         every { socket.open(config) } returns Result.success(Unit)
         every { socket.close() } returns Result.success(Unit)
 
-        // Kick off connect but don't complete the handshake (it will suspend)
         val job = async {
             session.connect(
                 ConnectUserData(
@@ -660,11 +626,9 @@ class StreamSocketSessionTest {
                 )
             )
         }
-        // Let the coroutine run enough to register the heartbeat callback
         advanceUntilIdle()
         val cb = requireNotNull(heartbeatCb) { "Heartbeat callback not registered" }
 
-        // Pretend we're already connected: set the connected event the heartbeat uses
         val connectedEvt = mockk<StreamClientConnectedEvent>(relaxed = true)
         every { connectedEvt.copy() } returns connectedEvt
         session.javaClass.getDeclaredField("streamClientConnectedEvent").apply {
@@ -672,30 +636,32 @@ class StreamSocketSessionTest {
             set(session, connectedEvt)
         }
 
-        // Expect serialize + send on heartbeat
-        every { parser.serialize(connectedEvt) } returns Result.success("HEALTH_JSON")
+        every {
+            parser.serialize(
+                match<StreamCompositeSerializationEvent<Unit>> { it.core === connectedEvt }
+            )
+        } returns Result.success("HEALTH_JSON")
         every { socket.send("HEALTH_JSON") } returns Result.success("Unit")
 
-        // Act: trigger the heartbeat
         cb.invoke()
 
-        // Assert
-        verify(exactly = 1) { parser.serialize(connectedEvt) }
+        verify(exactly = 1) {
+            parser.serialize(
+                match<StreamCompositeSerializationEvent<Unit>> { it.core === connectedEvt }
+            )
+        }
         verify(exactly = 1) { socket.send("HEALTH_JSON") }
 
-        // Cleanup the suspended connect
         job.cancelAndJoin()
     }
 
     @Test
     fun `onHeartbeat does nothing when connected event is null (no serialize, no send)`() =
         runTest {
-            // Capture heartbeat callback via answers (no slots)
             var heartbeatCb: (suspend () -> Unit)? = null
             every { health.onHeartbeat(any()) } answers { heartbeatCb = arg(0) }
             every { health.onUnhealthy(any()) } just Runs
 
-            // Let connect() run to the point where callbacks are registered
             every { socket.subscribe(any<StreamWebSocketListener>()) } returns
                 Result.success(mockk(relaxed = true))
             every { socket.subscribe(any<StreamWebSocketListener>(), any()) } returns
@@ -718,29 +684,23 @@ class StreamSocketSessionTest {
             }
             advanceUntilIdle()
 
-            // Sanity: heartbeat registered
             val cb = requireNotNull(heartbeatCb) { "Heartbeat callback not registered" }
 
-            // Act: trigger heartbeat with streamClientConnectedEvent still null
             cb.invoke()
 
-            // Assert: no health serialize or send occurred
-            verify(exactly = 0) { parser.serialize(any()) }
+            verify(exactly = 0) { parser.serialize(any<StreamCompositeSerializationEvent<Unit>>()) }
             verify(exactly = 0) { socket.send(any<String>()) }
 
-            // Cleanup
             job.cancelAndJoin()
         }
 
     @Test
     fun `onUnhealthy triggers disconnect - notifies error, closes socket, cancels subs, stops processors`() =
         runTest {
-            // Capture unhealthy callback via answers (no slots)
             var unhealthyCb: (suspend () -> Unit)? = null
             every { health.onHeartbeat(any()) } just Runs
             every { health.onUnhealthy(any()) } answers { unhealthyCb = arg(0) }
 
-            // Collect emitted states from notifyState
             val emittedStates = mutableListOf<StreamConnectionState>()
             every { subs.forEach(any()) } answers
                 {
@@ -751,7 +711,7 @@ class StreamSocketSessionTest {
                                 emittedStates += state
                             }
 
-                            override fun onEvent(event: StreamClientWsEvent) {}
+                            override fun onEvent(event: Any) {}
                         }
                     consumer(listener)
                     Result.success(Unit)
@@ -763,7 +723,6 @@ class StreamSocketSessionTest {
             every { socket.open(config) } returns Result.success(Unit)
             every { socket.close() } returns Result.success(Unit)
 
-            // Start connect to register unhealthy callback & create subscriptions
             val job = async {
                 session.connect(
                     ConnectUserData(
@@ -780,32 +739,25 @@ class StreamSocketSessionTest {
             advanceUntilIdle()
             val cb = requireNotNull(unhealthyCb) { "Unhealthy callback not registered" }
 
-            // Act: trigger onUnhealthy
             cb.invoke()
 
-            // Assert: disconnect path executed
             verify(exactly = 1) { socket.close() }
-            // All subscriptions are mocked into the hsSub
             verify(exactly = 2) { hsSub.cancel() }
             verify(exactly = 1) { health.stop() }
             verify(exactly = 1) { debounce.stop() }
-
             assertTrue(emittedStates.any { it is StreamConnectionState.Disconnected })
 
-            // Cleanup suspended connect
             job.cancelAndJoin()
         }
 
     @Test
     fun `onBatch forwards non-health events, ignores health, and emits Disconnected_Error on connection error`() =
         runTest {
-            // Capture onBatch callback (no slots)
             var onBatchCb: (suspend (List<String>, Long, Int) -> Unit)? = null
             every { debounce.onBatch(any()) } answers { onBatchCb = arg(0) }
             every { health.onHeartbeat(any()) } just Runs
             every { health.onUnhealthy(any()) } just Runs
 
-            // Collect events & states emitted via subscription manager
             val seenEvents = mutableListOf<Any>()
             val seenStates = mutableListOf<StreamConnectionState>()
             every { subs.forEach(any()) } answers
@@ -817,7 +769,7 @@ class StreamSocketSessionTest {
                                 seenStates += state
                             }
 
-                            override fun onEvent(event: StreamClientWsEvent) {
+                            override fun onEvent(event: Any) {
                                 seenEvents += event
                             }
                         }
@@ -825,7 +777,6 @@ class StreamSocketSessionTest {
                     Result.success(Unit)
                 }
 
-            // WebSocket plumbing to let connect() register callbacks
             every { socket.subscribe(any<StreamWebSocketListener>()) } returns
                 Result.success(mockk(relaxed = true))
             every { socket.subscribe(any<StreamWebSocketListener>(), any()) } returns
@@ -833,18 +784,19 @@ class StreamSocketSessionTest {
             every { socket.open(config) } returns Result.success(Unit)
             every { socket.close() } returns Result.success(Unit)
 
-            // Events returned by parser for each message in the batch
             val normalEvent = mockk<StreamClientWsEvent>(relaxed = true)
             val healthEvent = mockk<StreamHealthCheckEvent>(relaxed = true)
             val errorEvent =
                 mockk<StreamClientConnectionErrorEvent>(relaxed = true).also {
                     every { it.error } returns mockk(relaxed = true)
                 }
-            every { parser.deserialize("E1") } returns Result.success(normalEvent)
-            every { parser.deserialize("H") } returns Result.success(healthEvent)
-            every { parser.deserialize("ERR") } returns Result.success(errorEvent)
+            every { parser.deserialize("E1") } returns
+                Result.success(StreamCompositeSerializationEvent.internal(normalEvent))
+            every { parser.deserialize("H") } returns
+                Result.success(StreamCompositeSerializationEvent.internal(healthEvent))
+            every { parser.deserialize("ERR") } returns
+                Result.success(StreamCompositeSerializationEvent.internal(errorEvent))
 
-            // Start connect so that onBatch is set
             val job = async {
                 session.connect(
                     ConnectUserData(
@@ -861,33 +813,25 @@ class StreamSocketSessionTest {
             advanceUntilIdle()
 
             val cb = requireNotNull(onBatchCb) { "onBatch not registered" }
-
-            // Act: deliver a batch with a normal event, a health check, and a connection error
             cb.invoke(listOf("E1", "H", "ERR"), 100L, 3)
             advanceUntilIdle()
 
-            // Assert: only non-health events forwarded to listeners
             assertEquals(2, seenEvents.size)
             assertTrue(seenEvents.contains(normalEvent))
             assertTrue(seenEvents.contains(errorEvent))
-
-            // And a Disconnected.Error is emitted due to the connection error event
             assertTrue(seenStates.any { it is StreamConnectionState.Disconnected })
 
-            // Cleanup suspended connect
             job.cancelAndJoin()
         }
 
     @Test
     fun `onBatch - deserialize fails then fallback parses api error and emits Disconnected_Error`() =
         runTest {
-            // Capture the installed onBatch callback
             var onBatchCb: (suspend (List<String>, Long, Int) -> Unit)? = null
             every { debounce.onBatch(any()) } answers { onBatchCb = arg(0) }
             every { health.onHeartbeat(any()) } just Runs
             every { health.onUnhealthy(any()) } just Runs
 
-            // Collect what the session emits to listeners
             val seenStates = mutableListOf<StreamConnectionState>()
             val seenEvents = mutableListOf<Any>()
             every { subs.forEach(any()) } answers
@@ -899,7 +843,7 @@ class StreamSocketSessionTest {
                                 seenStates += state
                             }
 
-                            override fun onEvent(event: StreamClientWsEvent) {
+                            override fun onEvent(event: Any) {
                                 seenEvents += event
                             }
                         }
@@ -907,7 +851,6 @@ class StreamSocketSessionTest {
                     Result.success(Unit)
                 }
 
-            // Let connect() run far enough to register callbacks
             every { socket.subscribe(any<StreamWebSocketListener>()) } returns
                 Result.success(mockk(relaxed = true))
             every { socket.subscribe(any<StreamWebSocketListener>(), any()) } returns
@@ -915,14 +858,12 @@ class StreamSocketSessionTest {
             every { socket.open(config) } returns Result.success(Unit)
             every { socket.close() } returns Result.success(Unit)
 
-            // Parser fails -> fallback JSON parse as API error succeeds
             val apiError = mockk<StreamEndpointErrorData>(relaxed = true)
             every { parser.deserialize("BAD_JSON") } returns
                 Result.failure(IllegalStateException("boom"))
             every { json.fromJson("BAD_JSON", StreamEndpointErrorData::class.java) } returns
                 Result.success(apiError)
 
-            // Start connect to install the onBatch handler
             val job = async {
                 session.connect(
                     ConnectUserData(
@@ -938,17 +879,12 @@ class StreamSocketSessionTest {
             }
             advanceUntilIdle()
 
-            // Invoke onBatch with a single failing payload
             val cb = requireNotNull(onBatchCb) { "onBatch not registered" }
             cb.invoke(listOf("BAD_JSON"), 100L, 1)
             advanceUntilIdle()
 
-            // Assert: no events forwarded, but a Disconnected.Error was emitted from API error
-            // fallback
             assertTrue(seenEvents.isEmpty())
             assertTrue(seenStates.any { it is StreamConnectionState.Disconnected })
-
-            // And we did try to parse the payload as an API error
             verify { json.fromJson("BAD_JSON", StreamEndpointErrorData::class.java) }
 
             job.cancelAndJoin()
@@ -957,7 +893,6 @@ class StreamSocketSessionTest {
     @Test
     fun `handshake onMessage Connected triggers success - starts health, emits Connected, cancels handshake sub`() =
         runTest {
-            // Record states/events emitted to listeners
             val seenStates = mutableListOf<StreamConnectionState>()
             every { subs.forEach(any()) } answers
                 {
@@ -968,23 +903,20 @@ class StreamSocketSessionTest {
                                 seenStates += state
                             }
 
-                            override fun onEvent(event: StreamClientWsEvent) {
-                                /* not needed here */
+                            override fun onEvent(event: Any) {
+                                /* not needed */
                             }
                         }
                     consumer(listener)
                     Result.success(Unit)
                 }
 
-            // Mocks for subscriptions
             val lifeSub = mockk<StreamSubscription>(relaxed = true)
             val hsSub = mockk<StreamSubscription>(relaxed = true)
 
-            // 1) Lifecycle subscribe succeeds
             every { socket.subscribe(any<StreamWebSocketListener>()) } returns
                 Result.success(lifeSub)
 
-            // 2) Handshake subscribe stores the listener so we can trigger onMessage later
             var hsListener: StreamWebSocketListener? = null
             every { socket.subscribe(any<StreamWebSocketListener>(), any()) } answers
                 {
@@ -992,25 +924,21 @@ class StreamSocketSessionTest {
                     Result.success(hsSub)
                 }
 
-            // 3) Open calls back into the handshake listener with a "connected" message
             every { socket.open(config) } answers
                 {
-                    // Simulate server sending a Connected event AFTER handshakeSub is set
                     val connectedEvent =
                         mockk<StreamClientConnectedEvent>(relaxed = true).also {
                             every { it.connectionId } returns "conn-xyz"
                         }
                     every { parser.deserialize("CONNECTED_JSON") } returns
-                        Result.success(connectedEvent)
+                        Result.success(StreamCompositeSerializationEvent.internal(connectedEvent))
                     hsListener!!.onMessage("CONNECTED_JSON")
                     Result.success(Unit)
                 }
 
-            // Misc socket ops not used here
             every { socket.close() } returns Result.success(Unit)
             every { socket.send(any<String>()) } returns Result.success("Unit")
 
-            // Act
             val res =
                 async {
                         session.connect(
@@ -1027,26 +955,16 @@ class StreamSocketSessionTest {
                     }
                     .await()
 
-            // Assert: connect() succeeded
             assertTrue(res.isSuccess)
-
-            // Health started upon success
             verify { health.start() }
-
-            // Handshake subscription cancelled by success lambda
             verify { hsSub.cancel() }
-
-            // A Connected state was emitted
             assertTrue(seenStates.any { it is StreamConnectionState.Connected })
-
-            // And open() was called
             verify { socket.open(config) }
         }
 
     @Test
     fun `handshake onMessage ConnectionError triggers apiFailure - emits Disconnected_Error, cancels only handshake sub`() =
         runTest {
-            // Capture emitted states
             val seenStates = mutableListOf<StreamConnectionState>()
             every { subs.forEach(any()) } answers
                 {
@@ -1057,13 +975,12 @@ class StreamSocketSessionTest {
                                 seenStates += state
                             }
 
-                            override fun onEvent(event: StreamClientWsEvent) {}
+                            override fun onEvent(event: Any) {}
                         }
                     consumer(listener)
                     Result.success(Unit)
                 }
 
-            // Subscriptions
             val lifeSub = mockk<StreamSubscription>(relaxed = true)
             val hsSub = mockk<StreamSubscription>(relaxed = true)
             every { socket.subscribe(any<StreamWebSocketListener>()) } returns
@@ -1076,10 +993,10 @@ class StreamSocketSessionTest {
                     Result.success(hsSub)
                 }
 
-            // Open -> immediately deliver a ConnectionError event via the handshake listener
             val errEvent = mockk<StreamClientConnectionErrorEvent>(relaxed = true)
             every { errEvent.error } returns mockk(relaxed = true)
-            every { parser.deserialize("ERR_JSON") } returns Result.success(errEvent)
+            every { parser.deserialize("ERR_JSON") } returns
+                Result.success(StreamCompositeSerializationEvent.internal(errEvent))
 
             every { socket.open(config) } answers
                 {
@@ -1087,11 +1004,9 @@ class StreamSocketSessionTest {
                     Result.success(Unit)
                 }
 
-            // Not used here but keep stubs relaxed
             every { socket.close() } returns Result.success(Unit)
             every { socket.send(any<String>()) } returns Result.success("Unit")
 
-            // Act
             val result =
                 async {
                         session.connect(
@@ -1108,27 +1023,17 @@ class StreamSocketSessionTest {
                     }
                     .await()
 
-            // Assert: connect() failed
             assertTrue(result.isFailure)
-
-            // apiFailure cancels only the handshake subscription
             verify { hsSub.cancel() }
             verify(exactly = 0) { lifeSub.cancel() }
-
-            // Health must NOT start on failure
             verify(exactly = 0) { health.start() }
-
-            // States: Opening then Disconnected.Error at least once
             assertTrue(seenStates.first() is StreamConnectionState.Connecting.Opening)
             assertTrue(seenStates.any { it is StreamConnectionState.Disconnected })
-
-            // open() was called (handshake path reached)
             verify { socket.open(config) }
         }
 
     @Test
     fun `connect fails when handshake subscribe fails - cancels lifecycle, no open`() = runTest {
-        // Capture state emissions
         val states = mutableListOf<StreamConnectionState>()
         every { subs.forEach(any()) } answers
             {
@@ -1139,18 +1044,16 @@ class StreamSocketSessionTest {
                             states += state
                         }
 
-                        override fun onEvent(event: StreamClientWsEvent) {}
+                        override fun onEvent(event: Any) {}
                     }
                 consumer(listener)
                 Result.success(Unit)
             }
 
-        // Handshake subscribe fails -> should enter hsRes.isFailure branch
         val boom = RuntimeException("hs-subscribe failed")
         every { socket.subscribe(any<StreamWebSocketListener>(), any()) } returns
             Result.failure(boom)
 
-        // Ensure open is NOT called in this branch
         every { socket.open(any()) } answers
             {
                 throw IllegalStateException(
@@ -1174,17 +1077,10 @@ class StreamSocketSessionTest {
                 }
                 .await()
 
-        // Surfaces failure
         assertTrue(result.isFailure)
-
-        // Handshake subscribe was attempted once and failed
         verify { socket.subscribe(any<StreamWebSocketListener>(), any()) }
-        // Must NOT attempt to open the socket after handshake subscribe failure
         verify(exactly = 0) { socket.open(any()) }
-        // Health must not start
         verify(exactly = 0) { health.start() }
-
-        // States include Opening then Disconnected.Error
         assertTrue(states.first() is StreamConnectionState.Connecting.Opening)
         assertTrue(states.any { it is StreamConnectionState.Disconnected })
     }
@@ -1203,32 +1099,38 @@ class StreamSocketSessionTest {
                                 states += state
                             }
 
-                            override fun onEvent(event: StreamClientWsEvent) {}
+                            override fun onEvent(event: Any) {}
                         }
                     consumer(listener)
                     Result.success(Unit)
                 }
 
+            // Handshake subscription captured so we can deliver a message to it
             val hsSub = mockk<StreamSubscription>(relaxed = true)
-
             var hsListener: StreamWebSocketListener? = null
+
+            // Lifecycle subscribe succeeds
+            every { socket.subscribe(any<StreamWebSocketListener>()) } returns
+                Result.success(mockk(relaxed = true))
+
+            // Handshake subscribe captures listener
             every { socket.subscribe(any<StreamWebSocketListener>(), any()) } answers
                 {
                     hsListener = firstArg()
                     Result.success(hsSub)
                 }
 
-            // When open() is called, simulate a bad handshake payload that fails to deserialize.
+            // Parser fails to deserialize the handshake payload
             every { parser.deserialize("BAD_JSON") } returns
                 Result.failure(RuntimeException("parse fail"))
+
+            // When open is called, simulate server sending the bad handshake payload
             every { socket.open(config) } answers
                 {
-                    // simulate handshake message arriving after open
                     hsListener!!.onMessage("BAD_JSON")
                     Result.success(Unit)
                 }
 
-            // Not used but keep relaxed
             every { socket.close() } returns Result.success(Unit)
 
             val result =
@@ -1247,20 +1149,20 @@ class StreamSocketSessionTest {
                     }
                     .await()
 
-            // connect() fails due to deserialize error -> recover { failure(it) }
+            // connect() fails due to deserialize error
             assertTrue(result.isFailure)
 
-            // failure() cancels both subs here
+            // handshake sub is cancelled on failure
             verify { hsSub.cancel() }
 
             // Health must NOT start on failure
             verify(exactly = 0) { health.start() }
 
-            // States include Opening and Disconnected.Error
+            // States include Opening and Disconnected
             assertTrue(states.first() is StreamConnectionState.Connecting.Opening)
             assertTrue(states.any { it is StreamConnectionState.Disconnected })
 
-            // Open was invoked as part of the normal handshake path
+            // Open was invoked as part of the handshake path
             verify { socket.open(config) }
         }
 
@@ -1278,14 +1180,11 @@ class StreamSocketSessionTest {
                 Result.success(hsSub)
             }
 
-        // Serialize succeeds -> should call send with this payload
-        every { parser.serialize(any()) } returns Result.success("AUTH_PAYLOAD")
+        every { parser.serialize(any<StreamCompositeSerializationEvent<Unit>>()) } returns
+            Result.success("AUTH_PAYLOAD")
         every { socket.send("AUTH_PAYLOAD") } returns Result.success("Unit")
-
-        // Avoid leaks when we cancel at the end
         every { socket.close() } returns Result.success(Unit)
 
-        // When open is called, trigger handshake onOpen(101)
         every { socket.open(config) } answers
             {
                 val resp =
@@ -1301,14 +1200,11 @@ class StreamSocketSessionTest {
 
         val job = async { session.connect(connectUserData()) }
 
-        // Let the onOpen handler run
         advanceUntilIdle()
 
-        // Verify we sent the serialized auth payload
-        verify(exactly = 1) { parser.serialize(any()) }
+        verify(exactly = 1) { parser.serialize(any<StreamCompositeSerializationEvent<Unit>>()) }
         verify(exactly = 1) { socket.send("AUTH_PAYLOAD") }
 
-        // Clean up the still-pending connect
         job.cancel()
     }
 

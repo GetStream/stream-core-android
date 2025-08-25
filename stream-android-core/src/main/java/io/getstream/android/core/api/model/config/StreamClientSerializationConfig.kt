@@ -44,8 +44,14 @@ private constructor(
          * @param alsoExternal The event types to also parse as external.
          * @return A default [StreamClientSerializationConfig].
          */
-        fun <T> default(productEvents: StreamProductEventSerialization<T>, alsoExternal: Set<String> = emptySet()) =
-            StreamClientSerializationConfig(productEventSerializers = productEvents, alsoExternal = alsoExternal)
+        fun <T> default(
+            productEvents: StreamProductEventSerialization<T>,
+            alsoExternal: Set<String> = emptySet(),
+        ) =
+            StreamClientSerializationConfig(
+                productEventSerializers = productEvents,
+                alsoExternal = alsoExternal,
+            )
 
         /**
          * Creates a [StreamClientSerializationConfig] with the given JSON serialization.
@@ -55,8 +61,16 @@ private constructor(
          * @param alsoExternal The event types to also parse as external.
          * @return A [StreamClientSerializationConfig] with the given JSON serialization.
          */
-        fun <T> json(serialization: StreamJsonSerialization, productEvents: StreamProductEventSerialization<T>, alsoExternal: Set<String> = emptySet()) =
-            StreamClientSerializationConfig(json = serialization, productEventSerializers = productEvents, alsoExternal = alsoExternal)
+        fun <T> json(
+            serialization: StreamJsonSerialization,
+            productEvents: StreamProductEventSerialization<T>,
+            alsoExternal: Set<String> = emptySet(),
+        ) =
+            StreamClientSerializationConfig(
+                json = serialization,
+                productEventSerializers = productEvents,
+                alsoExternal = alsoExternal,
+            )
 
         /**
          * Creates a [StreamClientSerializationConfig] with the given event parsing.
@@ -66,7 +80,15 @@ private constructor(
          * @param alsoExternal The event types to also parse as external.
          * @return A [StreamClientSerializationConfig] with the given event parsing.
          */
-        fun <T> event(serialization: StreamClientEventSerialization, productEvents: StreamProductEventSerialization<T>, alsoExternal: Set<String> = emptySet()) =
-            StreamClientSerializationConfig(eventParser = serialization, productEventSerializers = productEvents, alsoExternal = alsoExternal)
+        fun <T> event(
+            serialization: StreamClientEventSerialization,
+            productEvents: StreamProductEventSerialization<T>,
+            alsoExternal: Set<String> = emptySet(),
+        ) =
+            StreamClientSerializationConfig(
+                eventParser = serialization,
+                productEventSerializers = productEvents,
+                alsoExternal = alsoExternal,
+            )
     }
 }

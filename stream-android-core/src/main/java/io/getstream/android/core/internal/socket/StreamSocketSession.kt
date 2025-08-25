@@ -198,12 +198,13 @@ internal class StreamSocketSession<T>(
                     eventParser
                         .deserialize(message)
                         .onSuccess { event ->
-
                             logger.v { "[onBatch] Deserialized event: $event" }
                             val coreEvent = event.core
                             val productEvent = event.product
 
-                            if (coreEvent != null && coreEvent is StreamClientConnectionErrorEvent) {
+                            if (
+                                coreEvent != null && coreEvent is StreamClientConnectionErrorEvent
+                            ) {
                                 notifyState(
                                     StreamConnectionState.Disconnected(
                                         StreamEndpointException("Connection error", coreEvent.error)
@@ -324,9 +325,7 @@ internal class StreamSocketSession<T>(
                         logger.d { "[onMessage] Socket message (string): $text" }
                         eventParser
                             .deserialize(text)
-                            .map {
-                                it.core
-                            }
+                            .map { it.core }
                             .map { authResponse ->
                                 when (authResponse) {
                                     is StreamClientConnectedEvent -> {

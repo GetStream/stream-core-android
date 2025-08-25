@@ -1,3 +1,18 @@
+/*
+ * Copyright (c) 2014-2025 Stream.io Inc. All rights reserved.
+ *
+ * Licensed under the Stream License;
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    https://github.com/GetStream/stream-core-android/blob/main/LICENSE
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package io.getstream.android.core.internal.serialization
 
 import com.squareup.moshi.JsonReader
@@ -8,14 +23,13 @@ import io.getstream.android.core.api.utils.runCatchingCancellable
 import okio.Buffer
 
 /**
- * Represents a composite event that can be either a [StreamClientWsEvent] or a product-specific event.
+ * Represents a composite event that can be either a [StreamClientWsEvent] or a product-specific
+ * event.
  *
  * @param T The type of the product-specific event.
  */
-internal class StreamCompositeSerializationEvent<T> private constructor(
-    val core: StreamClientWsEvent? = null,
-    val product: T? = null,
-) {
+internal class StreamCompositeSerializationEvent<T>
+private constructor(val core: StreamClientWsEvent? = null, val product: T? = null) {
     companion object {
         /**
          * Creates a new [StreamCompositeSerializationEvent] with the given [event].
@@ -23,7 +37,8 @@ internal class StreamCompositeSerializationEvent<T> private constructor(
          * @param event The event to wrap.
          * @return A new [StreamCompositeSerializationEvent] with the given [event].
          */
-        fun <T> internal(event: StreamClientWsEvent) = StreamCompositeSerializationEvent<T>(core = event)
+        fun <T> internal(event: StreamClientWsEvent) =
+            StreamCompositeSerializationEvent<T>(core = event)
 
         /**
          * Creates a new [StreamCompositeSerializationEvent] with the given [event].
@@ -52,7 +67,8 @@ internal class StreamCompositeSerializationEvent<T> private constructor(
 internal class StreamCompositeEventSerializationImpl<T>(
     private val internal: StreamClientEventSerialization,
     private val external: StreamProductEventSerialization<T>,
-    private val internalTypes: Set<String> = setOf("connection.ok", "connection.error", "health.check"),
+    private val internalTypes: Set<String> =
+        setOf("connection.ok", "connection.error", "health.check"),
     private val alsoExternal: Set<String> = emptySet(),
 ) {
     /**
@@ -63,8 +79,12 @@ internal class StreamCompositeEventSerializationImpl<T>(
      *   the process fails.
      */
     fun serialize(data: StreamCompositeSerializationEvent<T>): Result<String> {
-        data.core?.let { return internal.serialize(it) }
-        data.product?.let { return external.serialize(it) }
+        data.core?.let {
+            return internal.serialize(it)
+        }
+        data.product?.let {
+            return external.serialize(it)
+        }
         return Result.failure(NullPointerException())
     }
 
@@ -86,14 +106,16 @@ internal class StreamCompositeEventSerializationImpl<T>(
                     }
                     in alsoExternal -> {
                         val coreSer = internal
-                        val extSer  = external
+                        val extSer = external
                         val core = coreSer.deserialize(raw).getOrThrow()
                         val prod = extSer.deserialize(raw).getOrThrow()
                         Result.success(StreamCompositeSerializationEvent.both(core, prod))
                     }
                     in internalTypes -> {
                         val coreSer = internal
-                        coreSer.deserialize(raw).map { StreamCompositeSerializationEvent.internal(it) }
+                        coreSer.deserialize(raw).map {
+                            StreamCompositeSerializationEvent.internal(it)
+                        }
                     }
                     else -> {
                         val ext = external
@@ -109,7 +131,9 @@ internal class StreamCompositeEventSerializationImpl<T>(
         val reader = JsonReader.of(Buffer().writeUtf8(raw))
         reader.isLenient = true
         return try {
-            if (reader.peek() != JsonReader.Token.BEGIN_OBJECT) return null
+            if (reader.peek() != JsonReader.Token.BEGIN_OBJECT) {
+                return null
+            }
             reader.beginObject()
             var result: String? = null
             while (reader.hasNext()) {
@@ -117,13 +141,17 @@ internal class StreamCompositeEventSerializationImpl<T>(
                 if (name == "type" && reader.peek() == JsonReader.Token.STRING) {
                     result = reader.nextString()
                     // consume the rest to keep reader state valid
-                    while (reader.hasNext()) reader.skipValue()
+                    while (reader.hasNext()) {
+                        reader.skipValue()
+                    }
                     break
                 } else {
                     reader.skipValue()
                 }
             }
-            if (reader.peek() == JsonReader.Token.END_OBJECT) reader.endObject()
+            if (reader.peek() == JsonReader.Token.END_OBJECT) {
+                reader.endObject()
+            }
             result
         } catch (_: Throwable) {
             null

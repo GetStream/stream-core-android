@@ -105,11 +105,14 @@ fun createStreamClient(
         connectionIdHolder = connectionIdHolder,
         socketFactory = socketFactory,
         healthMonitor = healthMonitor,
-        serializationConfig = StreamClientSerializationConfig.default(object :
-            StreamProductEventSerialization<Unit> {
-            override fun serialize(data: Unit): Result<String> = Result.success("")
-            override fun deserialize(raw: String): Result<Unit> = Result.success(Unit)
-        }),
+        serializationConfig =
+            StreamClientSerializationConfig.default(
+                object : StreamProductEventSerialization<Unit> {
+                    override fun serialize(data: Unit): Result<String> = Result.success("")
+
+                    override fun deserialize(raw: String): Result<Unit> = Result.success(Unit)
+                }
+            ),
         batcher = batcher,
     )
 }

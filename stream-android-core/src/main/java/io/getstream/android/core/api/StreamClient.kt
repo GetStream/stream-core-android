@@ -32,7 +32,6 @@ import io.getstream.android.core.api.processing.StreamRetryProcessor
 import io.getstream.android.core.api.processing.StreamSerialProcessingQueue
 import io.getstream.android.core.api.processing.StreamSingleFlightProcessor
 import io.getstream.android.core.api.serialization.StreamClientEventSerialization
-import io.getstream.android.core.api.serialization.StreamProductEventSerialization
 import io.getstream.android.core.api.socket.StreamConnectionIdHolder
 import io.getstream.android.core.api.socket.StreamWebSocket
 import io.getstream.android.core.api.socket.StreamWebSocketFactory
@@ -272,11 +271,11 @@ fun StreamClient(
                 jsonSerialization = compositeSerialization,
                 eventParser =
                     StreamCompositeEventSerializationImpl(
-                        internal = serializationConfig.eventParser
-                            ?: StreamClientEventSerialization(compositeSerialization),
+                        internal =
+                            serializationConfig.eventParser
+                                ?: StreamClientEventSerialization(compositeSerialization),
                         external = serializationConfig.productEventSerializers,
-                    )
-                    ,
+                    ),
                 healthMonitor = healthMonitor,
                 batcher = batcher,
                 internalSocket = socket,
