@@ -23,7 +23,8 @@ ksp = "2.2.0-2.0.2"
 robolectric = "4.15.1"
 detekt = "1.23.8"
 spotless = "7.2.1"
-klint = "13.0.0"
+kover = "0.9.1"
+sonarqube = "6.0.1.5171"
 
 
 [libraries]
@@ -72,4 +73,6 @@ kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "ko
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 arturbosch-detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
 spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }
+kover = { id = "org.jetbrains.kotlinx.kover", version.ref = "kover"}
+sonarqube = { id = "org.sonarqube", version.ref = "sonarqube"}
 

@@ -5,6 +5,8 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.ksp)
     alias(libs.plugins.arturbosch.detekt)
+    alias(libs.plugins.sonarqube)
+    alias(libs.plugins.kover)
 }
 
 kotlin {
