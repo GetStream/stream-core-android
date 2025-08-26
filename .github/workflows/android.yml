@@ -25,26 +25,8 @@ env:
   GITHUB_PR_NUM: ${{ github.event.pull_request.number }}
 
 jobs:
-  spotless:
-    name: Spotless check
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check out code
-        uses: actions/checkout@v3.1.0
-      - uses: GetStream/android-ci-actions/actions/setup-java@main
-      - name: spotless
-        run: ./gradlew spotlessCheck --scan
-  lint:
-    name: Spotless check
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check out code
-        uses: actions/checkout@v3.1.0
-      - uses: GetStream/android-ci-actions/actions/setup-java@main
-      - name: spotless
-        run: ./gradlew lint
-
   build:
+    name: Compile
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -57,9 +39,26 @@ jobs:
         run: chmod +x ./gradlew
 
       - name: Build with Gradle
-        run: |
-          ./gradlew --scan --stacktrace \
-              assembleDebug
+        run: ./gradlew assembleDebug --scan
+
+  spotless:
+    name: Spotless
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v3.1.0
+      - uses: GetStream/android-ci-actions/actions/setup-java@main
+      - name: spotless
+        run: ./gradlew spotlessCheck --scan
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v3.1.0
+      - uses: GetStream/android-ci-actions/actions/setup-java@main
+      - name: spotless
+        run: ./gradlew lint
 
   unitTest:
     name: Unit Tests
