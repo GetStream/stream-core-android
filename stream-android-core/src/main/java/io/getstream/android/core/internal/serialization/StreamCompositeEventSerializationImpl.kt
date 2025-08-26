@@ -17,8 +17,7 @@ package io.getstream.android.core.internal.serialization
 
 import com.squareup.moshi.JsonReader
 import io.getstream.android.core.api.model.event.StreamClientWsEvent
-import io.getstream.android.core.api.serialization.StreamClientEventSerialization
-import io.getstream.android.core.api.serialization.StreamProductEventSerialization
+import io.getstream.android.core.api.serialization.StreamEventSerialization
 import io.getstream.android.core.api.utils.runCatchingCancellable
 import okio.Buffer
 
@@ -65,8 +64,8 @@ private constructor(val core: StreamClientWsEvent? = null, val product: T? = nul
  * @param T The type of the product-specific event.
  */
 internal class StreamCompositeEventSerializationImpl<T>(
-    private val internal: StreamClientEventSerialization,
-    private val external: StreamProductEventSerialization<T>,
+    private val internal: StreamEventSerialization<StreamClientWsEvent>,
+    private val external: StreamEventSerialization<T>,
     private val internalTypes: Set<String> =
         setOf("connection.ok", "connection.error", "health.check"),
     private val alsoExternal: Set<String> = emptySet(),

@@ -16,9 +16,9 @@
 package io.getstream.android.core.api.model.config
 
 import io.getstream.android.core.annotations.StreamCoreApi
-import io.getstream.android.core.api.serialization.StreamClientEventSerialization
+import io.getstream.android.core.api.model.event.StreamClientWsEvent
 import io.getstream.android.core.api.serialization.StreamJsonSerialization
-import io.getstream.android.core.api.serialization.StreamProductEventSerialization
+import io.getstream.android.core.api.serialization.StreamEventSerialization
 
 /**
  * Configuration for serialization and deserialization in the Stream client.
@@ -31,8 +31,8 @@ import io.getstream.android.core.api.serialization.StreamProductEventSerializati
 data class StreamClientSerializationConfig
 private constructor(
     val json: StreamJsonSerialization? = null,
-    val eventParser: StreamClientEventSerialization? = null,
-    val productEventSerializers: StreamProductEventSerialization<*>,
+    val eventParser: StreamEventSerialization<StreamClientWsEvent>? = null,
+    val productEventSerializers: StreamEventSerialization<*>,
     val internalTypes: Set<String> = setOf("connection.ok", "connection.error", "health.check"),
     val alsoExternal: Set<String> = emptySet(),
 ) {
@@ -45,7 +45,7 @@ private constructor(
          * @return A default [StreamClientSerializationConfig].
          */
         fun <T> default(
-            productEvents: StreamProductEventSerialization<T>,
+            productEvents: StreamEventSerialization<T>,
             alsoExternal: Set<String> = emptySet(),
         ) =
             StreamClientSerializationConfig(
@@ -63,7 +63,7 @@ private constructor(
          */
         fun <T> json(
             serialization: StreamJsonSerialization,
-            productEvents: StreamProductEventSerialization<T>,
+            productEvents: StreamEventSerialization<T>,
             alsoExternal: Set<String> = emptySet(),
         ) =
             StreamClientSerializationConfig(
@@ -81,8 +81,8 @@ private constructor(
          * @return A [StreamClientSerializationConfig] with the given event parsing.
          */
         fun <T> event(
-            serialization: StreamClientEventSerialization,
-            productEvents: StreamProductEventSerialization<T>,
+            serialization: StreamEventSerialization<StreamClientWsEvent>,
+            productEvents: StreamEventSerialization<T>,
             alsoExternal: Set<String> = emptySet(),
         ) =
             StreamClientSerializationConfig(

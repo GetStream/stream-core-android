@@ -29,7 +29,7 @@ import io.getstream.android.core.api.processing.StreamBatcher
 import io.getstream.android.core.api.processing.StreamRetryProcessor
 import io.getstream.android.core.api.processing.StreamSerialProcessingQueue
 import io.getstream.android.core.api.processing.StreamSingleFlightProcessor
-import io.getstream.android.core.api.serialization.StreamProductEventSerialization
+import io.getstream.android.core.api.serialization.StreamEventSerialization
 import io.getstream.android.core.api.socket.StreamConnectionIdHolder
 import io.getstream.android.core.api.socket.StreamWebSocketFactory
 import io.getstream.android.core.api.socket.listeners.StreamClientListener
@@ -107,7 +107,7 @@ fun createStreamClient(
         healthMonitor = healthMonitor,
         serializationConfig =
             StreamClientSerializationConfig.default(
-                object : StreamProductEventSerialization<Unit> {
+                object : StreamEventSerialization<Unit> {
                     override fun serialize(data: Unit): Result<String> = Result.success("")
 
                     override fun deserialize(raw: String): Result<Unit> = Result.success(Unit)

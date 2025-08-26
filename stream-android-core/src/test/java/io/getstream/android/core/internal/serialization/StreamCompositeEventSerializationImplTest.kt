@@ -16,8 +16,7 @@
 package io.getstream.android.core.internal.serialization
 
 import io.getstream.android.core.api.model.event.StreamClientWsEvent
-import io.getstream.android.core.api.serialization.StreamClientEventSerialization
-import io.getstream.android.core.api.serialization.StreamProductEventSerialization
+import io.getstream.android.core.api.serialization.StreamEventSerialization
 import io.mockk.*
 import org.junit.Assert.*
 import org.junit.Before
@@ -25,8 +24,8 @@ import org.junit.Test
 
 class StreamCompositeEventSerializationImplTest {
 
-    private lateinit var internalSer: StreamClientEventSerialization
-    private lateinit var externalSer: StreamProductEventSerialization<String>
+    private lateinit var internalSer: StreamEventSerialization<StreamClientWsEvent>
+    private lateinit var externalSer: StreamEventSerialization<String>
     private lateinit var coreEvent: StreamClientWsEvent
 
     @Before
