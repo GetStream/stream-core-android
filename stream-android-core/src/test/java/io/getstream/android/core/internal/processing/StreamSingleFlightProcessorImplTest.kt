@@ -31,6 +31,7 @@ import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.ClosedSendChannelException
 import kotlinx.coroutines.delay
@@ -41,6 +42,7 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.util.concurrent.Executors
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class StreamSingleFlightProcessorImplTest {
@@ -418,41 +420,43 @@ class StreamSingleFlightProcessorImplTest {
 
     @Test
     fun `run with racing callers where loser joins existing flight`() = runTest {
-        val map = RecordingMap<Any, Deferred<Result<*>>>()
-        val sf =
-            StreamSingleFlightProcessorImpl(
-                scope = CoroutineScope(SupervisorJob() + Dispatchers.Default),
+        val pool = Executors.newFixedThreadPool(4).asCoroutineDispatcher()
+        try {
+            val map = RecordingMap<Any, Deferred<Result<*>>>()
+            val sf = StreamSingleFlightProcessorImpl(
+                scope = CoroutineScope(SupervisorJob() + pool),
                 flights = map,
             )
-        val key = "k".asStreamTypedKey<Int>()
+            val key = "k".asStreamTypedKey<Int>()
 
-        repeat(30) {
-            val gate = java.util.concurrent.CountDownLatch(1)
-            val a =
-                async(Dispatchers.Default) {
+            repeat(200) { // more attempts to guarantee at least one race
+                val gate = java.util.concurrent.CountDownLatch(1)
+                val a = async(pool) {
                     gate.await()
                     sf.run(key) {
-                        delay(10)
+                        delay(100)  // keep the winner running long enough
                         1
                     }
                 }
-            val b =
-                async(Dispatchers.Default) {
+                val b = async(pool) {
                     gate.await()
                     sf.run(key) {
-                        delay(10)
+                        delay(100)
                         1
                     }
                 }
-            gate.countDown()
-            a.await()
-            b.await()
+                gate.countDown()
+                a.await()
+                b.await()
+            }
+
+            assertTrue(
+                "Expected putIfAbsent to return existing at least once",
+                map.installedNonNull.get(),
+            )
+        } finally {
+            pool.close() // or pool.executor.shutdown()
         }
-
-        assertTrue(
-            "Expected putIfAbsent to return existing at least once",
-            map.installedNonNull.get(),
-        )
     }
 
     @Test
