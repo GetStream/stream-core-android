@@ -17,8 +17,8 @@ package io.getstream.android.core.api.model.config
 
 import io.getstream.android.core.annotations.StreamCoreApi
 import io.getstream.android.core.api.model.event.StreamClientWsEvent
-import io.getstream.android.core.api.serialization.StreamJsonSerialization
 import io.getstream.android.core.api.serialization.StreamEventSerialization
+import io.getstream.android.core.api.serialization.StreamJsonSerialization
 
 /**
  * Configuration for serialization and deserialization in the Stream client.

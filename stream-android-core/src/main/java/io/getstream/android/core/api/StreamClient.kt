@@ -260,13 +260,13 @@ fun StreamClient(
                 addInterceptor(StreamOkHttpInterceptors.clientInfo(clientInfoHeader))
                 addInterceptor(StreamOkHttpInterceptors.apiKey(apiKey))
                 addInterceptor(StreamOkHttpInterceptors.connectionId(connectionIdHolder))
-                addInterceptor(StreamOkHttpInterceptors.auth( "jwt", tokenManager, compositeSerialization))
+                addInterceptor(
+                    StreamOkHttpInterceptors.auth("jwt", tokenManager, compositeSerialization)
+                )
                 addInterceptor(StreamOkHttpInterceptors.error(compositeSerialization))
             }
         }
-        configuredInterceptors.forEach {
-            httpBuilder.addInterceptor(it)
-        }
+        configuredInterceptors.forEach { httpBuilder.addInterceptor(it) }
     }
 
     return StreamClientImpl(

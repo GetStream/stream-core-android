@@ -17,7 +17,6 @@ package io.getstream.android.core.internal.http.interceptor
 
 import io.getstream.android.core.api.authentication.StreamTokenManager
 import io.getstream.android.core.api.model.exceptions.StreamEndpointErrorData
-import io.getstream.android.core.api.model.exceptions.StreamEndpointException
 import io.getstream.android.core.api.model.value.StreamToken
 import io.getstream.android.core.api.serialization.StreamJsonSerialization
 import io.mockk.MockKAnnotations
@@ -28,7 +27,6 @@ import io.mockk.impl.annotations.MockK
 import io.mockk.verify
 import java.util.concurrent.TimeUnit
 import kotlin.test.assertEquals
-import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
@@ -196,7 +194,7 @@ class StreamAuthInterceptorTest {
         // Proper token error code handled by this interceptor
         val tokenError = tokenErrorData(40)
         every { json.fromJson(any(), StreamEndpointErrorData::class.java) } returns
-                Result.success(tokenError)
+            Result.success(tokenError)
 
         val interceptor = StreamAuthInterceptor(tokenManager, json, authType = "jwt")
         val client = client(interceptor)
@@ -205,15 +203,18 @@ class StreamAuthInterceptorTest {
 
         val url = server.url("/v1/protected")
 
-        client.newCall(
-            Request.Builder()
-                .url(url)
-                .header("x-stream-retried-on-auth", "present") // simulate already retried
-                .build()
-        ).execute().use { resp ->
-            assertFalse(resp.isSuccessful) // pass-through, no exception here
-            assertEquals(401, resp.code)
-        }
+        client
+            .newCall(
+                Request.Builder()
+                    .url(url)
+                    .header("x-stream-retried-on-auth", "present") // simulate already retried
+                    .build()
+            )
+            .execute()
+            .use { resp ->
+                assertFalse(resp.isSuccessful) // pass-through, no exception here
+                assertEquals(401, resp.code)
+            }
 
         val first = server.takeRequest(2, TimeUnit.SECONDS)
         kotlin.test.assertNotNull(first)
@@ -225,9 +226,7 @@ class StreamAuthInterceptorTest {
         coVerify(exactly = 0) { tokenManager.refresh() }
     }
 
-    /**
-     * Non-token error codes are NOT handled here; pass response through without retry.
-     */
+    /** Non-token error codes are NOT handled here; pass response through without retry. */
     @Test
     fun `non-token error passes through without retry`() {
         val token = streamToken("t1")
@@ -236,7 +235,7 @@ class StreamAuthInterceptorTest {
         // e.g., business error code that is not 40/41/42
         val nonTokenError = tokenErrorData(13)
         every { json.fromJson(any(), StreamEndpointErrorData::class.java) } returns
-                Result.success(nonTokenError)
+            Result.success(nonTokenError)
 
         val interceptor = StreamAuthInterceptor(tokenManager, json, authType = "jwt")
         val client = client(interceptor)
@@ -258,16 +257,14 @@ class StreamAuthInterceptorTest {
         coVerify(exactly = 0) { tokenManager.refresh() }
     }
 
-    /**
-     * If the error body cannot be parsed into StreamEndpointErrorData, pass through.
-     */
+    /** If the error body cannot be parsed into StreamEndpointErrorData, pass through. */
     @Test
     fun `unparsable error body passes through without retry`() {
         val token = streamToken("t1")
         coEvery { tokenManager.loadIfAbsent() } returns Result.success(token)
 
         every { json.fromJson(any(), StreamEndpointErrorData::class.java) } returns
-                Result.failure(IllegalStateException("bad json"))
+            Result.failure(IllegalStateException("bad json"))
 
         val interceptor = StreamAuthInterceptor(tokenManager, json, authType = "jwt")
         val client = client(interceptor)
@@ -290,7 +287,6 @@ class StreamAuthInterceptorTest {
         verify(exactly = 0) { tokenManager.invalidate() }
         coVerify(exactly = 0) { tokenManager.refresh() }
     }
-
 
     // ----------------- Helpers -----------------
 

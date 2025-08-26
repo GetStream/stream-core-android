@@ -61,12 +61,16 @@ internal class StreamAuthInterceptor(
     }
 
     override fun intercept(chain: Interceptor.Chain): Response {
-        val token = runBlocking { tokenManager.loadIfAbsent() }.getOrEndpointException("Failed to load token.")
+        val token =
+            runBlocking { tokenManager.loadIfAbsent() }
+                .getOrEndpointException("Failed to load token.")
         val original = chain.request()
         val authed = original.withAuthHeaders(authType, token.rawValue)
 
         val first = chain.proceed(authed)
-        if (first.isSuccessful) return first
+        if (first.isSuccessful) {
+            return first
+        }
 
         // Peek only; do NOT consume
         val peeked = first.peekBody(PEEK_ERROR_BYTES_MAX).string()
@@ -82,11 +86,16 @@ internal class StreamAuthInterceptor(
                 // refresh & retry once
                 first.close()
                 tokenManager.invalidate().getOrEndpointException("Failed to invalidate token")
-                val refreshed = runBlocking { tokenManager.refresh() }
-                    .getOrEndpointException("Failed to refresh token")
+                val refreshed =
+                    runBlocking { tokenManager.refresh() }
+                        .getOrEndpointException("Failed to refresh token")
 
-                val retried = original.withAuthHeaders(authType, refreshed.rawValue)
-                    .newBuilder().header(HEADER_RETRIED_ON_AUTH, "present").build()
+                val retried =
+                    original
+                        .withAuthHeaders(authType, refreshed.rawValue)
+                        .newBuilder()
+                        .header(HEADER_RETRIED_ON_AUTH, "present")
+                        .build()
 
                 return chain.proceed(retried) // pass result (ok or error) downstream
             }
@@ -99,7 +108,6 @@ internal class StreamAuthInterceptor(
             return first
         }
     }
-
 
     private fun Request.withAuthHeaders(authType: String, bearer: String): Request =
         newBuilder()
