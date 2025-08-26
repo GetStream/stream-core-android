@@ -49,10 +49,9 @@ interface StreamEventSerialization<T> {
     fun deserialize(raw: String): Result<T>
 }
 
-
-
 /**
- * Creates a new [StreamEventSerialization] instance that can serialize [io.getstream.android.core.api.model.event.StreamClientWsEvent] objects.
+ * Creates a new [StreamEventSerialization] instance that can serialize
+ * [io.getstream.android.core.api.model.event.StreamClientWsEvent] objects.
  *
  * @param jsonParser The [StreamJsonSerialization] to use for JSON serialization and
  *   deserialization.

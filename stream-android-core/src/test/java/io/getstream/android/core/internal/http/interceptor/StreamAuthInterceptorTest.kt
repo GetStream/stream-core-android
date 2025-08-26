@@ -17,7 +17,6 @@ package io.getstream.android.core.internal.http.interceptor
 
 import io.getstream.android.core.api.authentication.StreamTokenManager
 import io.getstream.android.core.api.model.exceptions.StreamEndpointErrorData
-import io.getstream.android.core.api.model.exceptions.StreamEndpointException
 import io.getstream.android.core.api.model.value.StreamToken
 import io.getstream.android.core.api.serialization.StreamJsonSerialization
 import io.mockk.MockKAnnotations
@@ -28,7 +27,6 @@ import io.mockk.impl.annotations.MockK
 import io.mockk.verify
 import java.util.concurrent.TimeUnit
 import kotlin.test.assertEquals
-import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
@@ -36,6 +34,8 @@ import okhttp3.Request
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.junit.After
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
 
@@ -187,74 +187,12 @@ class StreamAuthInterceptorTest {
     }
 
     @Test
-    fun `non-token error throws StreamEndpointException without retry`() {
-        val token = streamToken("t1")
-        coEvery { tokenManager.loadIfAbsent() } returns Result.success(token)
-
-        val nonTokenError = tokenErrorData(422)
-        every { json.fromJson(any(), StreamEndpointErrorData::class.java) } returns
-            Result.success(nonTokenError)
-
-        val interceptor = StreamAuthInterceptor(tokenManager, json, authType = "jwt")
-        val client = client(interceptor)
-
-        server.enqueue(MockResponse().setResponseCode(422).setBody("""{"error":"unprocessable"}"""))
-
-        val url = server.url("/v1/fail")
-        val ex =
-            assertFailsWith<StreamEndpointException> {
-                client
-                    .newCall(Request.Builder().url(url).build())
-                    .execute()
-                    .use { /* force execution */ }
-            }
-        assertTrue(ex.message!!.contains("Failed request"))
-
-        // Consume the single (failed) request
-        val first = server.takeRequest(2, TimeUnit.SECONDS)
-        kotlin.test.assertNotNull(first, "Expected exactly one request to be sent")
-
-        // Assert no second request (i.e., no retry)
-        val second = server.takeRequest(300, TimeUnit.MILLISECONDS)
-        kotlin.test.assertNull(second, "Interceptor should not retry on non-token errors")
-
-        coVerify(exactly = 1) { tokenManager.loadIfAbsent() }
-        io.mockk.verify(exactly = 0) { tokenManager.invalidate() }
-        coVerify(exactly = 0) { tokenManager.refresh() }
-    }
-
-    @Test
-    fun `unparseable error throws StreamEndpointException`() {
-        val token = streamToken("t1")
-        coEvery { tokenManager.loadIfAbsent() } returns Result.success(token)
-
-        every { json.fromJson(any(), StreamEndpointErrorData::class.java) } returns
-            Result.failure(IllegalStateException("parse error"))
-
-        val interceptor = StreamAuthInterceptor(tokenManager, json, authType = "jwt")
-        val client = client(interceptor)
-
-        server.enqueue(MockResponse().setResponseCode(500).setBody("not-json"))
-
-        val url = server.url("/v1/error")
-        val ex =
-            assertFailsWith<StreamEndpointException> {
-                client.newCall(Request.Builder().url(url).build()).execute().use { /* consume */ }
-            }
-        assertTrue(ex.message!!.contains("Failed to serialize response error body"))
-
-        coVerify(exactly = 1) { tokenManager.loadIfAbsent() }
-        verify(exactly = 0) { tokenManager.invalidate() }
-        coVerify(exactly = 0) { tokenManager.refresh() }
-    }
-
-    @Test
-    fun `token error with alreadyRetried header does not retry again`() {
+    fun `token error with alreadyRetried header passes through without retry`() {
         val token = streamToken("stale")
         coEvery { tokenManager.loadIfAbsent() } returns Result.success(token)
-        every { tokenManager.invalidate() } returns Result.success(Unit)
 
-        val tokenError = tokenErrorData(401)
+        // Proper token error code handled by this interceptor
+        val tokenError = tokenErrorData(40)
         every { json.fromJson(any(), StreamEndpointErrorData::class.java) } returns
             Result.success(tokenError)
 
@@ -264,28 +202,88 @@ class StreamAuthInterceptorTest {
         server.enqueue(MockResponse().setResponseCode(401).setBody("""{"error":"token invalid"}"""))
 
         val url = server.url("/v1/protected")
-        val ex =
-            assertFailsWith<StreamEndpointException> {
-                client
-                    .newCall(
-                        Request.Builder()
-                            .url(url)
-                            .header(
-                                "x-stream-retried-on-auth",
-                                "present",
-                            ) // simulate already retried
-                            .build()
-                    )
-                    .execute()
-                    .use { /* consume */ }
+
+        client
+            .newCall(
+                Request.Builder()
+                    .url(url)
+                    .header("x-stream-retried-on-auth", "present") // simulate already retried
+                    .build()
+            )
+            .execute()
+            .use { resp ->
+                assertFalse(resp.isSuccessful) // pass-through, no exception here
+                assertEquals(401, resp.code)
             }
-        assertTrue(ex.message!!.contains("Failed request"))
 
         val first = server.takeRequest(2, TimeUnit.SECONDS)
         kotlin.test.assertNotNull(first)
+        kotlin.test.assertNull(server.takeRequest(300, TimeUnit.MILLISECONDS)) // no second try
+
+        // No refresh/invalidate when header indicates we already retried
+        coVerify(exactly = 1) { tokenManager.loadIfAbsent() }
+        verify(exactly = 0) { tokenManager.invalidate() }
+        coVerify(exactly = 0) { tokenManager.refresh() }
+    }
+
+    /** Non-token error codes are NOT handled here; pass response through without retry. */
+    @Test
+    fun `non-token error passes through without retry`() {
+        val token = streamToken("t1")
+        coEvery { tokenManager.loadIfAbsent() } returns Result.success(token)
+
+        // e.g., business error code that is not 40/41/42
+        val nonTokenError = tokenErrorData(13)
+        every { json.fromJson(any(), StreamEndpointErrorData::class.java) } returns
+            Result.success(nonTokenError)
+
+        val interceptor = StreamAuthInterceptor(tokenManager, json, authType = "jwt")
+        val client = client(interceptor)
+
+        server.enqueue(MockResponse().setResponseCode(422).setBody("""{"error":"validation"}"""))
+
+        val url = server.url("/v1/endpoint")
+        client.newCall(Request.Builder().url(url).build()).execute().use { resp ->
+            assertFalse(resp.isSuccessful) // still an error; just passed along
+            assertEquals(422, resp.code)
+        }
+
+        // No retry, no token refresh
+        val req = server.takeRequest(2, TimeUnit.SECONDS)!!
+        assertEquals("t1", req.getHeader("Authorization"))
         kotlin.test.assertNull(server.takeRequest(300, TimeUnit.MILLISECONDS))
 
-        coVerify(exactly = 1) { tokenManager.loadIfAbsent() }
+        verify(exactly = 0) { tokenManager.invalidate() }
+        coVerify(exactly = 0) { tokenManager.refresh() }
+    }
+
+    /** If the error body cannot be parsed into StreamEndpointErrorData, pass through. */
+    @Test
+    fun `unparsable error body passes through without retry`() {
+        val token = streamToken("t1")
+        coEvery { tokenManager.loadIfAbsent() } returns Result.success(token)
+
+        every { json.fromJson(any(), StreamEndpointErrorData::class.java) } returns
+            Result.failure(IllegalStateException("bad json"))
+
+        val interceptor = StreamAuthInterceptor(tokenManager, json, authType = "jwt")
+        val client = client(interceptor)
+
+        server.enqueue(MockResponse().setResponseCode(500).setBody("""<html>oops</html>"""))
+
+        val url = server.url("/v1/boom")
+        client.newCall(Request.Builder().url(url).build()).execute().use { resp ->
+            assertFalse(resp.isSuccessful)
+            assertEquals(500, resp.code)
+        }
+
+        // Consume the single request we expect
+        val first = server.takeRequest(2, TimeUnit.SECONDS)!!
+        assertEquals("t1", first.getHeader("Authorization"))
+
+        // Now verify there's no retry
+        kotlin.test.assertNull(server.takeRequest(300, TimeUnit.MILLISECONDS))
+
         verify(exactly = 0) { tokenManager.invalidate() }
         coVerify(exactly = 0) { tokenManager.refresh() }
     }

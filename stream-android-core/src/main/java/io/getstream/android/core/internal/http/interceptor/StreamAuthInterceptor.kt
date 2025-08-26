@@ -67,25 +67,25 @@ internal class StreamAuthInterceptor(
         val original = chain.request()
         val authed = original.withAuthHeaders(authType, token.rawValue)
 
-        val firstResponse = chain.proceed(authed)
-        if (firstResponse.isSuccessful) {
-            return firstResponse
+        val first = chain.proceed(authed)
+        if (first.isSuccessful) {
+            return first
         }
 
-        val errorBody = firstResponse.peekBody(PEEK_ERROR_BYTES_MAX).string()
-        val parsed = jsonParser.fromJson(errorBody, StreamEndpointErrorData::class.java)
+        // Peek only; do NOT consume
+        val peeked = first.peekBody(PEEK_ERROR_BYTES_MAX).string()
+        val parsed = jsonParser.fromJson(peeked, StreamEndpointErrorData::class.java)
 
-        // Guard against infinite loops: retry at most once per request.
         val alreadyRetried = original.header(HEADER_RETRIED_ON_AUTH) == "present"
 
         if (parsed.isSuccess) {
             val error = parsed.getOrEndpointException("Failed to parse error body.")
-            if (!alreadyRetried && isTokenInvalidErrorCode(error.code)) {
-                // Refresh and retry once.
-                firstResponse.close()
-                tokenManager
-                    .invalidate()
-                    .getOrEndpointException(message = "Failed to invalidate token")
+
+            // Only handle token errors here
+            if (isTokenInvalidErrorCode(error.code) && !alreadyRetried) {
+                // refresh & retry once
+                first.close()
+                tokenManager.invalidate().getOrEndpointException("Failed to invalidate token")
                 val refreshed =
                     runBlocking { tokenManager.refresh() }
                         .getOrEndpointException("Failed to refresh token")
@@ -97,19 +97,15 @@ internal class StreamAuthInterceptor(
                         .header(HEADER_RETRIED_ON_AUTH, "present")
                         .build()
 
-                return chain.proceed(retried)
+                return chain.proceed(retried) // pass result (ok or error) downstream
             }
 
-            // Non-token error or we already retried: surface a structured exception.
-            firstResponse.close()
-            throw StreamEndpointException("Failed request: ${original.url}", error, null)
+            // Non-token error, or token error but we already retried:
+            // pass the original failed response downstream; DO NOT throw here.
+            return first
         } else {
-            // Couldn’t parse error, still fail in a consistent way.
-            firstResponse.close()
-            throw StreamEndpointException(
-                "Failed to serialize response error body: ${original.url}",
-                null,
-            )
+            // Unknown/invalid error body → pass through
+            return first
         }
     }
 
