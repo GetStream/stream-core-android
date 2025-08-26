@@ -20,42 +20,45 @@ import io.getstream.android.core.api.model.event.StreamClientWsEvent
 import io.getstream.android.core.internal.serialization.StreamClientEventSerializationImpl
 
 /**
- * Interface for serializing and deserializing [StreamClientWsEvent] objects.
+ * Interface for serializing and deserializing product event objects.
  *
  * All operations return a [Result] so callers can safely propagate failures (e.g. malformed input,
  * I/O errors, schema mismatches) without throwing.
  *
- * @see StreamClientWsEvent for the event type handled by this interface.
+ * @param T The product event type handled by this interface.
  */
 @StreamCoreApi
-interface StreamClientEventSerialization {
+interface StreamEventSerialization<T> {
+
     /**
-     * Encodes a [StreamClientWsEvent] into a [String] suitable for transport or storage.
+     * Encodes a product event into a [String] suitable for transport or storage.
      *
      * @param data The event to serialize.
      * @return `Result.success(String)` when encoding succeeds, or `Result.failure(Throwable)` when
      *   the process fails.
      */
-    fun serialize(data: StreamClientWsEvent): Result<String>
+    fun serialize(data: T): Result<String>
 
     /**
-     * Decodes a [String] into a [StreamClientWsEvent].
+     * Decodes a product event from a [String] representation.
      *
-     * @param raw The serialized input to decode (e.g. a JSON string).
-     * @return `Result.success(StreamClientWsEvent)` on success, or `Result.failure(Throwable)` if
-     *   decoding fails.
+     * @param raw The string to deserialize.
+     * @return `Result.success(T)` when decoding succeeds, or `Result.failure(Throwable)` when the
+     *   process fails.
      */
-    fun deserialize(raw: String): Result<StreamClientWsEvent>
+    fun deserialize(raw: String): Result<T>
 }
 
+
+
 /**
- * Creates a new [StreamClientEventSerialization] instance.
+ * Creates a new [StreamEventSerialization] instance that can serialize [io.getstream.android.core.api.model.event.StreamClientWsEvent] objects.
  *
  * @param jsonParser The [StreamJsonSerialization] to use for JSON serialization and
  *   deserialization.
- * @return A new [StreamClientEventSerialization] instance.
+ * @return A new [StreamEventSerialization] instance.
  */
 @StreamCoreApi
-fun StreamClientEventSerialization(
+fun StreamEventSerialization(
     jsonParser: StreamJsonSerialization
-): StreamClientEventSerialization = StreamClientEventSerializationImpl(jsonParser)
+): StreamEventSerialization<StreamClientWsEvent> = StreamClientEventSerializationImpl(jsonParser)

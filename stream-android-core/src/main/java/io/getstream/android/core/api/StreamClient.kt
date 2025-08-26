@@ -33,7 +33,7 @@ import io.getstream.android.core.api.processing.StreamBatcher
 import io.getstream.android.core.api.processing.StreamRetryProcessor
 import io.getstream.android.core.api.processing.StreamSerialProcessingQueue
 import io.getstream.android.core.api.processing.StreamSingleFlightProcessor
-import io.getstream.android.core.api.serialization.StreamClientEventSerialization
+import io.getstream.android.core.api.serialization.StreamEventSerialization
 import io.getstream.android.core.api.socket.StreamConnectionIdHolder
 import io.getstream.android.core.api.socket.StreamWebSocket
 import io.getstream.android.core.api.socket.StreamWebSocketFactory
@@ -42,9 +42,6 @@ import io.getstream.android.core.api.socket.monitor.StreamHealthMonitor
 import io.getstream.android.core.api.subscribe.StreamSubscription
 import io.getstream.android.core.api.subscribe.StreamSubscriptionManager
 import io.getstream.android.core.internal.client.StreamClientImpl
-import io.getstream.android.core.internal.http.interceptor.StreamApiKeyInterceptor
-import io.getstream.android.core.internal.http.interceptor.StreamAuthInterceptor
-import io.getstream.android.core.internal.http.interceptor.StreamConnectionIdInterceptor
 import io.getstream.android.core.internal.serialization.StreamCompositeEventSerializationImpl
 import io.getstream.android.core.internal.serialization.StreamCompositeMoshiJsonSerialization
 import io.getstream.android.core.internal.serialization.StreamMoshiJsonSerializationImpl
@@ -55,7 +52,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import okhttp3.OkHttpClient
 
 /**
  * Entry point for establishing and managing a connection to Stream services.
@@ -297,7 +293,7 @@ fun StreamClient(
                     StreamCompositeEventSerializationImpl(
                         internal =
                             serializationConfig.eventParser
-                                ?: StreamClientEventSerialization(compositeSerialization),
+                                ?: StreamEventSerialization(compositeSerialization),
                         external = serializationConfig.productEventSerializers,
                     ),
                 healthMonitor = healthMonitor,
