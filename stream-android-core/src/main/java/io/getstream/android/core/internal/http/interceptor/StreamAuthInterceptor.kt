@@ -80,7 +80,12 @@ internal class StreamAuthInterceptor(
 
         if (parsed.isSuccess) {
             val error = parsed.getOrEndpointException("Failed to parse error body.")
-            if (!alreadyRetried && isTokenInvalidErrorCode(error.code)) {
+
+            if (!isTokenInvalidErrorCode(error.code)) {
+                return firstResponse
+            }
+
+            if (!alreadyRetried) {
                 // Refresh and retry once.
                 firstResponse.close()
                 tokenManager
@@ -104,12 +109,7 @@ internal class StreamAuthInterceptor(
             firstResponse.close()
             throw StreamEndpointException("Failed request: ${original.url}", error, null)
         } else {
-            // Couldn’t parse error, still fail in a consistent way.
-            firstResponse.close()
-            throw StreamEndpointException(
-                "Failed to serialize response error body: ${original.url}",
-                null,
-            )
+            return firstResponse
         }
     }
 
