@@ -25,6 +25,7 @@ detekt = "1.23.8"
 spotless = "7.2.1"
 klint = "13.0.0"
 kotlinDokka = "1.9.20"
+nexusPlugin = "1.3.0"
 
 [libraries]
 androidx-core = { module = "androidx.test:core", version.ref = "core" }
@@ -73,3 +74,4 @@ ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 arturbosch-detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
 spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }
 dokka = { id = "org.jetbrains.dokka", version.ref = "kotlinDokka" }
+nexus = { id = "io.github.gradle-nexus.publish-plugin", version.ref = "nexusPlugin" }
