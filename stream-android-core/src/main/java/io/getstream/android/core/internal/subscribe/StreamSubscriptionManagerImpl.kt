@@ -117,7 +117,7 @@ internal class StreamSubscriptionManagerImpl<T>(
                 object : StreamSubscription {
                     override fun cancel() {
                         val key = keyRef.get() ?: return
-                        synchronized(weakSubscribers) { weakSubscribers.remove(key, this) }
+                        synchronized(weakSubscribers) { weakSubscribers.remove(key) }
                     }
                 }
             weakSubscribers[listener] = handle
