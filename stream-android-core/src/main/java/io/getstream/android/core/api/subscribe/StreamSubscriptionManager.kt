@@ -44,7 +44,7 @@ interface StreamSubscriptionManager<T> {
      *
      * @property retention Controls how the manager retains the listener reference.
      */
-    data class Options(val retention: Retention = Retention.AUTO_REMOVE) {
+    data class Options(val retention: Retention = Retention.KEEP_UNTIL_CANCELLED) {
         /** Retention policy for a subscribed listener. */
         enum class Retention {
             /**
