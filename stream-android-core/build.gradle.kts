@@ -1,4 +1,5 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import io.getstream.core.Configuration
 
 plugins {
     alias(libs.plugins.android.library)
@@ -6,6 +7,14 @@ plugins {
     alias(libs.plugins.ksp)
     alias(libs.plugins.arturbosch.detekt)
 }
+
+rootProject.extra.apply {
+    set("PUBLISH_GROUP_ID", Configuration.artifactGroup)
+    set("PUBLISH_ARTIFACT_ID", "stream-android-core")
+    set("PUBLISH_VERSION", rootProject.extra.get("rootVersionName"))
+}
+
+apply(from = "${rootDir}/scripts/publish-module.gradle")
 
 kotlin {
     compilerOptions {
@@ -18,10 +27,10 @@ kotlin {
 
 android {
     namespace = "io.getstream.android.core"
-    compileSdk = 36
+    compileSdk = Configuration.compileSdk
 
     defaultConfig {
-        minSdk = 21
+        minSdk = Configuration.minSdk
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles("consumer-rules.pro")
@@ -45,6 +54,10 @@ android {
         abortOnError = true
         warningsAsErrors = true
         lintConfig = rootProject.file("lint.xml")
+    }
+
+    publishing {
+        singleVariant("release") { }
     }
 }
 
