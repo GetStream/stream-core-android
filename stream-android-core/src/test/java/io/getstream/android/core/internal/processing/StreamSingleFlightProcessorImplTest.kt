@@ -22,13 +22,13 @@ import io.mockk.coVerify
 import io.mockk.mockk
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
+import java.util.concurrent.Executors
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.asCoroutineDispatcher
@@ -42,7 +42,6 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import java.util.concurrent.Executors
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class StreamSingleFlightProcessorImplTest {
@@ -423,28 +422,31 @@ class StreamSingleFlightProcessorImplTest {
         val pool = Executors.newFixedThreadPool(4).asCoroutineDispatcher()
         try {
             val map = RecordingMap<Any, Deferred<Result<*>>>()
-            val sf = StreamSingleFlightProcessorImpl(
-                scope = CoroutineScope(SupervisorJob() + pool),
-                flights = map,
-            )
+            val sf =
+                StreamSingleFlightProcessorImpl(
+                    scope = CoroutineScope(SupervisorJob() + pool),
+                    flights = map,
+                )
             val key = "k".asStreamTypedKey<Int>()
 
             repeat(200) { // more attempts to guarantee at least one race
                 val gate = java.util.concurrent.CountDownLatch(1)
-                val a = async(pool) {
-                    gate.await()
-                    sf.run(key) {
-                        delay(100)  // keep the winner running long enough
-                        1
+                val a =
+                    async(pool) {
+                        gate.await()
+                        sf.run(key) {
+                            delay(100) // keep the winner running long enough
+                            1
+                        }
                     }
-                }
-                val b = async(pool) {
-                    gate.await()
-                    sf.run(key) {
-                        delay(100)
-                        1
+                val b =
+                    async(pool) {
+                        gate.await()
+                        sf.run(key) {
+                            delay(100)
+                            1
+                        }
                     }
-                }
                 gate.countDown()
                 a.await()
                 b.await()
