@@ -42,9 +42,6 @@ import io.getstream.android.core.api.socket.monitor.StreamHealthMonitor
 import io.getstream.android.core.api.subscribe.StreamSubscription
 import io.getstream.android.core.api.subscribe.StreamSubscriptionManager
 import io.getstream.android.core.internal.client.StreamClientImpl
-import io.getstream.android.core.internal.http.interceptor.StreamApiKeyInterceptor
-import io.getstream.android.core.internal.http.interceptor.StreamAuthInterceptor
-import io.getstream.android.core.internal.http.interceptor.StreamConnectionIdInterceptor
 import io.getstream.android.core.internal.serialization.StreamCompositeEventSerializationImpl
 import io.getstream.android.core.internal.serialization.StreamCompositeMoshiJsonSerialization
 import io.getstream.android.core.internal.serialization.StreamMoshiJsonSerializationImpl
@@ -55,7 +52,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import okhttp3.OkHttpClient
 
 /**
  * Entry point for establishing and managing a connection to Stream services.
@@ -263,13 +259,13 @@ fun StreamClient(
             httpBuilder.apply {
                 addInterceptor(StreamOkHttpInterceptors.clientInfo(clientInfoHeader))
                 addInterceptor(StreamOkHttpInterceptors.apiKey(apiKey))
-                addInterceptor(StreamOkHttpInterceptors.auth( "jwt", tokenManager, compositeSerialization))
+                addInterceptor(
+                    StreamOkHttpInterceptors.auth("jwt", tokenManager, compositeSerialization)
+                )
                 addInterceptor(StreamOkHttpInterceptors.connectionId(connectionIdHolder))
             }
         }
-        configuredInterceptors.forEach {
-            httpBuilder.addInterceptor(it)
-        }
+        configuredInterceptors.forEach { httpBuilder.addInterceptor(it) }
     }
 
     return StreamClientImpl(

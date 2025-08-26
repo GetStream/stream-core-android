@@ -98,33 +98,30 @@ internal class StreamCompositeEventSerializationImpl<T>(
     fun deserialize(raw: String): Result<StreamCompositeSerializationEvent<T>> =
         runCatchingCancellable {
             val type = peekType(raw)
-            return try {
-                when (type) {
-                    null -> {
-                        val ext = external
-                        ext.deserialize(raw).map { StreamCompositeSerializationEvent.external(it) }
-                    }
-                    in alsoExternal -> {
-                        val coreSer = internal
-                        val extSer = external
-                        val core = coreSer.deserialize(raw).getOrThrow()
-                        val prod = extSer.deserialize(raw).getOrThrow()
-                        Result.success(StreamCompositeSerializationEvent.both(core, prod))
-                    }
-                    in internalTypes -> {
-                        val coreSer = internal
-                        coreSer.deserialize(raw).map {
-                            StreamCompositeSerializationEvent.internal(it)
-                        }
-                    }
-                    else -> {
-                        val ext = external
-                        ext.deserialize(raw).map { StreamCompositeSerializationEvent.external(it) }
-                    }
+            when (type) {
+                null -> {
+                    val ext = external
+                    ext.deserialize(raw).map { StreamCompositeSerializationEvent.external(it) }
                 }
-            } catch (e: Throwable) {
-                Result.failure(e)
-            }
+
+                in alsoExternal -> {
+                    val coreSer = internal
+                    val extSer = external
+                    val core = coreSer.deserialize(raw).getOrThrow()
+                    val prod = extSer.deserialize(raw).getOrThrow()
+                    Result.success(StreamCompositeSerializationEvent.both(core, prod))
+                }
+
+                in internalTypes -> {
+                    val coreSer = internal
+                    coreSer.deserialize(raw).map { StreamCompositeSerializationEvent.internal(it) }
+                }
+
+                else -> {
+                    val ext = external
+                    ext.deserialize(raw).map { StreamCompositeSerializationEvent.external(it) }
+                }
+            }.getOrThrow()
         }
 
     private fun peekType(raw: String): String? {
