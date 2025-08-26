@@ -1,6 +1,6 @@
 import java.io.FileNotFoundException
 import java.util.Calendar
-
+apply(from = "${rootDir}/gradle/scripts/sonar.gradle")
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 plugins {
     alias(libs.plugins.android.application) apply false
@@ -11,6 +11,8 @@ plugins {
     alias(libs.plugins.ksp) apply false
     alias(libs.plugins.arturbosch.detekt) apply true
     alias(libs.plugins.spotless) apply true
+    alias(libs.plugins.sonarqube) apply true
+    alias(libs.plugins.kover) apply true
 }
 
 spotless {
@@ -32,6 +34,7 @@ detekt {
 
 // License tasks
 subprojects {
+    apply(from = "${rootDir}/gradle/scripts/coverage.gradle")
     tasks.register("generateLicense") {
         val currentYear = Calendar.getInstance().get(Calendar.YEAR).toString()
         val licenseTemplate = file("../config/license/license.template")
