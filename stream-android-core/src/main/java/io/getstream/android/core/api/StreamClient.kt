@@ -18,8 +18,10 @@ package io.getstream.android.core.api
 import io.getstream.android.core.annotations.StreamCoreApi
 import io.getstream.android.core.api.authentication.StreamTokenManager
 import io.getstream.android.core.api.authentication.StreamTokenProvider
+import io.getstream.android.core.api.http.StreamOkHttpInterceptors
 import io.getstream.android.core.api.log.StreamLoggerProvider
 import io.getstream.android.core.api.model.config.StreamClientSerializationConfig
+import io.getstream.android.core.api.model.config.StreamHttpConfig
 import io.getstream.android.core.api.model.config.StreamSocketConfig
 import io.getstream.android.core.api.model.connection.StreamConnectedUser
 import io.getstream.android.core.api.model.connection.StreamConnectionState
@@ -31,7 +33,7 @@ import io.getstream.android.core.api.processing.StreamBatcher
 import io.getstream.android.core.api.processing.StreamRetryProcessor
 import io.getstream.android.core.api.processing.StreamSerialProcessingQueue
 import io.getstream.android.core.api.processing.StreamSingleFlightProcessor
-import io.getstream.android.core.api.serialization.StreamClientEventSerialization
+import io.getstream.android.core.api.serialization.StreamEventSerialization
 import io.getstream.android.core.api.socket.StreamConnectionIdHolder
 import io.getstream.android.core.api.socket.StreamWebSocket
 import io.getstream.android.core.api.socket.StreamWebSocketFactory
@@ -40,6 +42,7 @@ import io.getstream.android.core.api.socket.monitor.StreamHealthMonitor
 import io.getstream.android.core.api.subscribe.StreamSubscription
 import io.getstream.android.core.api.subscribe.StreamSubscriptionManager
 import io.getstream.android.core.internal.client.StreamClientImpl
+import io.getstream.android.core.internal.serialization.StreamCompositeEventSerializationImpl
 import io.getstream.android.core.internal.serialization.StreamCompositeMoshiJsonSerialization
 import io.getstream.android.core.internal.serialization.StreamMoshiJsonSerializationImpl
 import io.getstream.android.core.internal.serialization.moshi.StreamCoreMoshiProvider
@@ -189,6 +192,7 @@ interface StreamClient {
  * @param tokenManager The token manager.
  * @param singleFlight The single-flight processor.
  * @param serialQueue The serial processing queue.
+ * @param httpConfig The HTTP configuration.
  * @param retryProcessor The retry processor.
  * @param connectionIdHolder The connection ID holder.
  * @param socketFactory The WebSocket factory.
@@ -217,9 +221,10 @@ fun StreamClient(
     socketFactory: StreamWebSocketFactory,
     healthMonitor: StreamHealthMonitor,
     batcher: StreamBatcher<String>,
+    // Http
+    httpConfig: StreamHttpConfig? = null,
     // Serialization
-    serializationConfig: StreamClientSerializationConfig =
-        StreamClientSerializationConfig.defaults(),
+    serializationConfig: StreamClientSerializationConfig,
     // Logging
     logProvider: StreamLoggerProvider = StreamLoggerProvider.defaultAndroidLogger(),
 ): StreamClient {
@@ -248,6 +253,21 @@ fun StreamClient(
             StreamMoshiJsonSerializationImpl(StreamCoreMoshiProvider().builder {}.build()),
             serializationConfig.json,
         )
+
+    httpConfig?.apply {
+        if (automaticInterceptors) {
+            httpBuilder.apply {
+                addInterceptor(StreamOkHttpInterceptors.clientInfo(clientInfoHeader))
+                addInterceptor(StreamOkHttpInterceptors.apiKey(apiKey))
+                addInterceptor(
+                    StreamOkHttpInterceptors.auth("jwt", tokenManager, compositeSerialization)
+                )
+                addInterceptor(StreamOkHttpInterceptors.connectionId(connectionIdHolder))
+            }
+        }
+        configuredInterceptors.forEach { httpBuilder.addInterceptor(it) }
+    }
+
     return StreamClientImpl(
         userId = userId,
         scope = clientScope,
@@ -256,7 +276,6 @@ fun StreamClient(
         serialQueue = serialQueue,
         connectionIdHolder = connectionIdHolder,
         logger = clientLogger,
-        retryProcessor = retryProcessor,
         mutableConnectionState = MutableStateFlow(StreamConnectionState.Idle),
         subscriptionManager = clientSubscriptionManager,
         socketSession =
@@ -271,8 +290,12 @@ fun StreamClient(
                     ),
                 jsonSerialization = compositeSerialization,
                 eventParser =
-                    serializationConfig.eventParser
-                        ?: StreamClientEventSerialization(compositeSerialization),
+                    StreamCompositeEventSerializationImpl(
+                        internal =
+                            serializationConfig.eventParser
+                                ?: StreamEventSerialization(compositeSerialization),
+                        external = serializationConfig.productEventSerializers,
+                    ),
                 healthMonitor = healthMonitor,
                 batcher = batcher,
                 internalSocket = socket,

@@ -18,11 +18,14 @@ package io.getstream.android.core.api.http
 import io.getstream.android.core.annotations.StreamCoreApi
 import io.getstream.android.core.api.authentication.StreamTokenManager
 import io.getstream.android.core.api.model.value.StreamApiKey
+import io.getstream.android.core.api.model.value.StreamHttpClientInfoHeader
 import io.getstream.android.core.api.serialization.StreamJsonSerialization
 import io.getstream.android.core.api.socket.StreamConnectionIdHolder
 import io.getstream.android.core.internal.http.interceptor.StreamApiKeyInterceptor
 import io.getstream.android.core.internal.http.interceptor.StreamAuthInterceptor
+import io.getstream.android.core.internal.http.interceptor.StreamClientInfoInterceptor
 import io.getstream.android.core.internal.http.interceptor.StreamConnectionIdInterceptor
+import io.getstream.android.core.internal.http.interceptor.StreamEndpointErrorInterceptor
 import okhttp3.Interceptor
 
 // TODO: Think about better approach
@@ -60,6 +63,15 @@ object StreamOkHttpInterceptors {
         StreamConnectionIdInterceptor(connectionIdHolder)
 
     /**
+     * Creates an OkHttp interceptor that adds the client info header to the request.
+     *
+     * @param clientInfoHeader The client info header to add.
+     * @return An OkHttp interceptor.
+     */
+    fun clientInfo(clientInfoHeader: StreamHttpClientInfoHeader): Interceptor =
+        StreamClientInfoInterceptor(clientInfoHeader)
+
+    /**
      * Creates an OkHttp interceptor that adds the Stream API key to the request as a query
      * parameter.
      *
@@ -67,4 +79,14 @@ object StreamOkHttpInterceptors {
      * @return An OkHttp interceptor.
      */
     fun apiKey(apiKey: StreamApiKey): Interceptor = StreamApiKeyInterceptor(apiKey)
+
+    /**
+     * Creates an OkHttp interceptor that parses and throws
+     * [io.getstream.android.core.api.model.exceptions.StreamEndpointException] for error responses.
+     *
+     * @param jsonParser JSON parser used to decode error payloads when requests fail.
+     * @return An OkHttp interceptor.
+     */
+    fun error(jsonParser: StreamJsonSerialization): Interceptor =
+        StreamEndpointErrorInterceptor(jsonParser)
 }

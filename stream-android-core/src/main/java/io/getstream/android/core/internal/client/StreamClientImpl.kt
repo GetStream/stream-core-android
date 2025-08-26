@@ -21,9 +21,7 @@ import io.getstream.android.core.api.log.StreamLogger
 import io.getstream.android.core.api.model.StreamTypedKey.Companion.randomExecutionKey
 import io.getstream.android.core.api.model.connection.StreamConnectedUser
 import io.getstream.android.core.api.model.connection.StreamConnectionState
-import io.getstream.android.core.api.model.event.StreamClientWsEvent
 import io.getstream.android.core.api.model.value.StreamUserId
-import io.getstream.android.core.api.processing.StreamRetryProcessor
 import io.getstream.android.core.api.processing.StreamSerialProcessingQueue
 import io.getstream.android.core.api.processing.StreamSingleFlightProcessor
 import io.getstream.android.core.api.socket.StreamConnectionIdHolder
@@ -39,14 +37,13 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 
-internal class StreamClientImpl(
+internal class StreamClientImpl<T>(
     private val userId: StreamUserId,
     private val tokenManager: StreamTokenManager,
     private val singleFlight: StreamSingleFlightProcessor,
     private val serialQueue: StreamSerialProcessingQueue,
-    private val retryProcessor: StreamRetryProcessor,
     private val connectionIdHolder: StreamConnectionIdHolder,
-    private val socketSession: StreamSocketSession,
+    private val socketSession: StreamSocketSession<T>,
     private val mutableConnectionState: MutableStateFlow<StreamConnectionState>,
     private val logger: StreamLogger,
     private val subscriptionManager: StreamSubscriptionManager<StreamClientListener>,
@@ -77,13 +74,14 @@ internal class StreamClientImpl(
                     socketSession
                         .subscribe(
                             object : StreamClientListener {
+
                                 override fun onState(state: StreamConnectionState) {
                                     logger.v { "[client#onState]: $state" }
                                     mutableConnectionState.update(state)
                                     subscriptionManager.forEach { it.onState(state) }
                                 }
 
-                                override fun onEvent(event: StreamClientWsEvent) {
+                                override fun onEvent(event: Any) {
                                     logger.v { "[client#onEvent]: $event" }
                                     subscriptionManager.forEach { it.onEvent(event) }
                                 }

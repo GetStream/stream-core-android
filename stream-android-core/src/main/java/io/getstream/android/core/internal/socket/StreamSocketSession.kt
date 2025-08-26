@@ -25,7 +25,6 @@ import io.getstream.android.core.api.model.exceptions.StreamClientException
 import io.getstream.android.core.api.model.exceptions.StreamEndpointErrorData
 import io.getstream.android.core.api.model.exceptions.StreamEndpointException
 import io.getstream.android.core.api.processing.StreamBatcher
-import io.getstream.android.core.api.serialization.StreamClientEventSerialization
 import io.getstream.android.core.api.serialization.StreamJsonSerialization
 import io.getstream.android.core.api.socket.StreamWebSocket
 import io.getstream.android.core.api.socket.listeners.StreamClientListener
@@ -38,6 +37,8 @@ import io.getstream.android.core.internal.model.authentication.StreamWSAuthMessa
 import io.getstream.android.core.internal.model.events.StreamClientConnectedEvent
 import io.getstream.android.core.internal.model.events.StreamClientConnectionErrorEvent
 import io.getstream.android.core.internal.model.events.StreamHealthCheckEvent
+import io.getstream.android.core.internal.serialization.StreamCompositeEventSerializationImpl
+import io.getstream.android.core.internal.serialization.StreamCompositeSerializationEvent
 import io.getstream.android.core.internal.socket.model.ConnectUserData
 import java.io.IOException
 import java.util.concurrent.atomic.AtomicBoolean
@@ -47,12 +48,12 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import okhttp3.Response
 
 @OptIn(ExperimentalAtomicApi::class)
-internal class StreamSocketSession(
+internal class StreamSocketSession<T>(
     private val logger: StreamLogger,
     private var config: StreamSocketConfig,
     private val internalSocket: StreamWebSocket<StreamWebSocketListener>,
     private val jsonSerialization: StreamJsonSerialization,
-    private val eventParser: StreamClientEventSerialization,
+    private val eventParser: StreamCompositeEventSerializationImpl<T>,
     private val healthMonitor: StreamHealthMonitor,
     private val batcher: StreamBatcher<String>,
     private val subscriptionManager: StreamSubscriptionManager<StreamClientListener>,
@@ -172,7 +173,7 @@ internal class StreamSocketSession(
                         "[onInterval] Socket health check sending: $streamClientConnectedEvent"
                     }
                     eventParser
-                        .serialize(healthCheckEvent)
+                        .serialize(StreamCompositeSerializationEvent.internal(healthCheckEvent))
                         .onSuccess { text -> internalSocket.send(text) }
                         .onFailure {
                             logger.e(it) {
@@ -197,15 +198,25 @@ internal class StreamSocketSession(
                     eventParser
                         .deserialize(message)
                         .onSuccess { event ->
-                            if (event !is StreamHealthCheckEvent) {
-                                subscriptionManager.forEach { it.onEvent(event) }
-                            }
-                            if (event is StreamClientConnectionErrorEvent) {
+                            logger.v { "[onBatch] Deserialized event: $event" }
+                            val coreEvent = event.core
+                            val productEvent = event.product
+
+                            if (
+                                coreEvent != null && coreEvent is StreamClientConnectionErrorEvent
+                            ) {
                                 notifyState(
                                     StreamConnectionState.Disconnected(
-                                        StreamEndpointException("Connection error", event.error)
+                                        StreamEndpointException("Connection error", coreEvent.error)
                                     )
                                 )
+                            }
+                            subscriptionManager.forEach { listener ->
+                                coreEvent
+                                    ?.takeUnless { it is StreamHealthCheckEvent }
+                                    ?.let { listener.onEvent(it) }
+
+                                productEvent?.let { listener.onEvent(it) }
                             }
                         }
                         .onFailure {
@@ -287,7 +298,7 @@ internal class StreamSocketSession(
                                         ),
                                 )
                             eventParser
-                                .serialize(authRequest)
+                                .serialize(StreamCompositeSerializationEvent.internal(authRequest))
                                 .mapCatching {
                                     logger.v { "[onOpen] Sending auth request: $it" }
                                     internalSocket.send(it)
@@ -314,6 +325,7 @@ internal class StreamSocketSession(
                         logger.d { "[onMessage] Socket message (string): $text" }
                         eventParser
                             .deserialize(text)
+                            .map { it.core }
                             .map { authResponse ->
                                 when (authResponse) {
                                     is StreamClientConnectedEvent -> {

@@ -48,7 +48,7 @@ class StreamClientIImplTest {
     private lateinit var singleFlight: StreamSingleFlightProcessor
     private lateinit var serialQueue: StreamSerialProcessingQueue
     private lateinit var connectionIdHolder: StreamConnectionIdHolder
-    private lateinit var socketSession: StreamSocketSession
+    private lateinit var socketSession: StreamSocketSession<Unit>
     private lateinit var logger: StreamLogger
 
     private lateinit var subscriptionManager: StreamSubscriptionManager<StreamClientListener>
@@ -93,7 +93,6 @@ class StreamClientIImplTest {
             connectionIdHolder = connectionIdHolder,
             socketSession = socketSession,
             logger = logger,
-            retryProcessor = mockk(relaxed = true),
             mutableConnectionState = connFlow,
             scope = scope,
             subscriptionManager = subscriptionManager,

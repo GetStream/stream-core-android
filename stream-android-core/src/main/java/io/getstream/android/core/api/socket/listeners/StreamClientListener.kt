@@ -17,7 +17,6 @@ package io.getstream.android.core.api.socket.listeners
 
 import io.getstream.android.core.annotations.StreamCoreApi
 import io.getstream.android.core.api.model.connection.StreamConnectionState
-import io.getstream.android.core.api.model.event.StreamClientWsEvent
 
 /**
  * Listener interface for Feeds socket events.
@@ -39,7 +38,7 @@ interface StreamClientListener {
      *
      * @param event The event received from the WebSocket.
      */
-    fun onEvent(event: StreamClientWsEvent) {}
+    fun onEvent(event: Any) {}
 
     /**
      * Called when an error occurs on the client.

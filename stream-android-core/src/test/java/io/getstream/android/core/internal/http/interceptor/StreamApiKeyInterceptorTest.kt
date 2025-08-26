@@ -15,7 +15,7 @@
  */
 package io.getstream.android.core.internal.http.interceptor
 
-import io.getstream.android.core.api.model.exceptions.StreamClientException
+import io.getstream.android.core.api.model.exceptions.StreamEndpointException
 import io.getstream.android.core.api.model.value.StreamApiKey
 import io.getstream.android.core.utils.boxWithReflection
 import io.mockk.every
@@ -70,7 +70,7 @@ class StreamApiKeyInterceptorTest {
         val interceptor = StreamApiKeyInterceptor(apiKey)
         val chain = mockChain(request)
 
-        assertFailsWith<StreamClientException> { interceptor.intercept(chain) }
+        assertFailsWith<StreamEndpointException> { interceptor.intercept(chain) }
     }
 
     // --- Helpers ---
