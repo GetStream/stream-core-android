@@ -1,4 +1,5 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import io.getstream.core.Configuration
 
 plugins {
     alias(libs.plugins.android.library)
@@ -8,6 +9,14 @@ plugins {
     alias(libs.plugins.sonarqube)
     alias(libs.plugins.kover)
 }
+
+rootProject.extra.apply {
+    set("PUBLISH_GROUP_ID", Configuration.artifactGroup)
+    set("PUBLISH_ARTIFACT_ID", "stream-android-core")
+    set("PUBLISH_VERSION", rootProject.extra.get("rootVersionName"))
+}
+
+apply(from = "${rootDir}/scripts/publish-module.gradle")
 
 kotlin {
     compilerOptions {
@@ -20,10 +29,10 @@ kotlin {
 
 android {
     namespace = "io.getstream.android.core"
-    compileSdk = 36
+    compileSdk = Configuration.compileSdk
 
     defaultConfig {
-        minSdk = 21
+        minSdk = Configuration.minSdk
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles("consumer-rules.pro")
@@ -48,6 +57,10 @@ android {
         warningsAsErrors = true
         lintConfig = rootProject.file("lint.xml")
     }
+
+    publishing {
+        singleVariant("release") { }
+    }
 }
 
 dependencies {
@@ -58,9 +71,7 @@ dependencies {
     }
     implementation(project(":stream-android-core-annotations"))
 
-    implementation(libs.androidx.core.ktx)
-    implementation(libs.androidx.appcompat)
-    implementation(libs.material)
+    implementation(libs.kotlinx.coroutines)
 
     detektPlugins(libs.detekt.formatting)
 
@@ -83,7 +94,4 @@ dependencies {
     testImplementation(libs.mockk)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.mockwebserver)
-
-    androidTestImplementation(libs.androidx.junit)
-    androidTestImplementation(libs.androidx.espresso.core)
 }
