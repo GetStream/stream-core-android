@@ -88,9 +88,9 @@ annotation class StreamInternalApi
 annotation class StreamDelicateApi(val message: String)
 
 /**
- * Marks APIs that are part of the **Stream core SDK layer**.
- * This API can be safely published and used by other Stream SDKs. They can also be propagated and exposed via
- * public APIs of the product SDKs.
+ * Marks APIs that are part of the **Stream core SDK layer**. This API can be safely published and
+ * used by other Stream SDKs. They can also be propagated and exposed via public APIs of the product
+ * SDKs.
  */
 @Target(
     AnnotationTarget.CLASS,

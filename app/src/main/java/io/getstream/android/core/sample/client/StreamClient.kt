@@ -37,7 +37,7 @@ import io.getstream.android.core.api.socket.monitor.StreamHealthMonitor
 import io.getstream.android.core.api.subscribe.StreamSubscriptionManager
 import kotlinx.coroutines.CoroutineScope
 
-        /**
+/**
  * Creates a [createStreamClient] instance with the given configuration and dependencies.
  *
  * @param scope The coroutine scope.

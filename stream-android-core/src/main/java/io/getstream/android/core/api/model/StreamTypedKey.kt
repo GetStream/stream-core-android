@@ -32,7 +32,8 @@ public data class StreamTypedKey<T>(val id: Any) {
          * @return A new [StreamTypedKey] with the given [id] and type [T].
          * @receiver id The unique identifier for the key.
          */
-        public inline fun <reified T> Any.asStreamTypedKey(): StreamTypedKey<T> = StreamTypedKey(this)
+        public inline fun <reified T> Any.asStreamTypedKey(): StreamTypedKey<T> =
+            StreamTypedKey(this)
 
         /**
          * Creates a new [StreamTypedKey] with a random [id] and type [T].

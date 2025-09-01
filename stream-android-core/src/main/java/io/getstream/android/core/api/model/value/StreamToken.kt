@@ -15,7 +15,6 @@
  */
 package io.getstream.android.core.api.model.value
 
-import android.annotation.SuppressLint
 import io.getstream.android.core.annotations.StreamPublishedApi
 
 /**

@@ -16,7 +16,6 @@
 package io.getstream.android.core.api.socket.listeners
 
 import io.getstream.android.core.annotations.StreamInternalApi
-import io.getstream.android.core.annotations.StreamPublishedApi
 import io.getstream.android.core.api.subscribe.StreamSubscription
 import okhttp3.Response
 import okio.ByteString

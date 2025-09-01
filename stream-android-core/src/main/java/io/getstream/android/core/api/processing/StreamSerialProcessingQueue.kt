@@ -16,7 +16,6 @@
 package io.getstream.android.core.api.processing
 
 import io.getstream.android.core.annotations.StreamInternalApi
-import io.getstream.android.core.annotations.StreamPublishedApi
 import io.getstream.android.core.api.log.StreamLogger
 import io.getstream.android.core.internal.processing.StreamSerialProcessingQueueImpl
 import kotlinx.coroutines.CoroutineScope

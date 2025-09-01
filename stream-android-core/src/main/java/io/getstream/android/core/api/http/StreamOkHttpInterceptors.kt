@@ -27,6 +27,7 @@ import io.getstream.android.core.internal.http.interceptor.StreamClientInfoInter
 import io.getstream.android.core.internal.http.interceptor.StreamConnectionIdInterceptor
 import io.getstream.android.core.internal.http.interceptor.StreamEndpointErrorInterceptor
 import okhttp3.Interceptor
+
 /**
  * Provides a set of OkHttp interceptors for use with the Stream SDKs.
  *

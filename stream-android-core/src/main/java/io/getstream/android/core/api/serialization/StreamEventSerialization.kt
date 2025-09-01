@@ -16,7 +16,6 @@
 package io.getstream.android.core.api.serialization
 
 import io.getstream.android.core.annotations.StreamInternalApi
-import io.getstream.android.core.annotations.StreamPublishedApi
 import io.getstream.android.core.api.model.event.StreamClientWsEvent
 import io.getstream.android.core.internal.serialization.StreamClientEventSerializationImpl
 

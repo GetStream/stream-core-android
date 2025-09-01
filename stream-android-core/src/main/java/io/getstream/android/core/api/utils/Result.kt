@@ -16,7 +16,6 @@
 package io.getstream.android.core.api.utils
 
 import io.getstream.android.core.annotations.StreamInternalApi
-import io.getstream.android.core.annotations.StreamPublishedApi
 import kotlin.coroutines.cancellation.CancellationException
 
 /**

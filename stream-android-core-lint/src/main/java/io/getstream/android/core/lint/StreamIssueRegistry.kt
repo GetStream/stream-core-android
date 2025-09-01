@@ -34,7 +34,7 @@ class StreamIssueRegistry : IssueRegistry() {
             KeepInstanceDetector.ISSUE,
             SuspendRunCatchingDetector.ISSUE,
             ExposeAsStateFlowDetector.ISSUE,
-            StreamApiExplicitMarkerDetector.ISSUE
+            StreamApiExplicitMarkerDetector.ISSUE,
         )
 
     override val vendor =

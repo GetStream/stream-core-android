@@ -16,7 +16,6 @@
 package io.getstream.android.core.api.serialization
 
 import io.getstream.android.core.annotations.StreamInternalApi
-import io.getstream.android.core.annotations.StreamPublishedApi
 
 /**
  * General contract for JSON serialization and deserialization.
