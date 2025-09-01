@@ -15,6 +15,7 @@
  */
 package io.getstream.android.core.api.model.value
 
+import io.getstream.android.core.annotations.StreamInternalApi
 import io.getstream.android.core.annotations.StreamPublishedApi
 import java.net.URI
 
@@ -23,7 +24,7 @@ import java.net.URI
  *
  * @property rawValue The raw value of the HTTP URL.
  */
-@StreamPublishedApi
+@StreamInternalApi
 @JvmInline
 public value class StreamHttpUrl(public val rawValue: String) {
     public companion object {

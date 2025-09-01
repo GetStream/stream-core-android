@@ -11,7 +11,6 @@ kotlin {
         jvmTarget.set(JvmTarget.JVM_11)
         freeCompilerArgs.addAll(
             "-opt-in=io.getstream.android.core.annotations.StreamInternalApi",
-            "-opt-in=io.getstream.android.core.annotations.StreamPublishedApi",
             "-XXLanguage:+PropertyParamAnnotationDefaultTargetMode"
         )
     }
