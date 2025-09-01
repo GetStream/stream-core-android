@@ -16,7 +16,6 @@
 package io.getstream.android.core.api.model.value
 
 import io.getstream.android.core.annotations.StreamInternalApi
-import io.getstream.android.core.annotations.StreamPublishedApi
 import java.text.Normalizer
 import kotlin.text.iterator
 
