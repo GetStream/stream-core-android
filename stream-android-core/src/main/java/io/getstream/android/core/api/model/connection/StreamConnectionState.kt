@@ -15,15 +15,15 @@
  */
 package io.getstream.android.core.api.model.connection
 
-import io.getstream.android.core.annotations.StreamCoreApi
+import io.getstream.android.core.annotations.StreamPublishedApi
 
-@StreamCoreApi
-sealed class StreamConnectionState {
+@StreamPublishedApi
+public sealed class StreamConnectionState {
     /** The client is not connected and not trying to connect. Initial state for fresh objects. */
-    data object Idle : StreamConnectionState()
+    public data object Idle : StreamConnectionState()
 
     /** The client was connected and is now disconnected. */
-    data class Disconnected(val cause: Throwable? = null) : StreamConnectionState()
+    public data class Disconnected(val cause: Throwable? = null) : StreamConnectionState()
 
     /**
      * The client is connected and authenticated.
@@ -31,23 +31,23 @@ sealed class StreamConnectionState {
      * @property connectedUser The user that is connected to the client.
      * @property connectionId The connection ID.
      */
-    data class Connected(val connectedUser: StreamConnectedUser, val connectionId: String) :
+    public data class Connected(val connectedUser: StreamConnectedUser, val connectionId: String) :
         StreamConnectionState()
 
     /** The client is trying to connect. */
-    sealed class Connecting : StreamConnectionState() {
+    public sealed class Connecting : StreamConnectionState() {
         /**
          * Opening a new connection
          *
          * @property userId The user ID that is being connected.
          */
-        data class Opening(val userId: String) : Connecting()
+        public data class Opening(val userId: String) : Connecting()
 
         /**
          * Authenticating a new connection. Socket is open, but not authenticated.
          *
          * @property userId The user ID that is being connected.
          */
-        data class Authenticating(val userId: String) : Connecting()
+        public data class Authenticating(val userId: String) : Connecting()
     }
 }

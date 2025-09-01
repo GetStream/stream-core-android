@@ -15,7 +15,8 @@
  */
 package io.getstream.android.core.api.socket.monitor
 
-import io.getstream.android.core.annotations.StreamCoreApi
+import io.getstream.android.core.annotations.StreamInternalApi
+import io.getstream.android.core.annotations.StreamPublishedApi
 import io.getstream.android.core.api.log.StreamLogger
 import io.getstream.android.core.internal.socket.monitor.StreamHealthMonitorImpl
 import kotlin.time.ExperimentalTime
@@ -31,8 +32,8 @@ import kotlinx.coroutines.CoroutineScope
  * - Call [acknowledgeHeartbeat] when receiving a valid "I'm alive" signal.
  * - Start and stop the monitor as needed.
  */
-@StreamCoreApi
-interface StreamHealthMonitor {
+@StreamInternalApi
+public interface StreamHealthMonitor {
     /**
      * Registers a callback that is invoked at every heartbeat interval.
      *
@@ -41,7 +42,7 @@ interface StreamHealthMonitor {
      *
      * @param callback A function to be called on each heartbeat tick.
      */
-    fun onHeartbeat(callback: suspend () -> Unit)
+    public fun onHeartbeat(callback: suspend () -> Unit)
 
     /**
      * Registers a callback that is invoked when the liveness threshold is exceeded.
@@ -51,7 +52,7 @@ interface StreamHealthMonitor {
      *
      * @param callback A function to be called when the liveness timeout occurs.
      */
-    fun onUnhealthy(callback: suspend () -> Unit)
+    public fun onUnhealthy(callback: suspend () -> Unit)
 
     /**
      * Acknowledges a heartbeat signal.
@@ -59,18 +60,18 @@ interface StreamHealthMonitor {
      * This should be called whenever the monitored system successfully responds, indicating that it
      * is alive and healthy. Resets the liveness timer.
      */
-    fun acknowledgeHeartbeat()
+    public fun acknowledgeHeartbeat()
 
     /** Starts the health monitor, beginning the heartbeat and liveness checks. */
-    fun start()
+    public fun start()
 
     /** Stops the health monitor, halting heartbeat and liveness checks. */
-    fun stop()
+    public fun stop()
 }
 
 @OptIn(ExperimentalTime::class)
-@StreamCoreApi
-fun StreamHealthMonitor(
+@StreamInternalApi
+public fun StreamHealthMonitor(
     logger: StreamLogger,
     scope: CoroutineScope,
     interval: Long = StreamHealthMonitorImpl.INTERVAL,

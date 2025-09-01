@@ -15,7 +15,7 @@
  */
 package io.getstream.android.core.api.authentication
 
-import io.getstream.android.core.annotations.StreamCoreApi
+import io.getstream.android.core.annotations.StreamPublishedApi
 import io.getstream.android.core.api.model.value.StreamToken
 import io.getstream.android.core.api.model.value.StreamUserId
 
@@ -52,8 +52,8 @@ import io.getstream.android.core.api.model.value.StreamUserId
  * - Token creation/rotation must happen on your server.
  * - Prefer short expirations and refresh on demand.
  */
-@StreamCoreApi
-fun interface StreamTokenProvider {
+@StreamPublishedApi
+public fun interface StreamTokenProvider {
     /**
      * Returns a JWT that authenticates the given [userId].
      *
@@ -67,5 +67,5 @@ fun interface StreamTokenProvider {
      * @throws Exception If the token cannot be obtained (network error, server error, invalid user,
      *   etc.).
      */
-    suspend fun loadToken(userId: StreamUserId): StreamToken
+    public suspend fun loadToken(userId: StreamUserId): StreamToken
 }

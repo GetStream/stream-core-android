@@ -15,7 +15,7 @@
  */
 package io.getstream.android.core.api.authentication
 
-import io.getstream.android.core.annotations.StreamCoreApi
+import io.getstream.android.core.annotations.StreamInternalApi
 import io.getstream.android.core.api.model.value.StreamToken
 import io.getstream.android.core.api.model.value.StreamUserId
 import io.getstream.android.core.api.processing.StreamSingleFlightProcessor
@@ -49,15 +49,15 @@ import kotlinx.coroutines.flow.StateFlow
  * tokenManager.token.value // null
  * ```
  */
-@StreamCoreApi
-interface StreamTokenManager {
+@StreamInternalApi
+public interface StreamTokenManager {
     /**
      * A hot stream of the current authentication token.
      *
      * Emits `null` when there is no token (e.g., before the first load or after [invalidate] is
      * called) and updates with each successful set or refresh.
      */
-    val token: StateFlow<StreamToken?>
+    public val token: StateFlow<StreamToken?>
 
     /**
      * Registers the provider used to load tokens on demand.
@@ -69,7 +69,7 @@ interface StreamTokenManager {
      * @return [Result.success] on success, or [Result.failure] if the provider cannot be installed
      *   in the current state.
      */
-    fun setProvider(provider: StreamTokenProvider): Result<Unit>
+    public fun setProvider(provider: StreamTokenProvider): Result<Unit>
 
     /**
      * Sets the current token explicitly.
@@ -81,7 +81,7 @@ interface StreamTokenManager {
      * @return [Result.success] on success, or [Result.failure] if the token is rejected by the
      *   implementation (e.g., invalid format).
      */
-    fun setToken(token: StreamToken): Result<Unit>
+    public fun setToken(token: StreamToken): Result<Unit>
 
     /**
      * Invalidates and clears the current token.
@@ -92,7 +92,7 @@ interface StreamTokenManager {
      * @return [Result.success] on success, or [Result.failure] if the token cannot be invalidated
      *   in the current state.
      */
-    fun invalidate(): Result<Unit>
+    public fun invalidate(): Result<Unit>
 
     /**
      * Ensures that a valid token is available.
@@ -103,14 +103,14 @@ interface StreamTokenManager {
      * @return [Result.success] containing the token, or [Result.failure] if no token is available
      *   and fetching failed.
      */
-    suspend fun loadIfAbsent(): Result<StreamToken>
+    public suspend fun loadIfAbsent(): Result<StreamToken>
 
     /**
      * Refreshes the current token from the provider.
      *
      * @return [Result.success] containing the token, or [Result.failure] if fetching failed.
      */
-    suspend fun refresh(): Result<StreamToken>
+    public suspend fun refresh(): Result<StreamToken>
 }
 
 /**
@@ -121,8 +121,8 @@ interface StreamTokenManager {
  * @param singleFlight The single-flight processor used to coordinate concurrent requests.
  * @return A new [StreamTokenManager] instance.
  */
-@StreamCoreApi
-fun StreamTokenManager(
+@StreamInternalApi
+public fun StreamTokenManager(
     userId: StreamUserId,
     tokenProvider: StreamTokenProvider,
     singleFlight: StreamSingleFlightProcessor,

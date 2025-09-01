@@ -15,7 +15,7 @@
  */
 package io.getstream.android.core.api.model.value
 
-import io.getstream.android.core.annotations.StreamCoreApi
+import io.getstream.android.core.annotations.StreamPublishedApi
 import java.text.Normalizer
 import kotlin.text.iterator
 
@@ -24,10 +24,10 @@ import kotlin.text.iterator
  *
  * @property rawValue The raw value of the header.
  */
-@StreamCoreApi
+@StreamPublishedApi
 @JvmInline
-value class StreamHttpClientInfoHeader private constructor(val rawValue: String) {
-    companion object {
+public value class StreamHttpClientInfoHeader private constructor(public val rawValue: String) {
+    public companion object {
         /**
          * Creates a new [StreamHttpClientInfoHeader] with the given values.
          *
@@ -41,7 +41,7 @@ value class StreamHttpClientInfoHeader private constructor(val rawValue: String)
          * @return A new [StreamHttpClientInfoHeader] with the given values.
          */
         @JvmStatic
-        fun create(
+        public fun create(
             product: String,
             productVersion: String,
             os: String,

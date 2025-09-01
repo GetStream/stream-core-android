@@ -15,40 +15,40 @@
  */
 package io.getstream.android.core.api.log
 
-import io.getstream.android.core.annotations.StreamCoreApi
+import io.getstream.android.core.annotations.StreamInternalApi
 
 /**
  * Defines a logging contract for the Stream SDK.
  *
  * Implementations of this interface provide a way to log messages and exceptions at different
  * severity levels. By default, convenience functions are provided for each log level (e.g., [d],
- * [e], [i], [w], [v], [wtf]).
+ * [e], [i], [w], [v]).
  *
  * @see StreamLoggerProvider for the global logger accessor.
  */
-@StreamCoreApi
-interface StreamLogger {
+@StreamInternalApi
+public interface StreamLogger {
     /**
      * Represents the severity of a log message.
      *
      * @property level The integer value of the severity, where higher numbers represent more severe
      *   log levels.
      */
-    sealed class LogLevel(val level: Int) {
+    public sealed class LogLevel(public val level: Int) {
         /** Verbose log messages, typically for detailed debugging. */
-        object Verbose : LogLevel(1)
+        public object Verbose : LogLevel(1)
 
         /** Debug log messages, used for general debugging. */
-        object Debug : LogLevel(2)
+        public object Debug : LogLevel(2)
 
         /** Informational log messages, representing normal operation. */
-        object Info : LogLevel(3)
+        public object Info : LogLevel(3)
 
         /** Warning log messages, representing non-fatal issues. */
-        object Warning : LogLevel(4)
+        public object Warning : LogLevel(4)
 
         /** Error log messages, representing recoverable failures. */
-        object Error : LogLevel(5)
+        public object Error : LogLevel(5)
     }
 
     /**
@@ -56,14 +56,14 @@ interface StreamLogger {
      *
      * @param message A lambda returning the message to log.
      */
-    fun d(message: () -> String) = log(LogLevel.Debug, null, message)
+    public fun d(message: () -> String): Unit = log(LogLevel.Debug, null, message)
 
     /**
      * Logs an error message.
      *
      * @param message A lambda returning the message to log.
      */
-    fun e(message: () -> String) = log(LogLevel.Error, null, message)
+    public fun e(message: () -> String): Unit = log(LogLevel.Error, null, message)
 
     /**
      * Logs an error with an optional message.
@@ -71,7 +71,7 @@ interface StreamLogger {
      * @param throwable The error or exception to log.
      * @param message An optional lambda returning a message to include.
      */
-    fun e(throwable: Throwable, message: (() -> String)?) =
+    public fun e(throwable: Throwable, message: (() -> String)?): Unit =
         log(LogLevel.Error, throwable) { message?.invoke() ?: "${throwable.message}" }
 
     /**
@@ -79,21 +79,21 @@ interface StreamLogger {
      *
      * @param message A lambda returning the message to log.
      */
-    fun w(message: () -> String) = log(LogLevel.Warning, null, message)
+    public fun w(message: () -> String): Unit = log(LogLevel.Warning, null, message)
 
     /**
      * Logs an informational message.
      *
      * @param message A lambda returning the message to log.
      */
-    fun i(message: () -> String) = log(LogLevel.Info, null, message)
+    public fun i(message: () -> String): Unit = log(LogLevel.Info, null, message)
 
     /**
      * Logs a verbose message.
      *
      * @param message A lambda returning the message to log.
      */
-    fun v(message: () -> String) = log(LogLevel.Verbose, null, message)
+    public fun v(message: () -> String): Unit = log(LogLevel.Verbose, null, message)
 
     /**
      * Logs a message at the given severity level.
@@ -102,5 +102,5 @@ interface StreamLogger {
      * @param throwable An optional [Throwable] associated with the log message.
      * @param message A lambda returning the message to log.
      */
-    fun log(level: LogLevel, throwable: Throwable?, message: () -> String)
+    public fun log(level: LogLevel, throwable: Throwable?, message: () -> String)
 }

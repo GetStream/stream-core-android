@@ -15,7 +15,8 @@
  */
 package io.getstream.android.core.api.utils
 
-import io.getstream.android.core.annotations.StreamCoreApi
+import io.getstream.android.core.annotations.StreamInternalApi
+import io.getstream.android.core.annotations.StreamPublishedApi
 import kotlin.coroutines.cancellation.CancellationException
 
 /**
@@ -32,6 +33,6 @@ import kotlin.coroutines.cancellation.CancellationException
  *   failure if this [Result] is a failure.
  * @throws Throwable if [transform] throws, including [CancellationException].
  */
-@StreamCoreApi
-inline fun <T, R> Result<T>.flatMap(transform: (T) -> Result<R>): Result<R> =
+@StreamInternalApi
+public inline fun <T, R> Result<T>.flatMap(transform: (T) -> Result<R>): Result<R> =
     fold(onSuccess = { transform(it) }, onFailure = { Result.failure(it) })

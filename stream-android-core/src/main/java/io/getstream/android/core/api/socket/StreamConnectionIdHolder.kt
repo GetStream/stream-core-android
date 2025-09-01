@@ -15,7 +15,8 @@
  */
 package io.getstream.android.core.api.socket
 
-import io.getstream.android.core.annotations.StreamCoreApi
+import io.getstream.android.core.annotations.StreamInternalApi
+import io.getstream.android.core.annotations.StreamPublishedApi
 import io.getstream.android.core.internal.socket.connection.StreamConnectionIdHolderImpl
 
 /**
@@ -28,14 +29,14 @@ import io.getstream.android.core.internal.socket.connection.StreamConnectionIdHo
  * the expected value (or `null` if no connection ID is set). On failure, the [Result] contains the
  * relevant [Throwable].
  */
-@StreamCoreApi
-interface StreamConnectionIdHolder {
+@StreamInternalApi
+public interface StreamConnectionIdHolder {
     /**
      * Clears the stored connection ID.
      *
      * @return A [Result] indicating success, or containing an error if the operation fails.
      */
-    fun clear(): Result<Unit>
+    public fun clear(): Result<Unit>
 
     /**
      * Stores the given connection ID.
@@ -44,7 +45,7 @@ interface StreamConnectionIdHolder {
      * @return A [Result] containing the stored connection ID if successful, or an error if the
      *   operation fails.
      */
-    fun setConnectionId(connectionId: String): Result<String>
+    public fun setConnectionId(connectionId: String): Result<String>
 
     /**
      * Retrieves the stored connection ID.
@@ -52,9 +53,9 @@ interface StreamConnectionIdHolder {
      * @return A [Result] containing the connection ID if available, `null` if none is set, or an
      *   error if the operation fails.
      */
-    fun getConnectionId(): Result<String?>
+    public fun getConnectionId(): Result<String?>
 }
 
 /** Creates a new [StreamConnectionIdHolder] instance. */
-@StreamCoreApi
-fun StreamConnectionIdHolder(): StreamConnectionIdHolder = StreamConnectionIdHolderImpl()
+@StreamInternalApi
+public fun StreamConnectionIdHolder(): StreamConnectionIdHolder = StreamConnectionIdHolderImpl()

@@ -15,7 +15,7 @@
  */
 package io.getstream.android.core.api.http
 
-import io.getstream.android.core.annotations.StreamCoreApi
+import io.getstream.android.core.annotations.StreamInternalApi
 import io.getstream.android.core.api.authentication.StreamTokenManager
 import io.getstream.android.core.api.model.value.StreamApiKey
 import io.getstream.android.core.api.model.value.StreamHttpClientInfoHeader
@@ -27,9 +27,6 @@ import io.getstream.android.core.internal.http.interceptor.StreamClientInfoInter
 import io.getstream.android.core.internal.http.interceptor.StreamConnectionIdInterceptor
 import io.getstream.android.core.internal.http.interceptor.StreamEndpointErrorInterceptor
 import okhttp3.Interceptor
-
-// TODO: Think about better approach
-
 /**
  * Provides a set of OkHttp interceptors for use with the Stream SDKs.
  *
@@ -37,8 +34,8 @@ import okhttp3.Interceptor
  * @see [StreamConnectionIdInterceptor]
  * @see [StreamApiKeyInterceptor]
  */
-@StreamCoreApi
-object StreamOkHttpInterceptors {
+@StreamInternalApi
+public object StreamOkHttpInterceptors {
     /**
      * Creates an OkHttp interceptor that adds authentication headers and retries on token errors.
      *
@@ -47,7 +44,7 @@ object StreamOkHttpInterceptors {
      * @param jsonParser JSON parser used to decode error payloads when requests fail.
      * @return An OkHttp interceptor.
      */
-    fun auth(
+    public fun auth(
         authType: String,
         tokenManager: StreamTokenManager,
         jsonParser: StreamJsonSerialization,
@@ -59,7 +56,7 @@ object StreamOkHttpInterceptors {
      * @param connectionIdHolder The holder that provides the connection ID.
      * @return An OkHttp interceptor.
      */
-    fun connectionId(connectionIdHolder: StreamConnectionIdHolder): Interceptor =
+    public fun connectionId(connectionIdHolder: StreamConnectionIdHolder): Interceptor =
         StreamConnectionIdInterceptor(connectionIdHolder)
 
     /**
@@ -68,7 +65,7 @@ object StreamOkHttpInterceptors {
      * @param clientInfoHeader The client info header to add.
      * @return An OkHttp interceptor.
      */
-    fun clientInfo(clientInfoHeader: StreamHttpClientInfoHeader): Interceptor =
+    public fun clientInfo(clientInfoHeader: StreamHttpClientInfoHeader): Interceptor =
         StreamClientInfoInterceptor(clientInfoHeader)
 
     /**
@@ -78,7 +75,7 @@ object StreamOkHttpInterceptors {
      * @param apiKey The API key to add.
      * @return An OkHttp interceptor.
      */
-    fun apiKey(apiKey: StreamApiKey): Interceptor = StreamApiKeyInterceptor(apiKey)
+    public fun apiKey(apiKey: StreamApiKey): Interceptor = StreamApiKeyInterceptor(apiKey)
 
     /**
      * Creates an OkHttp interceptor that parses and throws
@@ -87,6 +84,6 @@ object StreamOkHttpInterceptors {
      * @param jsonParser JSON parser used to decode error payloads when requests fail.
      * @return An OkHttp interceptor.
      */
-    fun error(jsonParser: StreamJsonSerialization): Interceptor =
+    public fun error(jsonParser: StreamJsonSerialization): Interceptor =
         StreamEndpointErrorInterceptor(jsonParser)
 }

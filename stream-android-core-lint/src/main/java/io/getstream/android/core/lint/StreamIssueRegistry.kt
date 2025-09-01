@@ -22,6 +22,7 @@ import com.android.tools.lint.detector.api.Issue
 import io.getstream.android.core.lint.detectors.ExposeAsStateFlowDetector
 import io.getstream.android.core.lint.detectors.KeepInstanceDetector
 import io.getstream.android.core.lint.detectors.MustBeInternalDetector
+import io.getstream.android.core.lint.detectors.StreamApiExplicitMarkerDetector
 import io.getstream.android.core.lint.detectors.StreamCoreApiDetector
 import io.getstream.android.core.lint.detectors.SuspendRunCatchingDetector
 
@@ -34,7 +35,7 @@ class StreamIssueRegistry : IssueRegistry() {
             KeepInstanceDetector.ISSUE,
             SuspendRunCatchingDetector.ISSUE,
             ExposeAsStateFlowDetector.ISSUE,
-            StreamCoreApiDetector.ISSUE,
+            StreamApiExplicitMarkerDetector.ISSUE
         )
 
     override val vendor =

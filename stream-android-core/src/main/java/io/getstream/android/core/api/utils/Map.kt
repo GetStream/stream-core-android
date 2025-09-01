@@ -15,7 +15,8 @@
  */
 package io.getstream.android.core.api.utils
 
-import io.getstream.android.core.annotations.StreamCoreApi
+import io.getstream.android.core.annotations.StreamInternalApi
+import io.getstream.android.core.annotations.StreamPublishedApi
 import java.util.concurrent.ConcurrentMap
 
 /**
@@ -25,8 +26,8 @@ import java.util.concurrent.ConcurrentMap
  * @param defaultValue The function to compute the value.
  * @return The value for the given key.
  */
-@StreamCoreApi
-inline fun <K, V> ConcurrentMap<K, V>.streamComputeIfAbsent(key: K, defaultValue: () -> V): V {
+@StreamInternalApi
+public inline fun <K, V> ConcurrentMap<K, V>.streamComputeIfAbsent(key: K, defaultValue: () -> V): V {
     this[key]?.let {
         return it
     }

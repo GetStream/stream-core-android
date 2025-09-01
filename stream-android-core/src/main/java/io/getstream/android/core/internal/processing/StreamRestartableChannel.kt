@@ -19,6 +19,7 @@ package io.getstream.android.core.internal.processing
 
 import java.util.concurrent.atomic.AtomicReference
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.selects.SelectClause1
 import kotlinx.coroutines.selects.SelectClause2
@@ -29,6 +30,7 @@ import kotlinx.coroutines.selects.SelectClause2
  * - When [start] is called after the channel was closed-for-send, it swaps in a fresh channel.
  * - Adds `*Safe` helpers that wrap send/trySend/close in Result for ergonomic error handling.
  */
+@OptIn(DelicateCoroutinesApi::class)
 internal class StreamRestartableChannel<T>(private val capacity: Int = Channel.BUFFERED) :
     Channel<T> {
 

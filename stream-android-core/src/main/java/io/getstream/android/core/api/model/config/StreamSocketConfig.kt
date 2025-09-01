@@ -15,7 +15,7 @@
  */
 package io.getstream.android.core.api.model.config
 
-import io.getstream.android.core.annotations.StreamCoreApi
+import io.getstream.android.core.annotations.StreamInternalApi
 import io.getstream.android.core.api.model.value.StreamApiKey
 import io.getstream.android.core.api.model.value.StreamHttpClientInfoHeader
 
@@ -27,16 +27,16 @@ import io.getstream.android.core.api.model.value.StreamHttpClientInfoHeader
  * @param authType The type of authentication used (e.g., "jwt").
  * @param clientInfoHeader The client info header.
  */
-@StreamCoreApi
+@StreamInternalApi
 @ConsistentCopyVisibility
-data class StreamSocketConfig
+public data class StreamSocketConfig
 private constructor(
     val url: String,
     val apiKey: StreamApiKey,
     val authType: String,
     val clientInfoHeader: StreamHttpClientInfoHeader,
 ) {
-    companion object {
+    public companion object {
         private const val JWT_AUTH_TYPE = "jwt"
         private const val ANONYMOUS_AUTH_TYPE = "anonymous"
 
@@ -48,7 +48,7 @@ private constructor(
          * @param clientInfoHeader The client info header.
          * @return A JWT-based [StreamSocketConfig].
          */
-        fun jwt(
+        public fun jwt(
             url: String,
             apiKey: StreamApiKey,
             clientInfoHeader: StreamHttpClientInfoHeader,
@@ -65,7 +65,7 @@ private constructor(
          * @param clientInfoHeader The client info header.
          * @return An anonymous [StreamSocketConfig].
          */
-        fun anonymous(
+        public fun anonymous(
             url: String,
             apiKey: StreamApiKey,
             clientInfoHeader: StreamHttpClientInfoHeader,
@@ -83,7 +83,7 @@ private constructor(
          * @param clientInfoHeader The client info header.
          * @return A custom [StreamSocketConfig].
          */
-        fun custom(
+        public fun custom(
             url: String,
             apiKey: StreamApiKey,
             authType: String,

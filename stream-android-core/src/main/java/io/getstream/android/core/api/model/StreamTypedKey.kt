@@ -15,16 +15,16 @@
  */
 package io.getstream.android.core.api.model
 
-import io.getstream.android.core.annotations.StreamCoreApi
+import io.getstream.android.core.annotations.StreamInternalApi
 
 /**
  * A typed key that can be used to disambiguate between different types of requests.
  *
  * @property id The unique identifier for the key.
  */
-@StreamCoreApi
-data class StreamTypedKey<T>(val id: Any) {
-    companion object {
+@StreamInternalApi
+public data class StreamTypedKey<T>(val id: Any) {
+    public companion object {
         /**
          * Creates a new [StreamTypedKey] with the given [id] and type [T].
          *
@@ -32,7 +32,7 @@ data class StreamTypedKey<T>(val id: Any) {
          * @return A new [StreamTypedKey] with the given [id] and type [T].
          * @receiver id The unique identifier for the key.
          */
-        inline fun <reified T> Any.asStreamTypedKey() = StreamTypedKey<T>(this)
+        public inline fun <reified T> Any.asStreamTypedKey(): StreamTypedKey<T> = StreamTypedKey(this)
 
         /**
          * Creates a new [StreamTypedKey] with a random [id] and type [T].
@@ -40,6 +40,6 @@ data class StreamTypedKey<T>(val id: Any) {
          * @param T The type of the key.
          * @return A new [StreamTypedKey] with a random [id] and type [T].
          */
-        fun <T> randomExecutionKey() = StreamTypedKey<T>(Any())
+        public fun <T> randomExecutionKey(): StreamTypedKey<T> = StreamTypedKey(Any())
     }
 }

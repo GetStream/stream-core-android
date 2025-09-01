@@ -15,7 +15,7 @@
  */
 package io.getstream.android.core.api.socket.listeners
 
-import io.getstream.android.core.annotations.StreamCoreApi
+import io.getstream.android.core.annotations.StreamInternalApi
 import io.getstream.android.core.api.model.connection.StreamConnectionState
 
 /**
@@ -24,26 +24,26 @@ import io.getstream.android.core.api.model.connection.StreamConnectionState
  * This interface defines methods to handle socket state changes and events. Implement this
  * interface to receive updates about the socket connection state and incoming events.
  */
-@StreamCoreApi
-interface StreamClientListener {
+@StreamInternalApi
+public interface StreamClientListener {
     /**
      * Called when the socket connection state changes.
      *
      * @param state The new state of the WebSocket connection.
      */
-    fun onState(state: StreamConnectionState) {}
+    public fun onState(state: StreamConnectionState) {}
 
     /**
      * Called when a new event is received from the socket.
      *
      * @param event The event received from the WebSocket.
      */
-    fun onEvent(event: Any) {}
+    public fun onEvent(event: Any) {}
 
     /**
      * Called when an error occurs on the client.
      *
      * @param err The error that occurred.
      */
-    fun onError(err: Throwable) {}
+    public fun onError(err: Throwable) {}
 }

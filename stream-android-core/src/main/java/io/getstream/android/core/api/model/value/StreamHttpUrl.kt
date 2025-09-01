@@ -15,7 +15,7 @@
  */
 package io.getstream.android.core.api.model.value
 
-import io.getstream.android.core.annotations.StreamCoreApi
+import io.getstream.android.core.annotations.StreamPublishedApi
 import java.net.URI
 
 /**
@@ -23,10 +23,10 @@ import java.net.URI
  *
  * @property rawValue The raw value of the HTTP URL.
  */
-@StreamCoreApi
+@StreamPublishedApi
 @JvmInline
-value class StreamHttpUrl(val rawValue: String) {
-    companion object {
+public value class StreamHttpUrl(public val rawValue: String) {
+    public companion object {
         /**
          * Creates a new [StreamHttpUrl] from a string.
          *
@@ -34,7 +34,7 @@ value class StreamHttpUrl(val rawValue: String) {
          * @return The created [StreamHttpUrl].
          * @throws IllegalArgumentException If the value is blank or not a valid URL.
          */
-        fun fromString(value: String): StreamHttpUrl {
+        public fun fromString(value: String): StreamHttpUrl {
             require(value.isNotBlank()) { "HTTP URL must not be blank" }
             val validURl =
                 try {

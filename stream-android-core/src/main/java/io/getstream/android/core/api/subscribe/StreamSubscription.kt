@@ -15,7 +15,7 @@
  */
 package io.getstream.android.core.api.subscribe
 
-import io.getstream.android.core.annotations.StreamCoreApi
+import io.getstream.android.core.annotations.StreamPublishedApi
 
 /**
  * Handle returned by every **Stream** `subscribe(…)` call.
@@ -29,8 +29,8 @@ import io.getstream.android.core.annotations.StreamCoreApi
  * Instances are **single-shot**: once you invoke [cancel] the subscription is permanently
  * terminated and calling `cancel()` again has no effect.
  */
-@StreamCoreApi
-interface StreamSubscription {
+@StreamPublishedApi
+public interface StreamSubscription {
     /**
      * Terminates this subscription.
      *
@@ -40,5 +40,5 @@ interface StreamSubscription {
      *
      * The operation is idempotent; invoking it multiple times is safe.
      */
-    fun cancel()
+    public fun cancel()
 }

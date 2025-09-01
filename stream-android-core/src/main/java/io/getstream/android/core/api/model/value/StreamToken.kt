@@ -16,16 +16,17 @@
 package io.getstream.android.core.api.model.value
 
 import android.annotation.SuppressLint
+import io.getstream.android.core.annotations.StreamPublishedApi
 
 /**
  * Authentication token value-object.
  *
  * Always construct it with [fromString] so we can enforce invariants.
  */
-@SuppressLint("StreamCoreApiMissing")
+@StreamPublishedApi
 @JvmInline
-value class StreamToken private constructor(val rawValue: String) {
-    companion object {
+public value class StreamToken private constructor(public val rawValue: String) {
+    public companion object {
         /**
          * Creates a new [StreamToken] from a string.
          *
@@ -33,7 +34,7 @@ value class StreamToken private constructor(val rawValue: String) {
          * @return The created [StreamToken].
          * @throws IllegalArgumentException If the token is blank.
          */
-        fun fromString(token: String): StreamToken {
+        public fun fromString(token: String): StreamToken {
             require(token.isNotBlank()) { "Token must not be blank" }
             return StreamToken(token)
         }
