@@ -4,9 +4,28 @@
       <verify-metadata>true</verify-metadata>
       <verify-signatures>true</verify-signatures>
       <trusted-artifacts>
+         <!-- Trust test and build dependencies -->
          <trust file=".*-javadoc[.]jar" regex="true"/>
          <trust file=".*-sources[.]jar" regex="true"/>
          <trust group="gradle" name="gradle"/>
+         <trust file=".*.module" regex="true"/>
+         <trust file=".*.pom" regex="true"/>
+         <trust group="org.robolectric"/>
+         <trust group="io.mockk"/>
+         <trust group="org.junit.jupiter"/>
+         <trust group="org.junit.platform"/>
+         <trust group="net.bytebuddy"/>
+         <trust group="com.ibm.icu"/>
+         <trust group="org.objenesis"/>
+         <trust group="com.almworks.sqlite4java"/>
+         <trust group="com.google.guava"/>
+         <trust group="androidx.lifecycle"/>
+         <trust group="androidx.*" regex="true"/>
+         <trust group="com.google.testparameterinjector"/>
+         <trust group="org.opentest4j"/>
+         <trust group="org.conscrypt"/>
+         <trust group="org.yaml"/>
+         <trust group="com.gradle" name="develocity-gradle-plugin"/>
       </trusted-artifacts>
       <ignored-keys>
          <ignored-key id="02216ED811210DAA" reason="Key couldn't be downloaded from any key server"/>
