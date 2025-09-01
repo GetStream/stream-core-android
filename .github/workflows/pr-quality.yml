@@ -1,5 +1,5 @@
 # .github/workflows/pr-quality-check.yml
-name: PR Quality check
+name: PR checklist
 
 # Add a constant anchor we can always find
 env:
@@ -15,7 +15,7 @@ permissions:
   issues: write
 
 jobs:
-  pr-quality:
+  pr-checklist:
     runs-on: ubuntu-latest
 
     steps:
