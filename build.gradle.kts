@@ -26,7 +26,6 @@ spotless {
         val currentYear = Calendar.getInstance().get(Calendar.YEAR).toString()
         target("**/*.kt")
         targetExclude("**/build/**/*.kt")
-        ktfmt().kotlinlangStyle()
         licenseHeaderFile(file("./config/license/generated/license-$currentYear.txt"))
     }
 }
