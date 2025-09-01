@@ -23,7 +23,6 @@ import io.getstream.android.core.lint.detectors.ExposeAsStateFlowDetector
 import io.getstream.android.core.lint.detectors.KeepInstanceDetector
 import io.getstream.android.core.lint.detectors.MustBeInternalDetector
 import io.getstream.android.core.lint.detectors.StreamApiExplicitMarkerDetector
-import io.getstream.android.core.lint.detectors.StreamCoreApiDetector
 import io.getstream.android.core.lint.detectors.SuspendRunCatchingDetector
 
 /** The stream lint rules registry. */
