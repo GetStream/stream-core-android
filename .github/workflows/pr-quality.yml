@@ -100,26 +100,46 @@ jobs:
             echo "has_failures=false" >> "$GITHUB_OUTPUT"
           fi
 
-      # Find existing comment by unique anchor (search newest first)
-      - name: Find PR Quality Check comment
-        id: find_comment
-        uses: peter-evans/find-comment@v3
+            # Compute the latest sticky comment id (by our anchor). If none, output is empty.
+      - name: Compute sticky comment id
+        id: sticky_comment
+        uses: actions/github-script@v7
         with:
-          issue-number: ${{ github.event.pull_request.number }}
-          body-includes: "<!-- pr-quality-anchor -->"
-          direction: last
+          script: |
+            const anchor = "<!-- pr-quality-anchor -->"; // must match the body below
+            const { owner, repo } = context.repo;
+            const issue_number = context.payload.pull_request.number;
 
-      # Update or create the sticky comment on failure
+            // Get up to 100 comments; paginate to be safe.
+            const comments = await github.paginate(
+              github.rest.issues.listComments,
+              { owner, repo, issue_number, per_page: 100 }
+            );
+
+            const matches = comments.filter(c => (c.body || "").includes(anchor));
+            if (matches.length === 0) {
+              core.setOutput("comment_id", "");
+              return;
+            }
+            // Pick the most recently updated one
+            matches.sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at));
+            core.setOutput("comment_id", String(matches[0].id));
+
+      - name: Sticky comment id
+        if: always()
+        run: echo "sticky comment-id=${{ steps.sticky_comment.outputs.comment_id }}"
+
+      # Update/create the sticky comment on failure
       - name: Create or update failure comment
         if: failure()
         uses: peter-evans/create-or-update-comment@v4
         with:
           issue-number: ${{ github.event.pull_request.number }}
-          comment-id: ${{ steps.find_comment.outputs.comment-id }}
+          comment-id: ${{ steps.sticky_comment.outputs.comment_id }}   # empty => creates new
           edit-mode: replace
           body: |
             <!-- pr-quality-anchor -->
-            ### PR Quality Check ❌ Failed
+            ### PR checklist ❌
 
             The following issues were detected:
 
@@ -136,11 +156,11 @@ jobs:
         uses: peter-evans/create-or-update-comment@v4
         with:
           issue-number: ${{ github.event.pull_request.number }}
-          comment-id: ${{ steps.find_comment.outputs.comment-id }}
+          comment-id: ${{ steps.sticky_comment.outputs.comment_id }}   # updates if found
           edit-mode: replace
           body: |
             <!-- pr-quality-anchor -->
-            ### PR Quality Check ✅ Passed
+            ### PR checklist ✅
 
             All required conditions are satisfied:
             - Title length is OK (or ignored by label).
