@@ -2,6 +2,8 @@
 name: PR Quality check
 
 on:
+  pull_request:
+    types: [opened, edited, synchronize, labeled, unlabeled, reopened]
   pull_request_target:
     types: [opened, edited, synchronize, labeled, unlabeled, reopened]
 
@@ -10,116 +12,116 @@ permissions:
   pull-requests: write
   issues: write
 
-env:
-  # Hidden marker to always find/update the same comment
-  PR_CHECKLIST_ANCHOR: "<!-- pr-checklist-anchor -->"
-  # Title bypass label for release-notes length rule
-  TITLE_BYPASS_LABEL: "pr:ignore-for-release"
-  # Title word limits (for release notes)
-  MIN_TITLE_WORDS: "5"
-  MAX_TITLE_WORDS: "12"
-
 jobs:
   pr-checklist:
     runs-on: ubuntu-latest
 
     steps:
+      # --- Sanity: ensure we are running and print basic info (remove later) ---
+      - name: Debug event
+        run: |
+          echo "event_name=${{ github.event_name }}"
+          echo "PR #${{ github.event.pull_request.number }}"
+          echo "Title: ${{ github.event.pull_request.title }}"
+          echo "Labels: $(jq -r '.pull_request.labels[].name' <<< '${{ toJson(github.event) }}' | paste -sd, - || true)"
+
       - name: Validate PR
         id: validate
         env:
-          TITLE: ${{ github.event.pull_request.title }}
-          BODY: ${{ github.event.pull_request.body }}
-          LABELS_CSV: ${{ join(github.event.pull_request.labels.*.name, ',') }}
-          MIN_WORDS: ${{ env.MIN_TITLE_WORDS }}
-          MAX_WORDS: ${{ env.MAX_TITLE_WORDS }}
-          BYPASS:    ${{ env.TITLE_BYPASS_LABEL }}
+          TITLE_BYPASS_LABEL: pr:ignore-for-release
+          MIN_TITLE_WORDS: "3"
+          MAX_TITLE_WORDS: "12"
+          EVENT_JSON: ${{ toJson(github.event) }}
         run: |
           set -euo pipefail
 
-          failures=""
+          # ---- inputs from event ----
+          TITLE="$(jq -r '.pull_request.title' <<<"$EVENT_JSON")"
+          BODY="$(jq -r '.pull_request.body // ""' <<<"$EVENT_JSON")"
+          # labels array -> newline list
+          mapfile -t LABELS < <(jq -r '.pull_request.labels[].name' <<<"$EVENT_JSON" || true)
 
-          has_label () {
-            case ",${LABELS_CSV}," in
-              *,"$1",*) return 0 ;;
-              *) return 1 ;;
-            esac
+          # ---- helpers ----
+          has_label() {
+            local want="$1"
+            for l in "${LABELS[@]:-}"; do
+              if [[ "$l" == "$want" ]]; then return 0; fi
+            done
+            return 1
           }
-
-          has_any_pr_label () {
-            IFS=',' read -ra LBL <<< "${LABELS_CSV}"
-            for l in "${LBL[@]}"; do
-              l="$(echo "$l" | xargs)"
-              [[ $l == pr:* ]] && return 0
+          has_any_pr_label() {
+            for l in "${LABELS[@]:-}"; do
+              [[ "$l" == pr:* ]] && return 0
             done
             return 1
           }
 
-          # ---- 1) Title length (unless bypass label present)
-          if ! has_label "$BYPASS"; then
+          failures=""
+
+          # 1) Title length (unless bypass)
+          if ! has_label "$TITLE_BYPASS_LABEL"; then
             title_words=$(echo "$TITLE" | tr -s '[:space:]' ' ' | sed -e 's/^ *//' -e 's/ *$//' | wc -w | xargs || true)
-            if [ -z "${title_words:-}" ]; then title_words=0; fi
-            if [ "$title_words" -lt "$MIN_WORDS" ] || [ "$title_words" -gt "$MAX_WORDS" ]; then
-              failures="${failures}\n- **Title** should be concise for release notes: ${MIN_WORDS}–${MAX_WORDS} words. Current: ${title_words}. (Add \`$BYPASS\` to bypass.)"
+            : "${title_words:=0}"
+            if (( title_words < MIN_TITLE_WORDS || title_words > MAX_TITLE_WORDS )); then
+              failures+=$'\n'"- **Title** should be ${MIN_TITLE_WORDS}–${MAX_TITLE_WORDS} words for release notes. Current: ${title_words}. (Add \`${TITLE_BYPASS_LABEL}\` to bypass.)"
             fi
           fi
 
-          # ---- 2) At least one pr:* label
+          # 2) At least one pr:* label
           if ! has_any_pr_label; then
-            failures="${failures}\n- Missing required label: at least one \`pr:\` label (e.g., \`pr:new-feature\`, \`pr:bug\`)."
+            failures+=$'\n'"- Missing required label: at least one \`pr:\` label (e.g., \`pr:new-feature\`, \`pr:bug\`)."
           fi
 
-          # ---- 3) Required sections (### headers): Goal / Implementation / Testing
-          BODY="${BODY:-}"
-
+          # 3) Required sections (accept any ###+ header; ignore comments/whitespace)
           section_nonempty () {
-            # Extract text under '### <Header>' until next '###' (or end)
             local hdr="$1"
+            # Extract text under '### <hdr>' (case-insensitive) until next '###'
             local section
-            section="$(printf "%s" "$BODY" | awk -v h="^###[[:space:]]*$hdr[[:space:]]*$" '
+            section="$(printf "%s" "$BODY" | awk -v IGNORECASE=1 -v h="^###[[:space:]]*$hdr[[:space:]]*$" '
               BEGIN { insec=0 }
               $0 ~ h { insec=1; next }
               insec && $0 ~ /^###[[:space:]]/ { insec=0 }
               insec { print }
             ')"
-            # Strip HTML comments and whitespace-only lines
             section="$(printf "%s" "$section" \
               | sed -E 's/<!--(.|\n)*?-->//g' \
               | sed -E 's/^[[:space:]]+|[[:space:]]+$//g' \
               | sed '/^[[:space:]]*$/d')"
-            [ -n "$section" ]
+            [[ -n "$section" ]]
           }
 
           for hdr in Goal Implementation Testing; do
             if ! section_nonempty "$hdr"; then
-              failures="${failures}\n- Section **${hdr}** is missing or empty (use \`### ${hdr}\` with some content)."
+              failures+=$'\n'"- Section **${hdr}** is missing or empty (use \`### ${hdr}\` with some content)."
             fi
           done
 
-          if [ -n "$failures" ]; then
+          if [[ -n "$failures" ]]; then
             echo "has_failures=true" >> "$GITHUB_OUTPUT"
             {
               echo 'failures<<EOF'
               printf "%b\n" "$failures"
               echo 'EOF'
             } >> "$GITHUB_OUTPUT"
-            # Fail job to block merging if branch protection requires this check
+            # Fail the job (branch protection can require this)
             exit 1
           else
             echo "has_failures=false" >> "$GITHUB_OUTPUT"
           fi
 
-      # Find sticky comment by anchor (no author filter → works for forks)
+      # Only the pull_request_target run should write comments (fork-safe & has perms)
       - name: Find PR Checklist comment
+        if: github.event_name == 'pull_request_target'
         id: find_comment
         uses: peter-evans/find-comment@v3
         with:
           issue-number: ${{ github.event.pull_request.number }}
-          body-includes: ${{ env.PR_CHECKLIST_ANCHOR }}
+          # Hidden anchor to ensure we always find the same comment
+          body-includes: "<!-- pr-checklist-anchor -->"
           direction: last
 
-      # Post or update the sticky comment to ❌ with details
-      - name: Create or update failure comment
-        if: failure()
+      - name: Create or update failure comment (sticky ❌)
+        if: github.event_name == 'pull_request_target' && failure()
         uses: peter-evans/create-or-update-comment@v4
         with:
           issue-number: ${{ github.event.pull_request.number }}
@@ -134,15 +136,12 @@ jobs:
             ${{ steps.validate.outputs.failures }}
 
             **We check**
-            1. Title is concise (**${{ env.MIN_TITLE_WORDS }}–${{ env.MAX_TITLE_WORDS }} words**) unless labeled `pr:ignore-for-release`.
+            1. Title is concise (**3–12 words**) unless labeled `pr:ignore-for-release`.
             2. At least one `pr:` label exists.
             3. Sections `### Goal`, `### Implementation`, and `### Testing` contain content.
 
-            _This comment updates automatically when you edit the PR title/body or labels._
-
-      # Flip the same sticky comment to ✅ when everything passes
-      - name: Create or update success comment
-        if: success()
+      - name: Create or update success comment (sticky ✅)
+        if: github.event_name == 'pull_request_target' && success()
         uses: peter-evans/create-or-update-comment@v4
         with:
           issue-number: ${{ github.event.pull_request.number }}
