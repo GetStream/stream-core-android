@@ -14,6 +14,7 @@ apply(from = "${rootDir}/scripts/publish-module.gradle")
 java {
     sourceCompatibility = JavaVersion.VERSION_11
     targetCompatibility = JavaVersion.VERSION_11
+    withSourcesJar()
 }
 kotlin {
     compilerOptions {
