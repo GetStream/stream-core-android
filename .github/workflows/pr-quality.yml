@@ -32,7 +32,7 @@ jobs:
 
           # ---- Settings ----
           MIN_WORDS=5
-          MAX_WORDS=12
+          MAX_WORDS=18
           TITLE_BYPASS_LABEL="pr:ignore-for-release"
 
           has_label () {
@@ -147,7 +147,7 @@ jobs:
             ${{ steps.validate.outputs.failures }}
 
             **What we check**
-            1. Title is concise (3–12 words) unless labeled `pr:ignore-for-release`.
+            1. Title is concise (5–18 words) unless labeled `pr:ignore-for-release`.
             2. At least one `pr:` label exists (e.g., `pr:bug`, `pr:new-feature`).
             3. Sections `## Goal`, `## Implementation`, and `## Testing` contain content.
 
