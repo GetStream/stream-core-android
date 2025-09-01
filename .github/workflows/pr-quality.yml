@@ -72,24 +72,26 @@ jobs:
             failures+=$'\n'"- Missing required label: at least one \`pr:\` label (e.g., \`pr:new-feature\`, \`pr:bug\`)."
           fi
 
-          # 3) Required sections (accept any ###+ header; ignore comments/whitespace)
+          # 3) Required sections (accept any header level >=2; ignore comments/whitespace)
           section_nonempty () {
             local hdr="$1"
-            # Extract text under '### <hdr>' (case-insensitive) until next '###'
+            # Match '##+ <hdr>' (two or more #'s), case-insensitive
             local section
-            section="$(printf "%s" "$BODY" | awk -v IGNORECASE=1 -v h="^###[[:space:]]*$hdr[[:space:]]*$" '
-              BEGIN { insec=0 }
-              $0 ~ h { insec=1; next }
-              insec && $0 ~ /^###[[:space:]]/ { insec=0 }
-              insec { print }
+            section="$(printf "%s" "$BODY" | awk -v IGNORECASE=1 -v h="^##+[[:space:]]*$hdr[[:space:]]*$" '
+            BEGIN { insec=0 }
+            $0 ~ h { insec=1; next }
+            insec && $0 ~ /^##+[[:space:]]/ { insec=0 }
+            insec { print }
             ')"
+            # Strip HTML comments and whitespace-only lines
             section="$(printf "%s" "$section" \
               | sed -E 's/<!--(.|\n)*?-->//g' \
-              | sed -E 's/^[[:space:]]+|[[:space:]]+$//g' \
-              | sed '/^[[:space:]]*$/d')"
+            | sed -E 's/^[[:space:]]+|[[:space:]]+$//g' \
+            | sed '/^[[:space:]]*$/d')"
             [[ -n "$section" ]]
           }
-
+  
+  
           for hdr in Goal Implementation Testing; do
             if ! section_nonempty "$hdr"; then
               failures+=$'\n'"- Section **${hdr}** is missing or empty (use \`### ${hdr}\` with some content)."
