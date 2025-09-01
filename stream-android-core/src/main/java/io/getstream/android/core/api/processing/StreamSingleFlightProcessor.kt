@@ -15,7 +15,7 @@
  */
 package io.getstream.android.core.api.processing
 
-import io.getstream.android.core.annotations.StreamCoreApi
+import io.getstream.android.core.annotations.StreamInternalApi
 import io.getstream.android.core.api.model.StreamTypedKey
 import io.getstream.android.core.internal.processing.StreamSingleFlightProcessorImpl
 import kotlinx.coroutines.CancellationException
@@ -53,8 +53,8 @@ import kotlinx.coroutines.CoroutineScope
  *
  * Implementations must be safe for concurrent use.
  */
-@StreamCoreApi
-interface StreamSingleFlightProcessor {
+@StreamInternalApi
+public interface StreamSingleFlightProcessor {
     /**
      * Runs [block], ensuring that **at most one execution** for [key] is in flight. Concurrent
      * callers with the same [key] await the same shared execution and receive its [Result].
@@ -67,32 +67,32 @@ interface StreamSingleFlightProcessor {
      *   cancelled. If the *awaiting caller* is cancelled, a [CancellationException] is thrown to
      *   that caller instead.
      */
-    suspend fun <T> run(key: StreamTypedKey<T>, block: suspend () -> T): Result<T>
+    public suspend fun <T> run(key: StreamTypedKey<T>, block: suspend () -> T): Result<T>
 
     /**
      * Checks if there is an in-flight execution for [key].
      *
      * @param key The key to check.
      */
-    fun <T> has(key: StreamTypedKey<T>): Boolean
+    public fun <T> has(key: StreamTypedKey<T>): Boolean
 
     /**
      * Cancels the current in-flight execution for [key], if any. Joiners will receive
      * `Result.failure(CancellationException)`. No-op if there is no in-flight execution.
      */
-    fun <T> cancel(key: StreamTypedKey<T>): Result<Unit>
+    public fun <T> cancel(key: StreamTypedKey<T>): Result<Unit>
 
     /**
      * Clears internal bookkeeping. Useful if another component owns lifecycle/cancellation and you
      * want to drop references.
      */
-    fun clear(cancelRunning: Boolean = true): Result<Unit>
+    public fun clear(cancelRunning: Boolean = true): Result<Unit>
 
     /**
      * Stops all execution and shuts down the runner. No further jobs are accepted. Stop is a
      * destructive action.
      */
-    fun stop(): Result<Unit>
+    public fun stop(): Result<Unit>
 }
 
 /**
@@ -101,6 +101,6 @@ interface StreamSingleFlightProcessor {
  * @param scope The coroutine scope to use for running the in-flight executions.
  * @return A new [StreamSingleFlightProcessor] instance.
  */
-@StreamCoreApi
-fun StreamSingleFlightProcessor(scope: CoroutineScope): StreamSingleFlightProcessor =
+@StreamInternalApi
+public fun StreamSingleFlightProcessor(scope: CoroutineScope): StreamSingleFlightProcessor =
     StreamSingleFlightProcessorImpl(scope)

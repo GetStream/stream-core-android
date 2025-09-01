@@ -15,7 +15,7 @@
  */
 package io.getstream.android.core.api.model.event
 
-import io.getstream.android.core.annotations.StreamCoreApi
+import io.getstream.android.core.annotations.StreamInternalApi
 
 /** Represents a WebSocket event for the Stream client. */
-@StreamCoreApi interface StreamClientWsEvent
+@StreamInternalApi public interface StreamClientWsEvent

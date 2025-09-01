@@ -15,7 +15,7 @@
  */
 package io.getstream.android.core.api.socket
 
-import io.getstream.android.core.annotations.StreamCoreApi
+import io.getstream.android.core.annotations.StreamInternalApi
 import io.getstream.android.core.api.log.StreamLogger
 import io.getstream.android.core.api.model.config.StreamSocketConfig
 import io.getstream.android.core.api.socket.listeners.StreamWebSocketListener
@@ -30,8 +30,8 @@ import io.getstream.android.core.internal.socket.StreamWebSocketImpl
  *
  * @param T The type of listener used to receive WebSocket events.
  */
-@StreamCoreApi
-interface StreamWebSocket<T : StreamWebSocketListener> : StreamSubscriptionManager<T> {
+@StreamInternalApi
+public interface StreamWebSocket<T : StreamWebSocketListener> : StreamSubscriptionManager<T> {
     /**
      * Opens the WebSocket connection using the provided configuration.
      *
@@ -39,7 +39,7 @@ interface StreamWebSocket<T : StreamWebSocketListener> : StreamSubscriptionManag
      *   authentication, and optional headers.
      * @return A [Result] indicating whether the connection was successfully initiated.
      */
-    fun open(config: StreamSocketConfig): Result<Unit>
+    public fun open(config: StreamSocketConfig): Result<Unit>
 
     /**
      * Closes the WebSocket connection.
@@ -48,7 +48,7 @@ interface StreamWebSocket<T : StreamWebSocketListener> : StreamSubscriptionManag
      *
      * @return A [Result] indicating whether the connection was successfully closed.
      */
-    fun close(): Result<Unit>
+    public fun close(): Result<Unit>
 
     /**
      * Sends binary data through the WebSocket connection.
@@ -57,7 +57,7 @@ interface StreamWebSocket<T : StreamWebSocketListener> : StreamSubscriptionManag
      * @return A [Result] containing the same [ByteArray] if successfully sent, or a failure if
      *   sending failed.
      */
-    fun send(data: ByteArray): Result<ByteArray>
+    public fun send(data: ByteArray): Result<ByteArray>
 
     /**
      * Sends a text message through the WebSocket connection.
@@ -66,7 +66,7 @@ interface StreamWebSocket<T : StreamWebSocketListener> : StreamSubscriptionManag
      * @return A [Result] containing the same [String] if successfully sent, or a failure if sending
      *   failed.
      */
-    fun send(text: String): Result<String>
+    public fun send(text: String): Result<String>
 }
 
 /**
@@ -77,8 +77,8 @@ interface StreamWebSocket<T : StreamWebSocketListener> : StreamSubscriptionManag
  * @param subscriptionManager The [StreamSubscriptionManager] to use for managing subscriptions.
  * @return A new [StreamWebSocket] instance.
  */
-@StreamCoreApi
-fun <T : StreamWebSocketListener> StreamWebSocket(
+@StreamInternalApi
+public fun <T : StreamWebSocketListener> StreamWebSocket(
     logger: StreamLogger,
     socketFactory: StreamWebSocketFactory,
     subscriptionManager: StreamSubscriptionManager<T>,

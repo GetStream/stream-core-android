@@ -15,17 +15,17 @@
  */
 package io.getstream.android.core.api.model.value
 
-import android.annotation.SuppressLint
+import io.getstream.android.core.annotations.StreamPublishedApi
 
 /**
  * Represents an API key for authentication.
  *
  * @property rawValue The raw value of the API key.
  */
-@SuppressLint("StreamCoreApiMissing")
+@StreamPublishedApi
 @JvmInline
-value class StreamApiKey private constructor(val rawValue: String) {
-    companion object {
+public value class StreamApiKey private constructor(public val rawValue: String) {
+    public companion object {
         /**
          * Creates a new [StreamApiKey] from a string.
          *
@@ -33,7 +33,7 @@ value class StreamApiKey private constructor(val rawValue: String) {
          * @return The created [StreamApiKey].
          * @throws IllegalArgumentException If the value is blank or contains only digits.
          */
-        fun fromString(value: String): StreamApiKey {
+        public fun fromString(value: String): StreamApiKey {
             require(value.isNotBlank()) { "API key must not be blank" }
             return StreamApiKey(value)
         }

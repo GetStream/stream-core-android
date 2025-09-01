@@ -15,7 +15,7 @@
  */
 package io.getstream.android.core.api.model.config
 
-import io.getstream.android.core.annotations.StreamCoreApi
+import io.getstream.android.core.annotations.StreamInternalApi
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 
@@ -26,8 +26,8 @@ import okhttp3.OkHttpClient
  * @param automaticInterceptors Whether to add automatic interceptors.
  * @param configuredInterceptors The configured interceptors.
  */
-@StreamCoreApi
-data class StreamHttpConfig(
+@StreamInternalApi
+public data class StreamHttpConfig(
     val httpBuilder: OkHttpClient.Builder,
     val automaticInterceptors: Boolean = true,
     val configuredInterceptors: Set<Interceptor> = emptySet(),

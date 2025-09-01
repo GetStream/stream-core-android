@@ -15,7 +15,7 @@
  */
 package io.getstream.android.core.api.subscribe
 
-import io.getstream.android.core.annotations.StreamCoreApi
+import io.getstream.android.core.annotations.StreamInternalApi
 import io.getstream.android.core.api.log.StreamLogger
 import io.getstream.android.core.internal.subscribe.StreamSubscriptionManagerImpl
 
@@ -37,16 +37,16 @@ import io.getstream.android.core.internal.subscribe.StreamSubscriptionManagerImp
  *
  * @param T the listener type (often a function type, e.g. `(Event) -> Unit`)
  */
-@StreamCoreApi
-interface StreamSubscriptionManager<T> {
+@StreamInternalApi
+public interface StreamSubscriptionManager<T> {
     /**
      * Subscription behavior options.
      *
      * @property retention Controls how the manager retains the listener reference.
      */
-    data class Options(val retention: Retention = Retention.AUTO_REMOVE) {
+    public data class Options(val retention: Retention = Retention.AUTO_REMOVE) {
         /** Retention policy for a subscribed listener. */
-        enum class Retention {
+        public enum class Retention {
             /**
              * The manager keeps only an ephemeral reference. If caller code drops all references to
              * the listener (and does not call `cancel()`), the listener is automatically removed
@@ -84,7 +84,7 @@ interface StreamSubscriptionManager<T> {
      * @return `Result.success(StreamSubscription)` when the listener was added;
      *   `Result.failure(Throwable)` if the operation cannot be completed (e.g., capacity limits).
      */
-    fun subscribe(listener: T, options: Options = Options()): Result<StreamSubscription>
+    public fun subscribe(listener: T, options: Options = Options()): Result<StreamSubscription>
 
     /**
      * Removes **all** listeners and releases related resources.
@@ -96,7 +96,7 @@ interface StreamSubscriptionManager<T> {
      * @return `Result.success(Unit)` if cleared successfully; `Result.failure(Throwable)`
      *   otherwise.
      */
-    fun clear(): Result<Unit>
+    public fun clear(): Result<Unit>
 
     /**
      * Executes [block] for every currently registered listener.
@@ -111,7 +111,7 @@ interface StreamSubscriptionManager<T> {
      * @return `Result.success(Unit)` on normal completion; `Result.failure(Throwable)` if iteration
      *   fails.
      */
-    fun forEach(block: (T) -> Unit): Result<Unit>
+    public fun forEach(block: (T) -> Unit): Result<Unit>
 }
 
 /**
@@ -123,8 +123,8 @@ interface StreamSubscriptionManager<T> {
  * @param maxWeakSubscriptions The maximum number of weak listeners.
  * @return A new [StreamSubscriptionManager] instance.
  */
-@StreamCoreApi
-fun <T> StreamSubscriptionManager(
+@StreamInternalApi
+public fun <T> StreamSubscriptionManager(
     logger: StreamLogger,
     maxStrongSubscriptions: Int = StreamSubscriptionManagerImpl.MAX_LISTENERS,
     maxWeakSubscriptions: Int = StreamSubscriptionManagerImpl.MAX_LISTENERS,

@@ -16,7 +16,7 @@
 package io.getstream.android.core.api.log
 
 import android.util.Log
-import io.getstream.android.core.annotations.StreamCoreApi
+import io.getstream.android.core.annotations.StreamInternalApi
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.math.min
 
@@ -26,17 +26,17 @@ import kotlin.math.min
  * Implementations decide how loggers are created for specific tags and how log messages are
  * emitted.
  */
-@StreamCoreApi
-interface StreamLoggerProvider {
+@StreamInternalApi
+public interface StreamLoggerProvider {
     /**
      * Creates a [StreamLogger] instance associated with the given tag.
      *
      * @param tag The tag to identify log messages. Typically corresponds to a class or module name.
      * @return A [StreamLogger] that will emit log messages using the given tag.
      */
-    fun taggedLogger(tag: String): StreamLogger
+    public fun taggedLogger(tag: String): StreamLogger
 
-    companion object {
+    public companion object {
         private const val MAX_LEN = 4000
 
         /**
@@ -55,7 +55,8 @@ interface StreamLoggerProvider {
          * @return A [StreamLoggerProvider] that produces Android-backed [StreamLogger] instances.
          */
         @JvmStatic
-        fun defaultAndroidLogger(
+        @StreamInternalApi
+        public fun defaultAndroidLogger(
             minLevel: StreamLogger.LogLevel = StreamLogger.LogLevel.Verbose,
             honorAndroidIsLoggable: Boolean = false,
         ): StreamLoggerProvider =

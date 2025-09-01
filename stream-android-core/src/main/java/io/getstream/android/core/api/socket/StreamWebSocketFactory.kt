@@ -15,7 +15,7 @@
  */
 package io.getstream.android.core.api.socket
 
-import io.getstream.android.core.annotations.StreamCoreApi
+import io.getstream.android.core.annotations.StreamInternalApi
 import io.getstream.android.core.api.log.StreamLogger
 import io.getstream.android.core.api.model.config.StreamSocketConfig
 import io.getstream.android.core.internal.socket.factory.StreamWebSocketFactoryImpl
@@ -33,8 +33,8 @@ import okhttp3.WebSocketListener
  * The created socket will be configured with the given [StreamSocketConfig], and bound to the
  * provided [WebSocketListener] for low-level socket events.
  */
-@StreamCoreApi
-interface StreamWebSocketFactory {
+@StreamInternalApi
+public interface StreamWebSocketFactory {
     /**
      * Creates a new [WebSocket] instance.
      *
@@ -45,7 +45,7 @@ interface StreamWebSocketFactory {
      * @return A [Result] wrapping the created [WebSocket]. On success, the returned [WebSocket]
      *   will be connected and bound to [listener].
      */
-    fun create(
+    public fun create(
         streamSocketConfig: StreamSocketConfig,
         listener: WebSocketListener,
     ): Result<WebSocket>
@@ -58,8 +58,8 @@ interface StreamWebSocketFactory {
  * @param logger The logger to use for logging.
  * @return A [StreamWebSocketFactory] instance.
  */
-@StreamCoreApi
-fun StreamWebSocketFactory(
+@StreamInternalApi
+public fun StreamWebSocketFactory(
     okHttpClient: OkHttpClient = OkHttpClient(),
     logger: StreamLogger,
 ): StreamWebSocketFactory = StreamWebSocketFactoryImpl(okHttpClient = okHttpClient, logger = logger)

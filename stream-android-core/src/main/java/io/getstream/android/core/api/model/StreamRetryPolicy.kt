@@ -15,7 +15,7 @@
  */
 package io.getstream.android.core.api.model
 
-import io.getstream.android.core.annotations.StreamCoreApi
+import io.getstream.android.core.annotations.StreamInternalApi
 
 /**
  * **Retry-policy value object** used by Stream’s internal implementations.
@@ -44,9 +44,9 @@ import io.getstream.android.core.annotations.StreamCoreApi
  * @param nextBackOffDelayFunction Computes the delay for the upcoming retry. Receives the retry
  *   index and the previous delay (or `initialDelayMillis` on the first retry).
  */
-@StreamCoreApi
+@StreamInternalApi
 @ConsistentCopyVisibility
-data class StreamRetryPolicy
+public data class StreamRetryPolicy
 private constructor(
     val minRetries: Int,
     val maxRetries: Int,
@@ -56,7 +56,7 @@ private constructor(
     val giveUpFunction: (retry: Int, cause: Throwable) -> Boolean,
     val nextBackOffDelayFunction: (retry: Int, previousDelay: Long) -> Long,
 ) {
-    companion object {
+    public companion object {
         /**
          * Creates an **exponential back-off** policy.
          *
@@ -83,7 +83,7 @@ private constructor(
          * @param initialDelayMillis Delay before the *first* retry.
          * @param giveUp Custom predicate to override the default “> maxRetries”.
          */
-        fun exponential(
+        public fun exponential(
             minRetries: Int = 1,
             maxRetries: Int = 5,
             backoffStepMillis: Long = 250,
@@ -123,7 +123,7 @@ private constructor(
          *
          * Parameter semantics match [exponential].
          */
-        fun linear(
+        public fun linear(
             minRetries: Int = 1,
             maxRetries: Int = 5,
             backoffStepMillis: Long = 250,
@@ -155,7 +155,7 @@ private constructor(
          * …
          * ```
          */
-        fun fixed(
+        public fun fixed(
             minRetries: Int = 1,
             maxRetries: Int = 5,
             delayMillis: Long = 500,
@@ -200,7 +200,7 @@ private constructor(
          * @param nextDelay Lambda receives **1-based retry index** and previous delay (or
          *   `initialDelayMillis` for the first retry) and must return the next delay in **ms**.
          */
-        fun custom(
+        public fun custom(
             minRetries: Int,
             maxRetries: Int,
             minBackoffMills: Long,

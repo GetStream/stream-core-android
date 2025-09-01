@@ -8,8 +8,7 @@
     </issue>
     <issue id="SuspendRunCatching" severity="error"/>
     <issue id="ExposeAsStateFlow" severity="error"/>
-    <issue id="StreamCoreApiMissing" severity="error">
+    <issue id="StreamApiExplicitMarker" severity="error">
         <option name="packages" value="io.getstream.android.core.api.*,io.getstream.android.core.api" />
-        <option name="exclude_packages" value="io.getstream.android.core.api.model.value.*" />
     </issue>
 </lint>

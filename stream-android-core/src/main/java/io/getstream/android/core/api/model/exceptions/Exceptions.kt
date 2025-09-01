@@ -15,7 +15,7 @@
  */
 package io.getstream.android.core.api.model.exceptions
 
-import io.getstream.android.core.annotations.StreamCoreApi
+import io.getstream.android.core.annotations.StreamPublishedApi
 import java.io.IOException
 
 /**
@@ -26,8 +26,8 @@ import java.io.IOException
  *
  * @property message The error message associated with this exception.
  */
-@StreamCoreApi
-open class StreamClientException(message: String = "", cause: Throwable? = null) :
+@StreamPublishedApi
+public open class StreamClientException(message: String = "", cause: Throwable? = null) :
     Exception(message, cause)
 
 /**
@@ -41,10 +41,10 @@ open class StreamClientException(message: String = "", cause: Throwable? = null)
  *   `null` otherwise.
  * @property cause The original exception that caused this error, if available, or `null` otherwise.
  */
-@StreamCoreApi
-class StreamEndpointException(
+@StreamPublishedApi
+public class StreamEndpointException(
     message: String = "",
-    val apiError: StreamEndpointErrorData? = null,
+    public val apiError: StreamEndpointErrorData? = null,
     cause: Throwable? = null,
 ) : IOException(message, cause)
 
@@ -58,6 +58,6 @@ class StreamEndpointException(
  * @property message A descriptive message about the failure.
  * @property causes The list of underlying exceptions that caused the failure.
  */
-@StreamCoreApi
-class StreamAggregateException(message: String = "", val causes: List<Throwable>) :
+@StreamPublishedApi
+public class StreamAggregateException(message: String = "", public val causes: List<Throwable>) :
     StreamClientException(message)

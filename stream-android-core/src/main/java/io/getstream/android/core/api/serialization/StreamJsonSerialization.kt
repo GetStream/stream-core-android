@@ -15,7 +15,7 @@
  */
 package io.getstream.android.core.api.serialization
 
-import io.getstream.android.core.annotations.StreamCoreApi
+import io.getstream.android.core.annotations.StreamInternalApi
 
 /**
  * General contract for JSON serialization and deserialization.
@@ -27,8 +27,8 @@ import io.getstream.android.core.annotations.StreamCoreApi
  * Implementations are expected to provide robust error handling and return results wrapped in
  * [Result].
  */
-@StreamCoreApi
-interface StreamJsonSerialization {
+@StreamInternalApi
+public interface StreamJsonSerialization {
     /**
      * Converts an object into its JSON string representation.
      *
@@ -36,7 +36,7 @@ interface StreamJsonSerialization {
      * @return A [Result] containing the JSON string if successful, or a failure with the underlying
      *   exception if serialization fails.
      */
-    fun toJson(any: Any): Result<String>
+    public fun toJson(any: Any): Result<String>
 
     /**
      * Converts a JSON string into an object of the specified class.
@@ -46,7 +46,7 @@ interface StreamJsonSerialization {
      * @return A [Result] containing the deserialized object if successful, or a failure with the
      *   underlying exception if deserialization fails.
      */
-    fun <T : Any> fromJson(raw: String, clazz: Class<T>): Result<T>
+    public fun <T : Any> fromJson(raw: String, clazz: Class<T>): Result<T>
 }
 
 /**
@@ -57,7 +57,7 @@ interface StreamJsonSerialization {
  *   underlying exception if deserialization fails.
  * @see [StreamJsonSerialization.fromJson]
  */
-@StreamCoreApi
+@StreamInternalApi
 @JvmSynthetic
-inline fun <reified T : Any> StreamJsonSerialization.fromJson(raw: String): Result<T> =
+public inline fun <reified T : Any> StreamJsonSerialization.fromJson(raw: String): Result<T> =
     fromJson(raw, T::class.java)

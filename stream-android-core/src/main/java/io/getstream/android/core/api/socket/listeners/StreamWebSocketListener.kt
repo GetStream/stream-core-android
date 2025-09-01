@@ -15,7 +15,7 @@
  */
 package io.getstream.android.core.api.socket.listeners
 
-import io.getstream.android.core.annotations.StreamCoreApi
+import io.getstream.android.core.annotations.StreamInternalApi
 import io.getstream.android.core.api.subscribe.StreamSubscription
 import okhttp3.Response
 import okio.ByteString
@@ -49,28 +49,28 @@ import okio.ByteString
  * @see StreamSubscription For lifecycle management of subscriptions.
  * @see okhttp3.WebSocketListener For the underlying OkHttp implementation.
  */
-@StreamCoreApi
-interface StreamWebSocketListener {
+@StreamInternalApi
+public interface StreamWebSocketListener {
     /**
      * Called when the socket connection is established.
      *
      * @param response The handshake response returned by the server.
      */
-    fun onOpen(response: Response) {}
+    public fun onOpen(response: Response) {}
 
     /**
      * Called when a new binary message is received from the server.
      *
      * @param bytes The raw binary payload received.
      */
-    fun onMessage(bytes: ByteString) {}
+    public fun onMessage(bytes: ByteString) {}
 
     /**
      * Called when a new text message is received from the server.
      *
      * @param text The UTF-8 encoded text payload received.
      */
-    fun onMessage(text: String) {}
+    public fun onMessage(text: String) {}
 
     /**
      * Called when an error occurs on the socket.
@@ -78,7 +78,7 @@ interface StreamWebSocketListener {
      * @param t The throwable cause of the failure.
      * @param response The optional server response associated with the error.
      */
-    fun onFailure(t: Throwable, response: Response?) {}
+    public fun onFailure(t: Throwable, response: Response?) {}
 
     /**
      * Called when the socket connection has been closed.
@@ -86,7 +86,7 @@ interface StreamWebSocketListener {
      * @param code The closure status code as defined by RFC 6455.
      * @param reason The reason message provided by the peer, if any.
      */
-    fun onClosed(code: Int, reason: String) {}
+    public fun onClosed(code: Int, reason: String) {}
 
     /**
      * Called when the socket is about to close.
@@ -94,5 +94,5 @@ interface StreamWebSocketListener {
      * @param code The closure status code as defined by RFC 6455.
      * @param reason The reason message provided by the peer, if any.
      */
-    fun onClosing(code: Int, reason: String) {}
+    public fun onClosing(code: Int, reason: String) {}
 }

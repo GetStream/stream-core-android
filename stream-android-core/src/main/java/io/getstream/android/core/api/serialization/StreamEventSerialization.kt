@@ -15,7 +15,7 @@
  */
 package io.getstream.android.core.api.serialization
 
-import io.getstream.android.core.annotations.StreamCoreApi
+import io.getstream.android.core.annotations.StreamInternalApi
 import io.getstream.android.core.api.model.event.StreamClientWsEvent
 import io.getstream.android.core.internal.serialization.StreamClientEventSerializationImpl
 
@@ -27,8 +27,8 @@ import io.getstream.android.core.internal.serialization.StreamClientEventSeriali
  *
  * @param T The product event type handled by this interface.
  */
-@StreamCoreApi
-interface StreamEventSerialization<T> {
+@StreamInternalApi
+public interface StreamEventSerialization<T> {
 
     /**
      * Encodes a product event into a [String] suitable for transport or storage.
@@ -37,7 +37,7 @@ interface StreamEventSerialization<T> {
      * @return `Result.success(String)` when encoding succeeds, or `Result.failure(Throwable)` when
      *   the process fails.
      */
-    fun serialize(data: T): Result<String>
+    public fun serialize(data: T): Result<String>
 
     /**
      * Decodes a product event from a [String] representation.
@@ -46,7 +46,7 @@ interface StreamEventSerialization<T> {
      * @return `Result.success(T)` when decoding succeeds, or `Result.failure(Throwable)` when the
      *   process fails.
      */
-    fun deserialize(raw: String): Result<T>
+    public fun deserialize(raw: String): Result<T>
 }
 
 /**
@@ -57,7 +57,7 @@ interface StreamEventSerialization<T> {
  *   deserialization.
  * @return A new [StreamEventSerialization] instance.
  */
-@StreamCoreApi
-fun StreamEventSerialization(
+@StreamInternalApi
+public fun StreamEventSerialization(
     jsonParser: StreamJsonSerialization
 ): StreamEventSerialization<StreamClientWsEvent> = StreamClientEventSerializationImpl(jsonParser)

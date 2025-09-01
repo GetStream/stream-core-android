@@ -15,24 +15,24 @@
  */
 package io.getstream.android.core.api.model.value
 
-import android.annotation.SuppressLint
+import io.getstream.android.core.annotations.StreamPublishedApi
 
 /**
  * Represents a user ID.
  *
  * @property rawValue The raw value of the user ID.
  */
-@SuppressLint("StreamCoreApiMissing")
+@StreamPublishedApi
 @JvmInline
-value class StreamUserId private constructor(val rawValue: String) {
-    companion object {
+public value class StreamUserId private constructor(public val rawValue: String) {
+    public companion object {
         /**
          * Creates a [StreamUserId] from a [rawValue].
          *
          * @param rawValue The raw value of the user ID.
          * @return A [StreamUserId] instance.
          */
-        fun fromString(rawValue: String): StreamUserId {
+        public fun fromString(rawValue: String): StreamUserId {
             require(rawValue.isNotBlank()) { "User ID cannot be blank" }
             return StreamUserId(rawValue)
         }

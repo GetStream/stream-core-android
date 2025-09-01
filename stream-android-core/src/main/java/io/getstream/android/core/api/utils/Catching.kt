@@ -15,7 +15,7 @@
  */
 package io.getstream.android.core.api.utils
 
-import io.getstream.android.core.annotations.StreamCoreApi
+import io.getstream.android.core.annotations.StreamInternalApi
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
@@ -27,9 +27,9 @@ import kotlin.coroutines.cancellation.CancellationException
  * - On **cancellation**: **rethrows** [CancellationException].
  * - On **other exceptions**: `Result.failure(cause)`.
  */
-@StreamCoreApi
+@StreamInternalApi
 @OptIn(ExperimentalContracts::class)
-inline fun <T> runCatchingCancellable(block: () -> T): Result<T> {
+public inline fun <T> runCatchingCancellable(block: () -> T): Result<T> {
     contract { callsInPlace(block, InvocationKind.AT_MOST_ONCE) }
     return try {
         Result.success(block())

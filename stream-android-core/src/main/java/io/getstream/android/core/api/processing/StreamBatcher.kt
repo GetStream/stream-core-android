@@ -15,7 +15,7 @@
  */
 package io.getstream.android.core.api.processing
 
-import io.getstream.android.core.annotations.StreamCoreApi
+import io.getstream.android.core.annotations.StreamInternalApi
 import io.getstream.android.core.internal.processing.StreamBatcherImpl
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
@@ -44,15 +44,15 @@ import kotlinx.coroutines.channels.Channel
  * - Coalescing high-frequency events (socket messages, UI updates) into fewer handler invocations.
  * - Rate-limiting downstream work (parsing, I/O, UI recomposition).
  */
-@StreamCoreApi
-interface StreamBatcher<T> {
+@StreamInternalApi
+public interface StreamBatcher<T> {
     /**
      * Starts the processor if it's not already running.
      *
      * @return `Result.success(Unit)` if the processor was started successfully; otherwise a
      *   `Result.failure(cause)` describing why the start failed.
      */
-    suspend fun start(): Result<Unit>
+    public suspend fun start(): Result<Unit>
 
     /**
      * Registers the batch handler to be invoked whenever a batch is ready.
@@ -67,7 +67,7 @@ interface StreamBatcher<T> {
      *
      * Calling this method replaces any previously registered handler.
      */
-    fun onBatch(handler: suspend (List<T>, Long, Int) -> Unit)
+    public fun onBatch(handler: suspend (List<T>, Long, Int) -> Unit)
 
     /**
      * Enqueues a single item for debounced processing.
@@ -81,7 +81,7 @@ interface StreamBatcher<T> {
      *
      * @param item The item to enqueue.
      */
-    suspend fun enqueue(item: T): Result<Unit>
+    public suspend fun enqueue(item: T): Result<Unit>
 
     /**
      * Enqueues a single item for debounced processing.
@@ -91,7 +91,7 @@ interface StreamBatcher<T> {
      * - `true` if the item was accepted,
      * - `false` if the processor is closed/stopped or cannot accept the item.
      */
-    fun offer(item: T): Boolean
+    public fun offer(item: T): Boolean
 
     /**
      * Stops the processor and releases resources.
@@ -103,7 +103,7 @@ interface StreamBatcher<T> {
      * @return `Result.success(Unit)` on a successful stop; `Result.failure(cause)` if stopping
      *   failed.
      */
-    fun stop(): Result<Unit>
+    public fun stop(): Result<Unit>
 }
 
 /**
@@ -118,8 +118,8 @@ interface StreamBatcher<T> {
  * @param channelCapacity The capacity of the underlying channel.
  * @return A new [StreamBatcher] instance.
  */
-@StreamCoreApi
-fun <T> StreamBatcher(
+@StreamInternalApi
+public fun <T> StreamBatcher(
     scope: CoroutineScope,
     batchSize: Int = 10,
     initialDelayMs: Long = 100L,

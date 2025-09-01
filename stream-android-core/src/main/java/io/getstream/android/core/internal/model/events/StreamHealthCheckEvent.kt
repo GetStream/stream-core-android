@@ -17,11 +17,11 @@ package io.getstream.android.core.internal.model.events
 
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
-import io.getstream.android.core.annotations.StreamCoreApi
+import io.getstream.android.core.annotations.StreamPublishedApi
 import io.getstream.android.core.api.model.event.StreamClientWsEvent
 import java.util.Date
 
-@StreamCoreApi
+@StreamPublishedApi
 @JsonClass(generateAdapter = true)
 internal data class StreamHealthCheckEvent(
     @Json(name = "connection_id") val connectionId: String,

@@ -15,7 +15,7 @@
  */
 package io.getstream.android.core.api.processing
 
-import io.getstream.android.core.annotations.StreamCoreApi
+import io.getstream.android.core.annotations.StreamInternalApi
 import io.getstream.android.core.api.log.StreamLogger
 import io.getstream.android.core.internal.processing.StreamSerialProcessingQueueImpl
 import kotlinx.coroutines.CoroutineScope
@@ -46,8 +46,8 @@ import kotlinx.coroutines.channels.Channel
  *   the job may still run if it was already accepted by the queue (implementation-specific). Call
  *   [stop] to cancel/flush work at the queue level.
  */
-@StreamCoreApi
-interface StreamSerialProcessingQueue {
+@StreamInternalApi
+public interface StreamSerialProcessingQueue {
     /**
      * Submits a suspending [job] for **serialized** execution.
      *
@@ -65,7 +65,7 @@ interface StreamSerialProcessingQueue {
      *   job once accepted (implementation-specific). Use [stop] to cancel at the queue level.
      * - **Exceptions:** Exceptions thrown by [job] are captured and returned via [Result.failure].
      */
-    suspend fun <T : Any> submit(job: suspend () -> T): Result<T>
+    public suspend fun <T : Any> submit(job: suspend () -> T): Result<T>
 
     /**
      * Starts the processor if it's not already running.
@@ -73,7 +73,7 @@ interface StreamSerialProcessingQueue {
      * @return `Result.success(Unit)` if the processor was started successfully; otherwise a
      *   `Result.failure(cause)` describing why the start failed.
      */
-    suspend fun start(): Result<Unit>
+    public suspend fun start(): Result<Unit>
 
     /**
      * Stops the processor and **fails** outstanding work.
@@ -89,7 +89,7 @@ interface StreamSerialProcessingQueue {
      * @return [Result.success] if the processor was stopped successfully; otherwise a
      *   [Result.failure] describing why the stop failed.
      */
-    suspend fun stop(timeout: Long? = null): Result<Unit>
+    public suspend fun stop(timeout: Long? = null): Result<Unit>
 }
 
 /**
@@ -102,8 +102,8 @@ interface StreamSerialProcessingQueue {
  * @param capacity The capacity of the internal queue.
  * @return A new [StreamSerialProcessingQueue] instance.
  */
-@StreamCoreApi
-fun StreamSerialProcessingQueue(
+@StreamInternalApi
+public fun StreamSerialProcessingQueue(
     logger: StreamLogger,
     scope: CoroutineScope,
     autoStart: Boolean = true,

@@ -1,5 +1,8 @@
+@file:OptIn(ExperimentalAbiValidation::class)
+
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import io.getstream.core.Configuration
+import org.jetbrains.kotlin.gradle.dsl.abi.ExperimentalAbiValidation
 
 plugins {
     alias(libs.plugins.android.library)
@@ -19,10 +22,12 @@ rootProject.extra.apply {
 apply(from = "${rootDir}/scripts/publish-module.gradle")
 
 kotlin {
+    explicitApi()
     compilerOptions {
         jvmTarget.set(JvmTarget.JVM_11)
         freeCompilerArgs.addAll(
-            "-opt-in=io.getstream.android.core.annotations.StreamCoreApi", "-XXLanguage:+PropertyParamAnnotationDefaultTargetMode"
+            "-opt-in=io.getstream.android.core.annotations.StreamInternalApi",
+            "-XXLanguage:+PropertyParamAnnotationDefaultTargetMode"
         )
     }
 }

@@ -17,7 +17,7 @@ package io.getstream.android.core.api.model.connection
 
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
-import io.getstream.android.core.annotations.StreamCoreApi
+import io.getstream.android.core.annotations.StreamPublishedApi
 import java.util.Date
 import kotlin.collections.Map
 
@@ -38,22 +38,22 @@ import kotlin.collections.Map
  * @property lastActive The date and time when the user was last active.
  * @property name The name of the user.
  */
-@StreamCoreApi
+@StreamPublishedApi
 @JsonClass(generateAdapter = true)
-class StreamConnectedUser(
-    @Json(name = "created_at") val createdAt: Date,
-    @Json(name = "id") val id: String,
-    @Json(name = "language") val language: String,
-    @Json(name = "role") val role: String,
-    @Json(name = "updated_at") val updatedAt: Date,
-    @Json(name = "blocked_user_ids") val blockedUserIds: List<String> = emptyList(),
-    @Json(name = "teams") val teams: List<String>,
-    @Json(name = "custom") val custom: Map<String, Any?> = emptyMap(),
-    @Json(name = "deactivated_at") val deactivatedAt: Date? = null,
-    @Json(name = "deleted_at") val deletedAt: Date? = null,
-    @Json(name = "image") val image: String? = null,
-    @Json(name = "last_active") val lastActive: Date? = null,
-    @Json(name = "name") val name: String? = null,
+public class StreamConnectedUser(
+    @Json(name = "created_at") public val createdAt: Date,
+    @Json(name = "id") public val id: String,
+    @Json(name = "language") public val language: String,
+    @Json(name = "role") public val role: String,
+    @Json(name = "updated_at") public val updatedAt: Date,
+    @Json(name = "blocked_user_ids") public val blockedUserIds: List<String> = emptyList(),
+    @Json(name = "teams") public val teams: List<String>,
+    @Json(name = "custom") public val custom: Map<String, Any?> = emptyMap(),
+    @Json(name = "deactivated_at") public val deactivatedAt: Date? = null,
+    @Json(name = "deleted_at") public val deletedAt: Date? = null,
+    @Json(name = "image") public val image: String? = null,
+    @Json(name = "last_active") public val lastActive: Date? = null,
+    @Json(name = "name") public val name: String? = null,
 ) {
     /**
      * Returns a string representation of the [StreamConnectedUser] object.

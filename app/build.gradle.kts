@@ -1,7 +1,19 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(JvmTarget.JVM_11)
+        freeCompilerArgs.addAll(
+            "-opt-in=io.getstream.android.core.annotations.StreamInternalApi",
+            "-XXLanguage:+PropertyParamAnnotationDefaultTargetMode"
+        )
+    }
 }
 
 android {
@@ -42,6 +54,7 @@ android {
 dependencies {
 
     implementation(project(":stream-android-core"))
+    implementation(project(":stream-android-core-annotations"))
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)

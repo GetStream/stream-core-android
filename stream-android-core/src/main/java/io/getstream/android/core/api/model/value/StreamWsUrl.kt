@@ -15,7 +15,7 @@
  */
 package io.getstream.android.core.api.model.value
 
-import io.getstream.android.core.annotations.StreamCoreApi
+import io.getstream.android.core.annotations.StreamInternalApi
 import java.net.URI
 
 /**
@@ -23,10 +23,10 @@ import java.net.URI
  *
  * @property rawValue The raw value of the WebSocket URL.
  */
-@StreamCoreApi
+@StreamInternalApi
 @JvmInline
-value class StreamWsUrl private constructor(val rawValue: String) {
-    companion object {
+public value class StreamWsUrl private constructor(public val rawValue: String) {
+    public companion object {
         /**
          * Creates a new [StreamWsUrl] from a string.
          *
@@ -34,7 +34,7 @@ value class StreamWsUrl private constructor(val rawValue: String) {
          * @return The created [StreamWsUrl].
          * @throws IllegalArgumentException If the value is blank or not a valid WS URL.
          */
-        fun fromString(value: String): StreamWsUrl {
+        public fun fromString(value: String): StreamWsUrl {
             require(value.isNotBlank()) { "WS URL must not be blank" }
             val validUrl =
                 try {

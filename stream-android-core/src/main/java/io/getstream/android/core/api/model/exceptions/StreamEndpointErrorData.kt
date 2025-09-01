@@ -17,7 +17,7 @@ package io.getstream.android.core.api.model.exceptions
 
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
-import io.getstream.android.core.annotations.StreamCoreApi
+import io.getstream.android.core.annotations.StreamPublishedApi
 
 /**
  * Represents an API error response from the Stream API. This data class encapsulates all the error
@@ -38,7 +38,7 @@ import io.getstream.android.core.annotations.StreamCoreApi
  * @property exceptionFields Additional key-value pairs providing extra context about the exception.
  *   Null if not provided.
  */
-@StreamCoreApi
+@StreamPublishedApi
 @JsonClass(generateAdapter = true)
 public data class StreamEndpointErrorData(
     @Json(name = "code") val code: Int,

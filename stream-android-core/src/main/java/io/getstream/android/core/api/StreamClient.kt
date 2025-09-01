@@ -15,7 +15,7 @@
  */
 package io.getstream.android.core.api
 
-import io.getstream.android.core.annotations.StreamCoreApi
+import io.getstream.android.core.annotations.StreamInternalApi
 import io.getstream.android.core.api.authentication.StreamTokenManager
 import io.getstream.android.core.api.authentication.StreamTokenProvider
 import io.getstream.android.core.api.http.StreamOkHttpInterceptors
@@ -96,8 +96,8 @@ import kotlinx.coroutines.flow.StateFlow
  * client.disconnect()
  * ```
  */
-@StreamCoreApi
-interface StreamClient {
+@StreamInternalApi
+public interface StreamClient {
     /**
      * Read-only, hot state holder for this client.
      *
@@ -105,7 +105,7 @@ interface StreamClient {
      * - Emits connection status changes (e.g., connecting/connected/disconnected).
      * - Hot & conflated: new collectors receive the latest value immediately.
      */
-    val connectionState: StateFlow<StreamConnectionState>
+    public val connectionState: StateFlow<StreamConnectionState>
 
     /**
      * Establishes a connection for the current user.
@@ -117,7 +117,7 @@ interface StreamClient {
      * **Cancellation**
      * - Throws [kotlinx.coroutines.CancellationException] if the awaiting coroutine is cancelled.
      */
-    suspend fun connect(): Result<StreamConnectedUser>
+    public suspend fun connect(): Result<StreamConnectedUser>
 
     /**
      * Terminates the active connection and releases related resources.
@@ -129,14 +129,14 @@ interface StreamClient {
      * **Cancellation**
      * - Throws [kotlinx.coroutines.CancellationException] if the awaiting coroutine is cancelled.
      */
-    suspend fun disconnect(): Result<Unit>
+    public suspend fun disconnect(): Result<Unit>
 
     /**
      * Subscribes to client events and state
      *
      * @param listener The listener to subscribe.
      */
-    fun subscribe(listener: StreamClientListener): Result<StreamSubscription>
+    public fun subscribe(listener: StreamClientListener): Result<StreamSubscription>
 }
 
 /**
@@ -199,8 +199,8 @@ interface StreamClient {
  * @param healthMonitor The health monitor.
  * @param batcher The WebSocket event batcher.
  */
-@StreamCoreApi
-fun StreamClient(
+@StreamInternalApi
+public fun StreamClient(
     // Client config
     apiKey: StreamApiKey,
     userId: StreamUserId,

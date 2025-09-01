@@ -88,15 +88,9 @@ annotation class StreamInternalApi
 annotation class StreamDelicateApi(val message: String)
 
 /**
- * Marks APIs that are part of the **Stream Core SDK layer**.
- *
- * These APIs are primarily intended for **internal use within Stream SDKs** (e.g. video, chat, or
- * other verticals) and are not considered public surface APIs.
- *
- * While they may be accessible, external usage is **discouraged** because:
- * - Support will typically focus on higher-level, public APIs instead.
- * - A vertical can upgrade to a major version of Stream core that may no longer have or support
- *   this api.
+ * Marks APIs that are part of the **Stream core SDK layer**. This API can be safely published and
+ * used by other Stream SDKs. They can also be propagated and exposed via public APIs of the product
+ * SDKs.
  */
 @Target(
     AnnotationTarget.CLASS,
@@ -106,10 +100,4 @@ annotation class StreamDelicateApi(val message: String)
     AnnotationTarget.TYPEALIAS,
 )
 @Retention(AnnotationRetention.BINARY)
-@RequiresOptIn(
-    message =
-        "Stream Core SDK API – intended for use only within the Stream SDK core. " +
-            "External usage is discouraged and may not be supported.",
-    level = RequiresOptIn.Level.ERROR,
-)
-annotation class StreamCoreApi
+annotation class StreamPublishedApi
