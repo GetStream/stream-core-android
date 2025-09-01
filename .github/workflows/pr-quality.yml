@@ -149,7 +149,7 @@ jobs:
             **What we check**
             1. Title is concise (5–18 words) unless labeled `pr:ignore-for-release`.
             2. At least one `pr:` label exists (e.g., `pr:bug`, `pr:new-feature`).
-            3. Sections `## Goal`, `## Implementation`, and `## Testing` contain content.
+            3. Sections `### Goal`, `### Implementation`, and `### Testing` contain content.
 
       # Flip the same sticky comment to ✅ on success
       - name: Create or update success comment
@@ -166,6 +166,6 @@ jobs:
             All required conditions are satisfied:
             - Title length is OK (or ignored by label).
             - At least one `pr:` label exists.
-            - Sections `## Goal`, `## Implementation`, and `## Testing` are filled.
+            - Sections `### Goal`, `### Implementation`, and `### Testing` are filled.
 
             🎉 Great job! This PR is ready for review.
