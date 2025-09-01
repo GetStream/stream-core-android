@@ -15,7 +15,7 @@
  */
 package io.getstream.android.core.api.model.value
 
-import io.getstream.android.core.annotations.StreamPublishedApi
+import io.getstream.android.core.annotations.StreamInternalApi
 import java.net.URI
 
 /**
@@ -23,7 +23,7 @@ import java.net.URI
  *
  * @property rawValue The raw value of the WebSocket URL.
  */
-@StreamPublishedApi
+@StreamInternalApi
 @JvmInline
 public value class StreamWsUrl private constructor(public val rawValue: String) {
     public companion object {
