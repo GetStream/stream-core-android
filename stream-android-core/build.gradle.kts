@@ -22,10 +22,10 @@ rootProject.extra.apply {
 apply(from = "${rootDir}/scripts/publish-module.gradle")
 
 kotlin {
+    explicitApi()
     compilerOptions {
         jvmTarget.set(JvmTarget.JVM_11)
         freeCompilerArgs.addAll(
-            "-Xexplicit-api=strict",
             "-opt-in=io.getstream.android.core.annotations.StreamInternalApi",
             "-opt-in=io.getstream.android.core.annotations.StreamPublishedApi",
             "-XXLanguage:+PropertyParamAnnotationDefaultTargetMode"
