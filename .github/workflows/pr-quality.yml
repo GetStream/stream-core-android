@@ -1,6 +1,10 @@
 # .github/workflows/pr-quality-check.yml
 name: PR Quality check
 
+# Add a constant anchor we can always find
+env:
+  PR_QUALITY_ANCHOR: "<!-- pr-quality-anchor -->"
+
 on:
   pull_request:
     types: [opened, edited, synchronize, labeled, unlabeled, reopened]
@@ -102,7 +106,7 @@ jobs:
         with:
           issue-number: ${{ github.event.pull_request.number }}
           comment-author: github-actions[bot]
-          body-includes: "### PR Quality Check"
+          body-includes: ${{ env.PR_QUALITY_ANCHOR }}
 
       - name: Create or update failure comment
         if: failure()
@@ -112,6 +116,7 @@ jobs:
           comment-id: ${{ steps.find_comment.outputs.comment-id }}
           edit-mode: replace
           body: |
+            <!-- pr-quality-anchor -->
             ### PR Quality Check ❌ Failed
 
             The following issues were detected:
@@ -123,8 +128,6 @@ jobs:
             2. At least one `pr:` label exists (e.g., `pr:bug`, `pr:new-feature`).
             3. Sections `## Goal`, `## Implementation`, and `## Testing` contain content.
 
-            _This comment updates automatically when you edit the PR title/body or labels._
-
       - name: Create or update success comment
         if: success()
         uses: peter-evans/create-or-update-comment@v4
@@ -133,6 +136,7 @@ jobs:
           comment-id: ${{ steps.find_comment.outputs.comment-id }}
           edit-mode: replace
           body: |
+            <!-- pr-quality-anchor -->
             ### PR Quality Check ✅ Passed
 
             All required conditions are satisfied:
