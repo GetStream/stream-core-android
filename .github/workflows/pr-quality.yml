@@ -31,7 +31,7 @@ jobs:
           failures=""
 
           # ---- Settings ----
-          MIN_WORDS=3
+          MIN_WORDS=5
           MAX_WORDS=12
           TITLE_BYPASS_LABEL="pr:ignore-for-release"
 
