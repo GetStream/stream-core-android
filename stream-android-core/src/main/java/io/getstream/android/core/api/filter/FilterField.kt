@@ -19,9 +19,13 @@ package io.getstream.android.core.api.filter
  * Interface representing a field that can be used in filters for querying data from the Stream API.
  *
  * Implementations of this interface should provide [remote], which is the name of the field as
- * expected by the Stream API.
+ * expected by the Stream API, and [localValue], a function to extract the field's value from a
+ * model instance.
  */
-public interface FilterField {
+public interface FilterField<M> {
     /** The name of this field as expected by the Stream API. */
     public val remote: String
+
+    /** Function to extract the field's value from a model instance. */
+    public val localValue: (M) -> Any?
 }
