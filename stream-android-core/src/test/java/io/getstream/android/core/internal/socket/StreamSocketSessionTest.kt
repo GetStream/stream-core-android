@@ -36,8 +36,15 @@ import io.getstream.android.core.internal.model.events.StreamHealthCheckEvent
 import io.getstream.android.core.internal.serialization.StreamCompositeEventSerializationImpl
 import io.getstream.android.core.internal.serialization.StreamCompositeSerializationEvent
 import io.getstream.android.core.internal.socket.model.ConnectUserData
-import io.mockk.*
+import io.mockk.MockKAnnotations
+import io.mockk.Runs
+import io.mockk.every
+import io.mockk.just
+import io.mockk.mockk
+import io.mockk.slot
+import io.mockk.verify
 import junit.framework.Assert.assertEquals
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -1207,6 +1214,66 @@ class StreamSocketSessionTest {
 
         job.cancel()
     }
+
+    @Test
+    fun `handshake onFailure triggers connect failure`() =
+        runTest(timeout = 1.seconds) {
+            val seenStates = mutableListOf<StreamConnectionState>()
+            every { subs.forEach(any()) } answers
+                {
+                    val consumer = arg<(StreamClientListener) -> Unit>(0)
+                    val listener =
+                        object : StreamClientListener {
+                            override fun onState(state: StreamConnectionState) {
+                                seenStates += state
+                            }
+
+                            override fun onEvent(event: Any) {}
+                        }
+                    consumer(listener)
+                    Result.success(Unit)
+                }
+
+            val lifeSub = mockk<StreamSubscription>(relaxed = true)
+            val hsSub = mockk<StreamSubscription>(relaxed = true)
+
+            every { socket.subscribe(any<StreamWebSocketListener>()) } returns
+                Result.success(lifeSub)
+
+            var hsListener: StreamWebSocketListener? = null
+            every { socket.subscribe(any<StreamWebSocketListener>(), any()) } answers
+                {
+                    hsListener = firstArg()
+                    Result.success(hsSub)
+                }
+
+            val socketFailure = RuntimeException("WebSocket connection failed")
+            val mockResponse = mockk<Response>(relaxed = true)
+
+            every { socket.open(config) } answers
+                {
+                    // Simulate socket failure during handshake
+                    hsListener?.onFailure(socketFailure, mockResponse)
+                        ?: error("Handshake listener not installed")
+                    Result.success(Unit)
+                }
+
+            every { socket.close() } returns Result.success(Unit)
+
+            val result = session.connect(connectUserData())
+
+            assertTrue(result.isFailure)
+
+            // Verify that the handshake subscription was cancelled
+            verify { hsSub.cancel() }
+
+            // Verify that proper connection states were emitted
+            assertTrue(seenStates.first() is StreamConnectionState.Connecting.Opening)
+            assertTrue(seenStates.any { it is StreamConnectionState.Disconnected })
+
+            // Verify no health monitoring started
+            verify(exactly = 0) { health.start() }
+        }
 
     private fun connectUserData(): ConnectUserData =
         ConnectUserData("u", "t", null, null, false, null, emptyMap())
