@@ -48,7 +48,7 @@ public interface StreamWebSocket<T : StreamWebSocketListener> : StreamSubscripti
      *
      * @param code The closure status code
      * @param reason The reason message provided by the peer, if any.
-     * @return `true` if the close operation was successful, `false` otherwise.
+     * @return A [Result] indicating whether the close operation was successful.
      */
     public fun close(
         code: Int = CLOSE_SOCKET_CODE,
