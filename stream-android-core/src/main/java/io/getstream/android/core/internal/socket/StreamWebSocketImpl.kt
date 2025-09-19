@@ -49,9 +49,9 @@ internal open class StreamWebSocketImpl<T : StreamWebSocketListener>(
                 .getOrThrow()
     }
 
-    override fun close(): Result<Unit> = withSocket {
-        logger.d { "[close] Closing socket" }
-        socket.close(CLOSE_SOCKET_CODE, CLOSE_SOCKET_REASON)
+    override fun close(code: Int, reason: String): Result<Unit> = withSocket {
+        logger.d { "[close#withReason] Closing socket. Code: $code, Reason: $reason" }
+        socket.close(code, reason)
     }
 
     override fun send(data: ByteArray): Result<ByteArray> = withSocket {

@@ -22,6 +22,7 @@ import io.getstream.android.core.api.model.config.StreamSocketConfig
 import io.getstream.android.core.api.model.connection.StreamConnectionState
 import io.getstream.android.core.api.model.event.StreamClientWsEvent
 import io.getstream.android.core.api.model.exceptions.StreamEndpointErrorData
+import io.getstream.android.core.api.model.exceptions.StreamEndpointException
 import io.getstream.android.core.api.processing.StreamBatcher
 import io.getstream.android.core.api.serialization.StreamJsonSerialization
 import io.getstream.android.core.api.socket.StreamWebSocket
@@ -36,15 +37,19 @@ import io.getstream.android.core.internal.model.events.StreamHealthCheckEvent
 import io.getstream.android.core.internal.serialization.StreamCompositeEventSerializationImpl
 import io.getstream.android.core.internal.serialization.StreamCompositeSerializationEvent
 import io.getstream.android.core.internal.socket.model.ConnectUserData
+import io.getstream.android.core.internal.socket.SocketConstants
 import io.mockk.*
 import junit.framework.Assert.assertEquals
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
+import java.io.IOException
 import okhttp3.Protocol
 import okhttp3.Request
 import okhttp3.Response
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.ResponseBody.Companion.toResponseBody
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -89,7 +94,7 @@ class StreamSocketSessionTest {
                 Result.success(Unit)
             }
 
-        every { socket.close() } returns Result.success(Unit)
+        every { socket.close(any(), any()) } returns Result.success(Unit)
         every { debounce.stop() } returns Result.success(Unit)
         every { health.stop() } just Runs
 
@@ -123,7 +128,7 @@ class StreamSocketSessionTest {
 
         assertTrue(res.isSuccess)
         assertTrue(listener.isCaptured && listener.captured is StreamConnectionState.Disconnected)
-        verify { socket.close() }
+        verify { socket.close(SocketConstants.CLOSE_SOCKET_CODE, SocketConstants.CLOSE_SOCKET_REASON) }
         verify { debounce.stop() }
         verify { health.stop() }
     }
@@ -145,7 +150,20 @@ class StreamSocketSessionTest {
 
         assertTrue(res.isSuccess)
         assertTrue(listener.isCaptured && listener.captured is StreamConnectionState.Disconnected)
-        verify { socket.close() }
+        verify { socket.close(SocketConstants.CLOSE_SOCKET_CODE, SocketConstants.CLOSE_SOCKET_REASON) }
+        verify { debounce.stop() }
+        verify { health.stop() }
+    }
+
+    @Test
+    fun `disconnect uses custom code and reason when provided`() = runTest {
+        val customCode = 4321
+        val customReason = "Going away"
+
+        val result = session.disconnect(code = customCode, reason = customReason)
+
+        assertTrue(result.isSuccess)
+        verify { socket.close(customCode, customReason) }
         verify { debounce.stop() }
         verify { health.stop() }
     }
@@ -165,7 +183,9 @@ class StreamSocketSessionTest {
             session.disconnect()
 
             verify(exactly = 1) { l.onState(ofType(StreamConnectionState.Disconnected::class)) }
-            verify(exactly = 2) { socket.close() }
+            verify(exactly = 2) {
+                socket.close(SocketConstants.CLOSE_SOCKET_CODE, SocketConstants.CLOSE_SOCKET_REASON)
+            }
             verify(atLeast = 1) { debounce.stop() }
             verify(atLeast = 1) { health.stop() }
         }
@@ -178,7 +198,7 @@ class StreamSocketSessionTest {
         val res = session.disconnect()
 
         assertTrue(res.isSuccess)
-        verify { socket.close() }
+        verify { socket.close(any(), any()) }
         verify { debounce.stop() }
         verify { health.stop() }
         verify { logger.e(notifyFailure, any()) }
@@ -241,7 +261,7 @@ class StreamSocketSessionTest {
             }
 
         every { debounce.offer(any()) } returns false
-        every { socket.close() } returns Result.success(Unit)
+        every { socket.close(any(), any()) } returns Result.success(Unit)
 
         val f =
             StreamSocketSession::class.java.getDeclaredField("eventListener").apply {
@@ -255,7 +275,7 @@ class StreamSocketSessionTest {
         verify { client.onState(match { it is StreamConnectionState.Disconnected }) }
         verify { health.stop() }
         verify { debounce.stop() }
-        verify { socket.close() }
+        verify { socket.close(any(), any()) }
     }
 
     @Test
@@ -267,7 +287,7 @@ class StreamSocketSessionTest {
                 Result.success(Unit)
             }
         every { debounce.offer(any()) } returns true
-        every { socket.close() } returns Result.success(Unit)
+        every { socket.close(any(), any()) } returns Result.success(Unit)
 
         val f =
             StreamSocketSession::class.java.getDeclaredField("eventListener").apply {
@@ -278,7 +298,7 @@ class StreamSocketSessionTest {
         listener.onMessage("""{"whatever":"ok"}""")
 
         verify { health.acknowledgeHeartbeat() }
-        verify(exactly = 0) { socket.close() }
+        verify(exactly = 0) { socket.close(any(), any()) }
         verify(exactly = 0) { client.onState(any()) }
     }
 
@@ -291,7 +311,7 @@ class StreamSocketSessionTest {
                 Result.success(Unit)
             }
         every { debounce.offer(any()) } returns false
-        every { socket.close() } returns Result.success(Unit)
+        every { socket.close(any(), any()) } returns Result.success(Unit)
 
         val f =
             StreamSocketSession::class.java.getDeclaredField("eventListener").apply {
@@ -301,7 +321,7 @@ class StreamSocketSessionTest {
 
         listener.onMessage("""{"bad":"msg"}""")
 
-        verify { socket.close() }
+        verify { socket.close(any(), any()) }
         verify { client.onState(any<StreamConnectionState.Disconnected>()) }
         verify { health.stop() }
         verify { debounce.stop() }
@@ -315,7 +335,7 @@ class StreamSocketSessionTest {
                 firstArg<(StreamClientListener) -> Unit>().invoke(client)
                 Result.success(Unit)
             }
-        every { socket.close() } returns Result.success(Unit)
+        every { socket.close(any(), any()) } returns Result.success(Unit)
 
         val f =
             StreamSocketSession::class.java.getDeclaredField("eventListener").apply {
@@ -388,14 +408,14 @@ class StreamSocketSessionTest {
                 firstArg<(StreamClientListener) -> Unit>().invoke(client)
                 Result.success(Unit)
             }
-        every { socket.close() } returns Result.success(Unit)
+        every { socket.close(any(), any()) } returns Result.success(Unit)
 
         val boom = IllegalStateException("x")
         val res = session.disconnect(boom)
 
         assertTrue(res.isSuccess)
         verify { client.onState(ofType<StreamConnectionState.Disconnected>()) }
-        verify { socket.close() }
+        verify { socket.close(any(), any()) }
         verify { health.stop() }
         verify { debounce.stop() }
     }
@@ -408,7 +428,7 @@ class StreamSocketSessionTest {
                 firstArg<(StreamClientListener) -> Unit>().invoke(client)
                 Result.success(Unit)
             }
-        every { socket.close() } returns Result.failure(RuntimeException("close fail"))
+        every { socket.close(any(), any()) } returns Result.failure(RuntimeException("close fail"))
 
         val res = session.disconnect()
 
@@ -583,7 +603,7 @@ class StreamSocketSessionTest {
             every { socket.subscribe(any<StreamWebSocketListener>(), any()) } returns
                 Result.success(sub)
             every { socket.open(config) } returns Result.success(Unit)
-            every { socket.close() } returns Result.success(Unit)
+            every { socket.close(any(), any()) } returns Result.success(Unit)
 
             val job = async { session.connect(connectUserData()) }
 
@@ -595,7 +615,7 @@ class StreamSocketSessionTest {
             advanceUntilIdle()
 
             verify(atLeast = 2) { sub.cancel() }
-            verify { socket.close() }
+            verify { socket.close(any(), any()) }
             verify { health.stop() }
             verify { debounce.stop() }
         }
@@ -611,7 +631,7 @@ class StreamSocketSessionTest {
         every { socket.subscribe(any<StreamWebSocketListener>(), any()) } returns
             Result.success(mockk(relaxed = true))
         every { socket.open(config) } returns Result.success(Unit)
-        every { socket.close() } returns Result.success(Unit)
+        every { socket.close(any(), any()) } returns Result.success(Unit)
 
         val job = async {
             session.connect(
@@ -667,7 +687,7 @@ class StreamSocketSessionTest {
             every { socket.subscribe(any<StreamWebSocketListener>(), any()) } returns
                 Result.success(mockk(relaxed = true))
             every { socket.open(config) } returns Result.success(Unit)
-            every { socket.close() } returns Result.success(Unit)
+            every { socket.close(any(), any()) } returns Result.success(Unit)
 
             val job = async {
                 session.connect(
@@ -721,7 +741,7 @@ class StreamSocketSessionTest {
             every { socket.subscribe(any<StreamWebSocketListener>(), any()) } returns
                 Result.success(hsSub)
             every { socket.open(config) } returns Result.success(Unit)
-            every { socket.close() } returns Result.success(Unit)
+            every { socket.close(any(), any()) } returns Result.success(Unit)
 
             val job = async {
                 session.connect(
@@ -741,7 +761,7 @@ class StreamSocketSessionTest {
 
             cb.invoke()
 
-            verify(exactly = 1) { socket.close() }
+            verify(exactly = 1) { socket.close(any(), any()) }
             verify(exactly = 2) { hsSub.cancel() }
             verify(exactly = 1) { health.stop() }
             verify(exactly = 1) { debounce.stop() }
@@ -782,7 +802,7 @@ class StreamSocketSessionTest {
             every { socket.subscribe(any<StreamWebSocketListener>(), any()) } returns
                 Result.success(mockk(relaxed = true))
             every { socket.open(config) } returns Result.success(Unit)
-            every { socket.close() } returns Result.success(Unit)
+            every { socket.close(any(), any()) } returns Result.success(Unit)
 
             val normalEvent = mockk<StreamClientWsEvent>(relaxed = true)
             val healthEvent = mockk<StreamHealthCheckEvent>(relaxed = true)
@@ -856,7 +876,7 @@ class StreamSocketSessionTest {
             every { socket.subscribe(any<StreamWebSocketListener>(), any()) } returns
                 Result.success(mockk(relaxed = true))
             every { socket.open(config) } returns Result.success(Unit)
-            every { socket.close() } returns Result.success(Unit)
+            every { socket.close(any(), any()) } returns Result.success(Unit)
 
             val apiError = mockk<StreamEndpointErrorData>(relaxed = true)
             every { parser.deserialize("BAD_JSON") } returns
@@ -936,7 +956,7 @@ class StreamSocketSessionTest {
                     Result.success(Unit)
                 }
 
-            every { socket.close() } returns Result.success(Unit)
+            every { socket.close(any(), any()) } returns Result.success(Unit)
             every { socket.send(any<String>()) } returns Result.success("Unit")
 
             val res =
@@ -1004,7 +1024,7 @@ class StreamSocketSessionTest {
                     Result.success(Unit)
                 }
 
-            every { socket.close() } returns Result.success(Unit)
+            every { socket.close(any(), any()) } returns Result.success(Unit)
             every { socket.send(any<String>()) } returns Result.success("Unit")
 
             val result =
@@ -1031,6 +1051,124 @@ class StreamSocketSessionTest {
             assertTrue(seenStates.any { it is StreamConnectionState.Disconnected })
             verify { socket.open(config) }
         }
+
+    @Test
+    fun `handshake onFailure emits disconnected error, cancels subscriptions, and returns failure`() = runTest {
+        val states = mutableListOf<StreamConnectionState>()
+        every { subs.forEach(any()) } answers
+            {
+                val consumer = arg<(StreamClientListener) -> Unit>(0)
+                val listener =
+                    object : StreamClientListener {
+                        override fun onState(state: StreamConnectionState) {
+                            states += state
+                        }
+
+                        override fun onEvent(event: Any) {}
+                    }
+                consumer(listener)
+                Result.success(Unit)
+            }
+
+        val handshakeSub = mockk<StreamSubscription>(relaxed = true)
+
+        var handshakeListener: StreamWebSocketListener? = null
+        every { socket.subscribe(any<StreamWebSocketListener>(), any()) } answers
+            {
+                handshakeListener = firstArg()
+                Result.success(handshakeSub)
+            }
+
+        val apiError = mockk<StreamEndpointErrorData>(relaxed = true)
+        every { json.fromJson(any(), StreamEndpointErrorData::class.java) } returns
+            Result.success(apiError)
+
+        every { socket.open(config) } returns Result.success(Unit)
+
+        val job = async { session.connect(connectUserData()) }
+        advanceUntilIdle()
+
+        val cause = IllegalStateException("socket failure")
+        val errorResponse =
+            Response.Builder()
+                .request(Request.Builder().url("https://example.test/failure").build())
+                .protocol(Protocol.HTTP_1_1)
+                .code(500)
+                .message("Server Error")
+                .body("""{"error":"boom"}""".toResponseBody("application/json".toMediaType()))
+                .build()
+
+        handshakeListener?.onFailure(cause, errorResponse)
+            ?: error("Handshake listener not installed")
+
+        advanceUntilIdle()
+
+        val result = job.await()
+
+        assertTrue(result.isFailure)
+        val exception = result.exceptionOrNull()
+        assertTrue(exception is StreamEndpointException)
+        assertEquals(cause, (exception as StreamEndpointException).cause)
+        assertTrue(exception.apiError === apiError)
+
+        assertTrue(states.first() is StreamConnectionState.Connecting.Opening)
+        val disconnected = states.filterIsInstance<StreamConnectionState.Disconnected>().last()
+        assertTrue(disconnected.cause === exception)
+
+        verify { handshakeSub.cancel() }
+        verify(exactly = 0) { health.start() }
+    }
+
+    @Test
+    fun `handshake onClosed emits disconnected error, cancels subscriptions, and returns failure`() = runTest {
+        val states = mutableListOf<StreamConnectionState>()
+        every { subs.forEach(any()) } answers
+            {
+                val consumer = arg<(StreamClientListener) -> Unit>(0)
+                val listener =
+                    object : StreamClientListener {
+                        override fun onState(state: StreamConnectionState) {
+                            states += state
+                        }
+
+                        override fun onEvent(event: Any) {}
+                    }
+                consumer(listener)
+                Result.success(Unit)
+            }
+
+        val handshakeSub = mockk<StreamSubscription>(relaxed = true)
+
+        var handshakeListener: StreamWebSocketListener? = null
+        every { socket.subscribe(any<StreamWebSocketListener>(), any()) } answers
+            {
+                handshakeListener = firstArg()
+                Result.success(handshakeSub)
+            }
+
+        every { socket.open(config) } returns Result.success(Unit)
+
+        val job = async { session.connect(connectUserData()) }
+        advanceUntilIdle()
+
+        handshakeListener?.onClosed(1006, "server closed")
+            ?: error("Handshake listener not installed")
+
+        advanceUntilIdle()
+
+        val result = job.await()
+
+        assertTrue(result.isFailure)
+        val exception = result.exceptionOrNull()
+        assertTrue(exception is IOException)
+
+        assertTrue(states.first() is StreamConnectionState.Connecting.Opening)
+        val disconnected = states.filterIsInstance<StreamConnectionState.Disconnected>().last()
+        assertTrue(disconnected.cause === exception)
+
+        verify { handshakeSub.cancel() }
+        verify(exactly = 0) { health.start() }
+    }
 
     @Test
     fun `connect fails when handshake subscribe fails - cancels lifecycle, no open`() = runTest {
@@ -1131,7 +1269,7 @@ class StreamSocketSessionTest {
                     Result.success(Unit)
                 }
 
-            every { socket.close() } returns Result.success(Unit)
+            every { socket.close(any(), any()) } returns Result.success(Unit)
 
             val result =
                 async {
@@ -1183,7 +1321,7 @@ class StreamSocketSessionTest {
         every { parser.serialize(any<StreamCompositeSerializationEvent<Unit>>()) } returns
             Result.success("AUTH_PAYLOAD")
         every { socket.send("AUTH_PAYLOAD") } returns Result.success("Unit")
-        every { socket.close() } returns Result.success(Unit)
+        every { socket.close(any(), any()) } returns Result.success(Unit)
 
         every { socket.open(config) } answers
             {

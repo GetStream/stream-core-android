@@ -32,6 +32,7 @@ import io.getstream.android.core.api.socket.listeners.StreamWebSocketListener
 import io.getstream.android.core.api.socket.monitor.StreamHealthMonitor
 import io.getstream.android.core.api.subscribe.StreamSubscription
 import io.getstream.android.core.api.subscribe.StreamSubscriptionManager
+import io.getstream.android.core.api.utils.toErrorData
 import io.getstream.android.core.internal.model.StreamConnectUserDetailsRequest
 import io.getstream.android.core.internal.model.authentication.StreamWSAuthMessageRequest
 import io.getstream.android.core.internal.model.events.StreamClientConnectedEvent
@@ -117,9 +118,29 @@ internal class StreamSocketSession<T>(
             }
         }
 
-    /** Disconnect the socket and synchronously notify listeners. */
-    fun disconnect(error: Throwable? = null): Result<Unit> {
-        logger.d { "[disconnect] Disconnecting socket, error: $error" }
+    /**
+     * Terminates the active socket session and performs a best-effort shutdown of all components.
+     *
+     * The method emits a `StreamConnectionState.Disconnected` state (embedding [error] when
+     * provided), cancels the active socket subscription, closes the underlying
+     * [StreamWebSocket], and stops the health monitor and batch processor. Subsequent invocations
+     * are idempotent: listeners are only notified on the first call while the socket close is
+     * still attempted every time.
+     *
+     * @param error Optional cause that is propagated to subscribers via
+     *   `StreamConnectionState.Disconnected(error)`.
+     * @param code Close code forwarded to [StreamWebSocket.close]. Defaults to the standard manual
+     *   shutdown code used by the SDK.
+     * @param reason Reason string forwarded to [StreamWebSocket.close]. Defaults to the standard
+     *   human-readable explanation used by the SDK.
+     * @return The result returned by [StreamWebSocket.close] after cleanup completes.
+     */
+    fun disconnect(
+        error: Throwable? = null,
+        code: Int = SocketConstants.CLOSE_SOCKET_CODE,
+        reason: String = SocketConstants.CLOSE_SOCKET_REASON,
+    ): Result<Unit> {
+        logger.d { "[disconnect] Disconnecting socket, code: $code, reason: $reason, error: $error" }
         if (!closingByUs.getAndSet(true)) {
             val newState =
                 if (error == null) {
@@ -132,14 +153,28 @@ internal class StreamSocketSession<T>(
         // Cancel subscriptions before closing to avoid duplicate callbacks.
         socketSubscription?.cancel()
         val closeRes =
-            internalSocket.close().onFailure { throwable ->
-                logger.e { "[disconnect] Failed to close socket. ${throwable.message}" }
-            }
+            internalSocket.close(code, reason)
+                .onSuccess { logger.d { "[disconnect] Socket closed" } }
+                .onFailure { throwable ->
+                    logger.e { "[disconnect] Failed to close socket. ${throwable.message}" }
+                }
         cleanup()
         return closeRes
     }
 
-    /** Connects the user to the socket. */
+    /**
+     * Opens the socket and completes the Stream authentication handshake for the provided user.
+     *
+     * The call subscribes to lifecycle events, opens the underlying [StreamWebSocket], performs
+     * the auth handshake, starts the health monitor once connected, and emits all intermediate
+     * [StreamConnectionState] updates to registered [StreamClientListener] instances. When the
+     * coroutine is cancelled or any step fails, all temporary subscriptions are cleaned up and the
+     * failure is propagated via the returned [Result].
+     *
+     * @param data Payload describing the user being connected and the products being authorised.
+     * @return `Result.success` with the established [StreamConnectionState.Connected] when the
+     *   handshake finishes, or `Result.failure` containing the encountered error.
+     */
     suspend fun connect(data: ConnectUserData): Result<StreamConnectionState.Connected> =
         suspendCancellableCoroutine { continuation ->
             var handshakeSubscription: StreamSubscription? = null
@@ -149,7 +184,10 @@ internal class StreamSocketSession<T>(
                 logger.d { "[connect] Cancelled: ${cause?.message}" }
                 socketSubscription?.cancel()
                 handshakeSubscription?.cancel()
-                internalSocket.close()
+                internalSocket.close(
+                    SocketConstants.CLOSE_SOCKET_CODE,
+                    SocketConstants.CLOSE_SOCKET_REASON,
+                )
                 cleanup()
             }
 
@@ -248,17 +286,20 @@ internal class StreamSocketSession<T>(
                     notifyState(connected) // emit state before completing
                     continuation.resume(Result.success(connected))
                 }
+                logger.v { "[success] Connection successful" }
             }
 
             val failure: (Throwable) -> Unit = { throwable ->
+                logger.e(throwable) { "[failure] Connection failed. ${throwable.message}" }
                 handshakeSubscription?.cancel()
                 socketSubscription?.cancel()
                 completeFailure(throwable)
             }
 
             val apiFailure: (StreamEndpointErrorData) -> Unit = { apiError ->
-                handshakeSubscription?.cancel()
                 val error = StreamEndpointException("Connection error", apiError)
+                logger.e(error) { "[apiFailure] Connection error: $apiError" }
+                handshakeSubscription?.cancel()
                 completeFailure(error)
             }
 
@@ -367,6 +408,24 @@ internal class StreamSocketSession<T>(
                                 }
                                 failure(it)
                             }
+                    }
+
+                    override fun onFailure(t: Throwable, response: Response?) {
+                        val apiError = response?.toErrorData(jsonSerialization)?.getOrNull()
+                        val exception = StreamEndpointException(
+                            message = "Socket failed during connection",
+                            cause = t,
+                            apiError = apiError,
+                        )
+                        logger.e(exception) { "[onFailure] Socket failure during connection: ${exception.message}" }
+                        failure(exception)
+                    }
+
+                    override fun onClosed(code: Int, reason: String) {
+                        val exception =
+                            IOException("Socket closed during connection. Code: $code, Reason: $reason")
+                        logger.e(exception) { "[onClosed] Socket closed during connection. Code: $code, Reason: $reason" }
+                        failure(exception)
                     }
                 }
 

@@ -15,11 +15,14 @@
  */
 package io.getstream.android.core.api.socket
 
+import io.getstream.android.core.annotations.StreamDelicateApi
 import io.getstream.android.core.annotations.StreamInternalApi
 import io.getstream.android.core.api.log.StreamLogger
 import io.getstream.android.core.api.model.config.StreamSocketConfig
 import io.getstream.android.core.api.socket.listeners.StreamWebSocketListener
 import io.getstream.android.core.api.subscribe.StreamSubscriptionManager
+import io.getstream.android.core.internal.socket.SocketConstants.CLOSE_SOCKET_CODE
+import io.getstream.android.core.internal.socket.SocketConstants.CLOSE_SOCKET_REASON
 import io.getstream.android.core.internal.socket.StreamWebSocketImpl
 
 /**
@@ -42,13 +45,13 @@ public interface StreamWebSocket<T : StreamWebSocketListener> : StreamSubscripti
     public fun open(config: StreamSocketConfig): Result<Unit>
 
     /**
-     * Closes the WebSocket connection.
+     * Closes the WebSocket connection with a custom code and reason.
      *
-     * Once closed, no further messages can be sent or received.
-     *
-     * @return A [Result] indicating whether the connection was successfully closed.
+     * @param code The closure status code
+     * @param reason The reason message provided by the peer, if any.
+     * @return `true` if the close operation was successful, `false` otherwise.
      */
-    public fun close(): Result<Unit>
+    public fun close(code: Int = CLOSE_SOCKET_CODE, reason: String = CLOSE_SOCKET_REASON): Result<Unit>
 
     /**
      * Sends binary data through the WebSocket connection.

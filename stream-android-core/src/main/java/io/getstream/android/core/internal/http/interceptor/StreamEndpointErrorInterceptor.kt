@@ -15,11 +15,10 @@
  */
 package io.getstream.android.core.internal.http.interceptor
 
-import io.getstream.android.core.api.model.exceptions.StreamEndpointErrorData
 import io.getstream.android.core.api.model.exceptions.StreamEndpointException
 import io.getstream.android.core.api.serialization.StreamJsonSerialization
+import io.getstream.android.core.api.utils.toErrorData
 import kotlin.fold
-import kotlin.jvm.java
 import okhttp3.Interceptor
 import okhttp3.Response
 
@@ -37,10 +36,7 @@ internal class StreamEndpointErrorInterceptor(private val jsonParser: StreamJson
 
         if (!response.isSuccessful) {
             // Try to parse a Stream API error from the response body
-            val errorBody = response.peekBody(Long.MAX_VALUE).string()
-            jsonParser
-                .fromJson(errorBody, StreamEndpointErrorData::class.java)
-                .fold(
+            response.toErrorData(jsonParser).fold(
                     onSuccess = { apiError ->
                         throw StreamEndpointException(
                             "Failed request: ${chain.request().url}",
