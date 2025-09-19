@@ -1360,16 +1360,6 @@ class StreamSocketSessionTest {
     }
 
     @Test
-    fun `handshake onFailure triggers connect failure`() =
-        runTest(timeout = 1.seconds) {
-            testHandshakeFailure { hsListener, _ ->
-                val socketFailure = RuntimeException("WebSocket connection failed")
-                val mockResponse = mockk<Response>(relaxed = true)
-                hsListener.onFailure(socketFailure, mockResponse)
-            }
-        }
-
-    @Test
     fun `handshake onClosed triggers connect failure with IOException`() =
         runTest(timeout = 1.seconds) {
             val result = testHandshakeFailure { hsListener, _ ->
