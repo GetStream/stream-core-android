@@ -43,6 +43,7 @@ import io.mockk.just
 import io.mockk.mockk
 import io.mockk.slot
 import io.mockk.verify
+import java.io.IOException
 import junit.framework.Assert.assertEquals
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.async
@@ -1218,62 +1219,84 @@ class StreamSocketSessionTest {
     @Test
     fun `handshake onFailure triggers connect failure`() =
         runTest(timeout = 1.seconds) {
-            val seenStates = mutableListOf<StreamConnectionState>()
-            every { subs.forEach(any()) } answers
-                {
-                    val consumer = arg<(StreamClientListener) -> Unit>(0)
-                    val listener =
-                        object : StreamClientListener {
-                            override fun onState(state: StreamConnectionState) {
-                                seenStates += state
-                            }
-
-                            override fun onEvent(event: Any) {}
-                        }
-                    consumer(listener)
-                    Result.success(Unit)
-                }
-
-            val lifeSub = mockk<StreamSubscription>(relaxed = true)
-            val hsSub = mockk<StreamSubscription>(relaxed = true)
-
-            every { socket.subscribe(any<StreamWebSocketListener>()) } returns
-                Result.success(lifeSub)
-
-            var hsListener: StreamWebSocketListener? = null
-            every { socket.subscribe(any<StreamWebSocketListener>(), any()) } answers
-                {
-                    hsListener = firstArg()
-                    Result.success(hsSub)
-                }
-
-            val socketFailure = RuntimeException("WebSocket connection failed")
-            val mockResponse = mockk<Response>(relaxed = true)
-
-            every { socket.open(config) } answers
-                {
-                    // Simulate socket failure during handshake
-                    hsListener?.onFailure(socketFailure, mockResponse)
-                        ?: error("Handshake listener not installed")
-                    Result.success(Unit)
-                }
-
-            every { socket.close() } returns Result.success(Unit)
-
-            val result = session.connect(connectUserData())
-
-            assertTrue(result.isFailure)
-
-            // Verify that the handshake subscription was cancelled
-            verify { hsSub.cancel() }
-
-            // Verify that proper connection states were emitted
-            assertTrue(seenStates.first() is StreamConnectionState.Connecting.Opening)
-            assertTrue(seenStates.any { it is StreamConnectionState.Disconnected })
-
-            // Verify no health monitoring started
-            verify(exactly = 0) { health.start() }
+            testHandshakeFailure { hsListener, _ ->
+                val socketFailure = RuntimeException("WebSocket connection failed")
+                val mockResponse = mockk<Response>(relaxed = true)
+                hsListener.onFailure(socketFailure, mockResponse)
+            }
         }
+
+    @Test
+    fun `handshake onClosed triggers connect failure with IOException`() =
+        runTest(timeout = 1.seconds) {
+            val result = testHandshakeFailure { hsListener, _ ->
+                hsListener.onClosed(12345, "Closed because yes")
+            }
+
+            // Verify that the failure contains an IOException with the expected message
+            val exception = result.exceptionOrNull()
+            assertTrue(
+                "Expected IOException but got ${exception?.javaClass?.simpleName}",
+                exception is IOException,
+            )
+        }
+
+    private suspend fun testHandshakeFailure(
+        triggerFailure: (StreamWebSocketListener, StreamSubscription) -> Unit
+    ): Result<StreamConnectionState.Connected> {
+        val seenStates = mutableListOf<StreamConnectionState>()
+        every { subs.forEach(any()) } answers
+            {
+                val consumer = arg<(StreamClientListener) -> Unit>(0)
+                val listener =
+                    object : StreamClientListener {
+                        override fun onState(state: StreamConnectionState) {
+                            seenStates += state
+                        }
+
+                        override fun onEvent(event: Any) {}
+                    }
+                consumer(listener)
+                Result.success(Unit)
+            }
+
+        val lifeSub = mockk<StreamSubscription>(relaxed = true)
+        val hsSub = mockk<StreamSubscription>(relaxed = true)
+
+        every { socket.subscribe(any<StreamWebSocketListener>()) } returns Result.success(lifeSub)
+
+        var hsListener: StreamWebSocketListener? = null
+        every { socket.subscribe(any<StreamWebSocketListener>(), any()) } answers
+            {
+                hsListener = firstArg()
+                Result.success(hsSub)
+            }
+
+        every { socket.open(config) } answers
+            {
+                val listener = hsListener ?: error("Handshake listener not installed")
+                triggerFailure(listener, hsSub)
+                Result.success(Unit)
+            }
+
+        every { socket.close() } returns Result.success(Unit)
+
+        val result = session.connect(connectUserData())
+
+        assertTrue(result.isFailure)
+
+        // Verify that the handshake subscription was cancelled
+        verify { hsSub.cancel() }
+
+        // Verify that proper connection states were emitted
+        assertTrue(seenStates.first() is StreamConnectionState.Connecting.Opening)
+        assertTrue(seenStates.any { it is StreamConnectionState.Disconnected })
+
+        // Verify no health monitoring started
+        verify(exactly = 0) { health.start() }
+
+        return result
+    }
 
     private fun connectUserData(): ConnectUserData =
         ConnectUserData("u", "t", null, null, false, null, emptyMap())
