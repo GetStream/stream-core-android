@@ -368,6 +368,16 @@ internal class StreamSocketSession<T>(
                                 failure(it)
                             }
                     }
+
+                    override fun onFailure(t: Throwable, response: Response?) {
+                        logger.e(t) { "[onFailure] Socket failure. ${t.message}" }
+                        failure(t)
+                    }
+
+                    override fun onClosed(code: Int, reason: String) {
+                        logger.e { "[onClosed] Socket closed. Code: $code, Reason: $reason" }
+                        failure(IOException("Socket closed. Code: $code, Reason: $reason"))
+                    }
                 }
 
             val hsRes =
