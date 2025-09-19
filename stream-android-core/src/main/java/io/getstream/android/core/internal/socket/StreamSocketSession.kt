@@ -122,10 +122,10 @@ internal class StreamSocketSession<T>(
      * Terminates the active socket session and performs a best-effort shutdown of all components.
      *
      * The method emits a `StreamConnectionState.Disconnected` state (embedding [error] when
-     * provided), cancels the active socket subscription, closes the underlying
-     * [StreamWebSocket], and stops the health monitor and batch processor. Subsequent invocations
-     * are idempotent: listeners are only notified on the first call while the socket close is
-     * still attempted every time.
+     * provided), cancels the active socket subscription, closes the underlying [StreamWebSocket],
+     * and stops the health monitor and batch processor. Subsequent invocations are idempotent:
+     * listeners are only notified on the first call while the socket close is still attempted every
+     * time.
      *
      * @param error Optional cause that is propagated to subscribers via
      *   `StreamConnectionState.Disconnected(error)`.
@@ -140,7 +140,9 @@ internal class StreamSocketSession<T>(
         code: Int = SocketConstants.CLOSE_SOCKET_CODE,
         reason: String = SocketConstants.CLOSE_SOCKET_REASON,
     ): Result<Unit> {
-        logger.d { "[disconnect] Disconnecting socket, code: $code, reason: $reason, error: $error" }
+        logger.d {
+            "[disconnect] Disconnecting socket, code: $code, reason: $reason, error: $error"
+        }
         if (!closingByUs.getAndSet(true)) {
             val newState =
                 if (error == null) {
@@ -153,7 +155,8 @@ internal class StreamSocketSession<T>(
         // Cancel subscriptions before closing to avoid duplicate callbacks.
         socketSubscription?.cancel()
         val closeRes =
-            internalSocket.close(code, reason)
+            internalSocket
+                .close(code, reason)
                 .onSuccess { logger.d { "[disconnect] Socket closed" } }
                 .onFailure { throwable ->
                     logger.e { "[disconnect] Failed to close socket. ${throwable.message}" }
@@ -165,8 +168,8 @@ internal class StreamSocketSession<T>(
     /**
      * Opens the socket and completes the Stream authentication handshake for the provided user.
      *
-     * The call subscribes to lifecycle events, opens the underlying [StreamWebSocket], performs
-     * the auth handshake, starts the health monitor once connected, and emits all intermediate
+     * The call subscribes to lifecycle events, opens the underlying [StreamWebSocket], performs the
+     * auth handshake, starts the health monitor once connected, and emits all intermediate
      * [StreamConnectionState] updates to registered [StreamClientListener] instances. When the
      * coroutine is cancelled or any step fails, all temporary subscriptions are cleaned up and the
      * failure is propagated via the returned [Result].
@@ -412,19 +415,26 @@ internal class StreamSocketSession<T>(
 
                     override fun onFailure(t: Throwable, response: Response?) {
                         val apiError = response?.toErrorData(jsonSerialization)?.getOrNull()
-                        val exception = StreamEndpointException(
-                            message = "Socket failed during connection",
-                            cause = t,
-                            apiError = apiError,
-                        )
-                        logger.e(exception) { "[onFailure] Socket failure during connection: ${exception.message}" }
+                        val exception =
+                            StreamEndpointException(
+                                message = "Socket failed during connection",
+                                cause = t,
+                                apiError = apiError,
+                            )
+                        logger.e(exception) {
+                            "[onFailure] Socket failure during connection: ${exception.message}"
+                        }
                         failure(exception)
                     }
 
                     override fun onClosed(code: Int, reason: String) {
                         val exception =
-                            IOException("Socket closed during connection. Code: $code, Reason: $reason")
-                        logger.e(exception) { "[onClosed] Socket closed during connection. Code: $code, Reason: $reason" }
+                            IOException(
+                                "Socket closed during connection. Code: $code, Reason: $reason"
+                            )
+                        logger.e(exception) {
+                            "[onClosed] Socket closed during connection. Code: $code, Reason: $reason"
+                        }
                         failure(exception)
                     }
                 }

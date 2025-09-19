@@ -36,7 +36,9 @@ internal class StreamEndpointErrorInterceptor(private val jsonParser: StreamJson
 
         if (!response.isSuccessful) {
             // Try to parse a Stream API error from the response body
-            response.toErrorData(jsonParser).fold(
+            response
+                .toErrorData(jsonParser)
+                .fold(
                     onSuccess = { apiError ->
                         throw StreamEndpointException(
                             "Failed request: ${chain.request().url}",

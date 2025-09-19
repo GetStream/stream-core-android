@@ -37,18 +37,17 @@ import io.getstream.android.core.internal.model.events.StreamHealthCheckEvent
 import io.getstream.android.core.internal.serialization.StreamCompositeEventSerializationImpl
 import io.getstream.android.core.internal.serialization.StreamCompositeSerializationEvent
 import io.getstream.android.core.internal.socket.model.ConnectUserData
-import io.getstream.android.core.internal.socket.SocketConstants
 import io.mockk.*
+import java.io.IOException
 import junit.framework.Assert.assertEquals
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
-import java.io.IOException
+import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.Protocol
 import okhttp3.Request
 import okhttp3.Response
-import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.ResponseBody.Companion.toResponseBody
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -128,7 +127,9 @@ class StreamSocketSessionTest {
 
         assertTrue(res.isSuccess)
         assertTrue(listener.isCaptured && listener.captured is StreamConnectionState.Disconnected)
-        verify { socket.close(SocketConstants.CLOSE_SOCKET_CODE, SocketConstants.CLOSE_SOCKET_REASON) }
+        verify {
+            socket.close(SocketConstants.CLOSE_SOCKET_CODE, SocketConstants.CLOSE_SOCKET_REASON)
+        }
         verify { debounce.stop() }
         verify { health.stop() }
     }
@@ -150,7 +151,9 @@ class StreamSocketSessionTest {
 
         assertTrue(res.isSuccess)
         assertTrue(listener.isCaptured && listener.captured is StreamConnectionState.Disconnected)
-        verify { socket.close(SocketConstants.CLOSE_SOCKET_CODE, SocketConstants.CLOSE_SOCKET_REASON) }
+        verify {
+            socket.close(SocketConstants.CLOSE_SOCKET_CODE, SocketConstants.CLOSE_SOCKET_REASON)
+        }
         verify { debounce.stop() }
         verify { health.stop() }
     }
@@ -1053,122 +1056,124 @@ class StreamSocketSessionTest {
         }
 
     @Test
-    fun `handshake onFailure emits disconnected error, cancels subscriptions, and returns failure`() = runTest {
-        val states = mutableListOf<StreamConnectionState>()
-        every { subs.forEach(any()) } answers
-            {
-                val consumer = arg<(StreamClientListener) -> Unit>(0)
-                val listener =
-                    object : StreamClientListener {
-                        override fun onState(state: StreamConnectionState) {
-                            states += state
+    fun `handshake onFailure emits disconnected error, cancels subscriptions, and returns failure`() =
+        runTest {
+            val states = mutableListOf<StreamConnectionState>()
+            every { subs.forEach(any()) } answers
+                {
+                    val consumer = arg<(StreamClientListener) -> Unit>(0)
+                    val listener =
+                        object : StreamClientListener {
+                            override fun onState(state: StreamConnectionState) {
+                                states += state
+                            }
+
+                            override fun onEvent(event: Any) {}
                         }
+                    consumer(listener)
+                    Result.success(Unit)
+                }
 
-                        override fun onEvent(event: Any) {}
-                    }
-                consumer(listener)
-                Result.success(Unit)
-            }
+            val handshakeSub = mockk<StreamSubscription>(relaxed = true)
 
-        val handshakeSub = mockk<StreamSubscription>(relaxed = true)
+            var handshakeListener: StreamWebSocketListener? = null
+            every { socket.subscribe(any<StreamWebSocketListener>(), any()) } answers
+                {
+                    handshakeListener = firstArg()
+                    Result.success(handshakeSub)
+                }
 
-        var handshakeListener: StreamWebSocketListener? = null
-        every { socket.subscribe(any<StreamWebSocketListener>(), any()) } answers
-            {
-                handshakeListener = firstArg()
-                Result.success(handshakeSub)
-            }
+            val apiError = mockk<StreamEndpointErrorData>(relaxed = true)
+            every { json.fromJson(any(), StreamEndpointErrorData::class.java) } returns
+                Result.success(apiError)
 
-        val apiError = mockk<StreamEndpointErrorData>(relaxed = true)
-        every { json.fromJson(any(), StreamEndpointErrorData::class.java) } returns
-            Result.success(apiError)
+            every { socket.open(config) } returns Result.success(Unit)
 
-        every { socket.open(config) } returns Result.success(Unit)
+            val job = async { session.connect(connectUserData()) }
+            advanceUntilIdle()
 
-        val job = async { session.connect(connectUserData()) }
-        advanceUntilIdle()
+            val cause = IllegalStateException("socket failure")
+            val errorResponse =
+                Response.Builder()
+                    .request(Request.Builder().url("https://example.test/failure").build())
+                    .protocol(Protocol.HTTP_1_1)
+                    .code(500)
+                    .message("Server Error")
+                    .body("""{"error":"boom"}""".toResponseBody("application/json".toMediaType()))
+                    .build()
 
-        val cause = IllegalStateException("socket failure")
-        val errorResponse =
-            Response.Builder()
-                .request(Request.Builder().url("https://example.test/failure").build())
-                .protocol(Protocol.HTTP_1_1)
-                .code(500)
-                .message("Server Error")
-                .body("""{"error":"boom"}""".toResponseBody("application/json".toMediaType()))
-                .build()
+            handshakeListener?.onFailure(cause, errorResponse)
+                ?: error("Handshake listener not installed")
 
-        handshakeListener?.onFailure(cause, errorResponse)
-            ?: error("Handshake listener not installed")
+            advanceUntilIdle()
 
-        advanceUntilIdle()
+            val result = job.await()
 
-        val result = job.await()
+            assertTrue(result.isFailure)
+            val exception = result.exceptionOrNull()
+            assertTrue(exception is StreamEndpointException)
+            assertEquals(cause, (exception as StreamEndpointException).cause)
+            assertTrue(exception.apiError === apiError)
 
-        assertTrue(result.isFailure)
-        val exception = result.exceptionOrNull()
-        assertTrue(exception is StreamEndpointException)
-        assertEquals(cause, (exception as StreamEndpointException).cause)
-        assertTrue(exception.apiError === apiError)
+            assertTrue(states.first() is StreamConnectionState.Connecting.Opening)
+            val disconnected = states.filterIsInstance<StreamConnectionState.Disconnected>().last()
+            assertTrue(disconnected.cause === exception)
 
-        assertTrue(states.first() is StreamConnectionState.Connecting.Opening)
-        val disconnected = states.filterIsInstance<StreamConnectionState.Disconnected>().last()
-        assertTrue(disconnected.cause === exception)
-
-        verify { handshakeSub.cancel() }
-        verify(exactly = 0) { health.start() }
-    }
+            verify { handshakeSub.cancel() }
+            verify(exactly = 0) { health.start() }
+        }
 
     @Test
-    fun `handshake onClosed emits disconnected error, cancels subscriptions, and returns failure`() = runTest {
-        val states = mutableListOf<StreamConnectionState>()
-        every { subs.forEach(any()) } answers
-            {
-                val consumer = arg<(StreamClientListener) -> Unit>(0)
-                val listener =
-                    object : StreamClientListener {
-                        override fun onState(state: StreamConnectionState) {
-                            states += state
+    fun `handshake onClosed emits disconnected error, cancels subscriptions, and returns failure`() =
+        runTest {
+            val states = mutableListOf<StreamConnectionState>()
+            every { subs.forEach(any()) } answers
+                {
+                    val consumer = arg<(StreamClientListener) -> Unit>(0)
+                    val listener =
+                        object : StreamClientListener {
+                            override fun onState(state: StreamConnectionState) {
+                                states += state
+                            }
+
+                            override fun onEvent(event: Any) {}
                         }
+                    consumer(listener)
+                    Result.success(Unit)
+                }
 
-                        override fun onEvent(event: Any) {}
-                    }
-                consumer(listener)
-                Result.success(Unit)
-            }
+            val handshakeSub = mockk<StreamSubscription>(relaxed = true)
 
-        val handshakeSub = mockk<StreamSubscription>(relaxed = true)
+            var handshakeListener: StreamWebSocketListener? = null
+            every { socket.subscribe(any<StreamWebSocketListener>(), any()) } answers
+                {
+                    handshakeListener = firstArg()
+                    Result.success(handshakeSub)
+                }
 
-        var handshakeListener: StreamWebSocketListener? = null
-        every { socket.subscribe(any<StreamWebSocketListener>(), any()) } answers
-            {
-                handshakeListener = firstArg()
-                Result.success(handshakeSub)
-            }
+            every { socket.open(config) } returns Result.success(Unit)
 
-        every { socket.open(config) } returns Result.success(Unit)
+            val job = async { session.connect(connectUserData()) }
+            advanceUntilIdle()
 
-        val job = async { session.connect(connectUserData()) }
-        advanceUntilIdle()
+            handshakeListener?.onClosed(1006, "server closed")
+                ?: error("Handshake listener not installed")
 
-        handshakeListener?.onClosed(1006, "server closed")
-            ?: error("Handshake listener not installed")
+            advanceUntilIdle()
 
-        advanceUntilIdle()
+            val result = job.await()
 
-        val result = job.await()
+            assertTrue(result.isFailure)
+            val exception = result.exceptionOrNull()
+            assertTrue(exception is IOException)
 
-        assertTrue(result.isFailure)
-        val exception = result.exceptionOrNull()
-        assertTrue(exception is IOException)
+            assertTrue(states.first() is StreamConnectionState.Connecting.Opening)
+            val disconnected = states.filterIsInstance<StreamConnectionState.Disconnected>().last()
+            assertTrue(disconnected.cause === exception)
 
-        assertTrue(states.first() is StreamConnectionState.Connecting.Opening)
-        val disconnected = states.filterIsInstance<StreamConnectionState.Disconnected>().last()
-        assertTrue(disconnected.cause === exception)
-
-        verify { handshakeSub.cancel() }
-        verify(exactly = 0) { health.start() }
-    }
+            verify { handshakeSub.cancel() }
+            verify(exactly = 0) { health.start() }
+        }
 
     @Test
     fun `connect fails when handshake subscribe fails - cancels lifecycle, no open`() = runTest {

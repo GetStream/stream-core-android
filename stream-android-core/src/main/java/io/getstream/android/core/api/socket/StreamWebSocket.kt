@@ -15,7 +15,6 @@
  */
 package io.getstream.android.core.api.socket
 
-import io.getstream.android.core.annotations.StreamDelicateApi
 import io.getstream.android.core.annotations.StreamInternalApi
 import io.getstream.android.core.api.log.StreamLogger
 import io.getstream.android.core.api.model.config.StreamSocketConfig
@@ -51,7 +50,10 @@ public interface StreamWebSocket<T : StreamWebSocketListener> : StreamSubscripti
      * @param reason The reason message provided by the peer, if any.
      * @return `true` if the close operation was successful, `false` otherwise.
      */
-    public fun close(code: Int = CLOSE_SOCKET_CODE, reason: String = CLOSE_SOCKET_REASON): Result<Unit>
+    public fun close(
+        code: Int = CLOSE_SOCKET_CODE,
+        reason: String = CLOSE_SOCKET_REASON,
+    ): Result<Unit>
 
     /**
      * Sends binary data through the WebSocket connection.

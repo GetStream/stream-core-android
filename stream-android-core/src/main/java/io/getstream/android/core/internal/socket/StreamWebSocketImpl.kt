@@ -23,8 +23,6 @@ import io.getstream.android.core.api.socket.StreamWebSocketFactory
 import io.getstream.android.core.api.socket.listeners.StreamWebSocketListener
 import io.getstream.android.core.api.subscribe.StreamSubscription
 import io.getstream.android.core.api.subscribe.StreamSubscriptionManager
-import io.getstream.android.core.internal.socket.SocketConstants.CLOSE_SOCKET_CODE
-import io.getstream.android.core.internal.socket.SocketConstants.CLOSE_SOCKET_REASON
 import java.io.IOException
 import okhttp3.Response
 import okhttp3.WebSocket
