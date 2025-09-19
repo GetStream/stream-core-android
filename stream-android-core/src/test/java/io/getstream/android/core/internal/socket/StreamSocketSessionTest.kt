@@ -37,8 +37,6 @@ import io.getstream.android.core.internal.model.events.StreamHealthCheckEvent
 import io.getstream.android.core.internal.serialization.StreamCompositeEventSerializationImpl
 import io.getstream.android.core.internal.serialization.StreamCompositeSerializationEvent
 import io.getstream.android.core.internal.socket.model.ConnectUserData
-import io.mockk.*
-import java.io.IOException
 import io.mockk.MockKAnnotations
 import io.mockk.Runs
 import io.mockk.every
@@ -46,6 +44,7 @@ import io.mockk.just
 import io.mockk.mockk
 import io.mockk.slot
 import io.mockk.verify
+import java.io.IOException
 import junit.framework.Assert.assertEquals
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.async
