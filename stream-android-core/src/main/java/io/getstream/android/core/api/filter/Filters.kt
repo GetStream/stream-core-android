@@ -15,6 +15,7 @@
  */
 package io.getstream.android.core.api.filter
 
+import io.getstream.android.core.annotations.StreamPublishedApi
 import io.getstream.android.core.internal.filter.BinaryOperator
 import io.getstream.android.core.internal.filter.CollectionOperator
 
@@ -26,6 +27,7 @@ public object Filters {
      * @param filters The filters to combine.
      * @return A filter that matches when all provided filters match.
      */
+    @StreamPublishedApi
     public fun <M, F : FilterField<M>> and(vararg filters: Filter<M, F>): Filter<M, F> =
         CollectionOperationFilter(CollectionOperator.AND, filters.toSet())
 
@@ -35,6 +37,7 @@ public object Filters {
      * @param filters The filters to combine.
      * @return A filter that matches when any of the specified filters match.
      */
+    @StreamPublishedApi
     public fun <M, F : FilterField<M>> or(vararg filters: Filter<M, F>): Filter<M, F> =
         CollectionOperationFilter(CollectionOperator.OR, filters.toSet())
 }
@@ -45,6 +48,7 @@ public object Filters {
  * @param value The value to check equality against.
  * @return A filter that matches when this field equals the specified value.
  */
+@StreamPublishedApi
 public fun <M, F : FilterField<M>> F.equal(value: Any): Filter<M, F> =
     BinaryOperationFilter(BinaryOperator.EQUAL, this, value)
 
@@ -54,6 +58,7 @@ public fun <M, F : FilterField<M>> F.equal(value: Any): Filter<M, F> =
  * @param value The value to check against.
  * @return A filter that matches when this field is greater than the specified value.
  */
+@StreamPublishedApi
 public fun <M, F : FilterField<M>> F.greater(value: Any): Filter<M, F> =
     BinaryOperationFilter(BinaryOperator.GREATER, this, value)
 
@@ -63,6 +68,7 @@ public fun <M, F : FilterField<M>> F.greater(value: Any): Filter<M, F> =
  * @param value The value to check against.
  * @return A filter that matches when this field is greater than or equal to the specified value.
  */
+@StreamPublishedApi
 public fun <M, F : FilterField<M>> F.greaterOrEqual(value: Any): Filter<M, F> =
     BinaryOperationFilter(BinaryOperator.GREATER_OR_EQUAL, this, value)
 
@@ -72,6 +78,7 @@ public fun <M, F : FilterField<M>> F.greaterOrEqual(value: Any): Filter<M, F> =
  * @param value The value to check against.
  * @return A filter that matches when this field is less than the specified value.
  */
+@StreamPublishedApi
 public fun <M, F : FilterField<M>> F.less(value: Any): Filter<M, F> =
     BinaryOperationFilter(BinaryOperator.LESS, this, value)
 
@@ -81,6 +88,7 @@ public fun <M, F : FilterField<M>> F.less(value: Any): Filter<M, F> =
  * @param value The value to check against.
  * @return A filter that matches when this field is less than or equal to the specified value.
  */
+@StreamPublishedApi
 public fun <M, F : FilterField<M>> F.lessOrEqual(value: Any): Filter<M, F> =
     BinaryOperationFilter(BinaryOperator.LESS_OR_EQUAL, this, value)
 
@@ -90,6 +98,7 @@ public fun <M, F : FilterField<M>> F.lessOrEqual(value: Any): Filter<M, F> =
  * @param values The list of values to check against.
  * @return A filter that matches when this field's value is in the specified list.
  */
+@StreamPublishedApi
 public fun <M, F : FilterField<M>> F.`in`(values: List<Any>): Filter<M, F> =
     BinaryOperationFilter(BinaryOperator.IN, this, values.toSet())
 
@@ -99,6 +108,7 @@ public fun <M, F : FilterField<M>> F.`in`(values: List<Any>): Filter<M, F> =
  * @param values The values to check against.
  * @return A filter that matches when this field's value is in the specified values.
  */
+@StreamPublishedApi
 public fun <M, F : FilterField<M>> F.`in`(vararg values: Any): Filter<M, F> =
     BinaryOperationFilter(BinaryOperator.IN, this, values.toSet())
 
@@ -108,6 +118,7 @@ public fun <M, F : FilterField<M>> F.`in`(vararg values: Any): Filter<M, F> =
  * @param value The query string to search for.
  * @return A filter that matches based on the full-text query.
  */
+@StreamPublishedApi
 public fun <M, F : FilterField<M>> F.query(value: String): Filter<M, F> =
     BinaryOperationFilter(BinaryOperator.QUERY, this, value)
 
@@ -117,6 +128,7 @@ public fun <M, F : FilterField<M>> F.query(value: String): Filter<M, F> =
  * @param value The string to autocomplete against.
  * @return A filter that matches based on autocomplete functionality.
  */
+@StreamPublishedApi
 public fun <M, F : FilterField<M>> F.autocomplete(value: String): Filter<M, F> =
     BinaryOperationFilter(BinaryOperator.AUTOCOMPLETE, this, value)
 
@@ -125,6 +137,7 @@ public fun <M, F : FilterField<M>> F.autocomplete(value: String): Filter<M, F> =
  *
  * @return A filter that matches when this field exists.
  */
+@StreamPublishedApi
 public fun <M, F : FilterField<M>> F.exists(): Filter<M, F> =
     BinaryOperationFilter(BinaryOperator.EXISTS, this, true)
 
@@ -133,6 +146,7 @@ public fun <M, F : FilterField<M>> F.exists(): Filter<M, F> =
  *
  * @return A filter that matches when this field does not exist.
  */
+@StreamPublishedApi
 public fun <M, F : FilterField<M>> F.doesNotExist(): Filter<M, F> =
     BinaryOperationFilter(BinaryOperator.EXISTS, this, false)
 
@@ -142,6 +156,7 @@ public fun <M, F : FilterField<M>> F.doesNotExist(): Filter<M, F> =
  * @param value The value to check for within this field.
  * @return A filter that matches when this field contains the specified value.
  */
+@StreamPublishedApi
 public fun <M, F : FilterField<M>> F.contains(value: Any): Filter<M, F> =
     BinaryOperationFilter(BinaryOperator.CONTAINS, this, value)
 
@@ -151,5 +166,6 @@ public fun <M, F : FilterField<M>> F.contains(value: Any): Filter<M, F> =
  * @param value The path to check for existence.
  * @return A filter that matches when the specified path exists in this field.
  */
+@StreamPublishedApi
 public fun <M, F : FilterField<M>> F.pathExists(value: String): Filter<M, F> =
     BinaryOperationFilter(BinaryOperator.PATH_EXISTS, this, value)
