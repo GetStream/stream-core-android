@@ -19,6 +19,7 @@ import io.getstream.android.core.api.authentication.StreamTokenManager
 import io.getstream.android.core.api.model.exceptions.StreamEndpointErrorData
 import io.getstream.android.core.api.model.exceptions.StreamEndpointException
 import io.getstream.android.core.api.serialization.StreamJsonSerialization
+import io.getstream.android.core.api.utils.toErrorData
 import kotlinx.coroutines.runBlocking
 import okhttp3.Interceptor
 import okhttp3.Request
@@ -73,13 +74,12 @@ internal class StreamAuthInterceptor(
         }
 
         // Peek only; do NOT consume
-        val peeked = first.peekBody(PEEK_ERROR_BYTES_MAX).string()
-        val parsed = jsonParser.fromJson(peeked, StreamEndpointErrorData::class.java)
+        val errorData = first.toErrorData(jsonParser)
 
         val alreadyRetried = original.header(HEADER_RETRIED_ON_AUTH) == "present"
 
-        if (parsed.isSuccess) {
-            val error = parsed.getOrEndpointException("Failed to parse error body.")
+        if (errorData.isSuccess) {
+            val error = errorData.getOrEndpointException("Failed to parse error body.")
 
             // Only handle token errors here
             if (isTokenInvalidErrorCode(error.code) && !alreadyRetried) {
