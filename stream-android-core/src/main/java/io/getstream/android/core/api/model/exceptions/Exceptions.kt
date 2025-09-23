@@ -43,7 +43,7 @@ public open class StreamClientException(message: String = "", cause: Throwable? 
  */
 @StreamPublishedApi
 public class StreamEndpointException(
-    message: String = "",
+    message: String? = null,
     public val apiError: StreamEndpointErrorData? = null,
     cause: Throwable? = null,
 ) : IOException(message, cause)
