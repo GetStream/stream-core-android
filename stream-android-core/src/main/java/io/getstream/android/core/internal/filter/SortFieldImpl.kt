@@ -15,9 +15,9 @@
  */
 package io.getstream.android.core.internal.filter
 
-import io.getstream.android.core.api.filter.AnySortComparator
-import io.getstream.android.core.api.filter.SortComparator
-import io.getstream.android.core.api.filter.SortField
+import io.getstream.android.core.api.sort.AnySortComparator
+import io.getstream.android.core.api.sort.SortComparator
+import io.getstream.android.core.api.sort.SortField
 
 /** Private implementation of SortField */
 internal class SortFieldImpl<T, V : Comparable<V>>(

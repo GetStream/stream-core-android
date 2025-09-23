@@ -16,13 +16,14 @@
 package io.getstream.android.core.api.filter
 
 import junit.framework.TestCase
+import kotlin.test.fail
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 
 @RunWith(Parameterized::class)
 internal class FilterToRequestTest(
-    private val filter: Filter<*>,
+    private val filter: Filter<*, *>,
     private val expectedRequest: Map<String, Any>,
     private val testName: String,
 ) {
@@ -34,7 +35,9 @@ internal class FilterToRequestTest(
     }
 
     companion object {
-        private data class TestField(override val remote: String) : FilterField
+        private data class TestField(override val remote: String) : FilterField<Any> {
+            override val localValue: (Any) -> Any? = { fail("Shouldn't be called in these tests") }
+        }
 
         private val idField = TestField("id")
         private val createdAtField = TestField("created_at")
