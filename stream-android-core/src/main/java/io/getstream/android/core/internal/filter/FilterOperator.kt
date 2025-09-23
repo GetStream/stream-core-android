@@ -16,7 +16,7 @@
 package io.getstream.android.core.internal.filter
 
 /** Represents operators that can be used for filtering. */
-internal enum class FilterOperator(
+internal enum class BinaryOperator(
     /** The name of this operator as expected by the Stream API. */
     val remote: String
 ) {
@@ -49,15 +49,20 @@ internal enum class FilterOperator(
     /** Matches values that exist/don't exist based on the specified boolean value. */
     EXISTS("\$exists"),
 
-    /** Matches all the values specified in an array. */
-    AND("\$and"),
-
-    /** Matches at least one of the values specified in an array. */
-    OR("\$or"),
-
     /** Matches if the key array contains the given value. */
     CONTAINS("\$contains"),
 
     /** Matches if the value contains JSON with the given path. */
     PATH_EXISTS("\$path_exists"),
+}
+
+internal enum class CollectionOperator(
+    /** The name of this operator as expected by the Stream API. */
+    val remote: String
+) {
+    /** Matches all the values specified in an array. */
+    AND("\$and"),
+
+    /** Matches at least one of the values specified in an array. */
+    OR("\$or"),
 }
