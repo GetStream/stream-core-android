@@ -13,13 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.getstream.android.core.api.filter
+package io.getstream.android.core.api.sort
+
+import io.getstream.android.core.annotations.StreamPublishedApi
 
 /**
  * The direction of a sort operation. This enum defines whether a sort should be performed in
  * ascending (forward) or descending (reverse) order. The raw values correspond to the values
  * expected by the remote API.
  */
+@StreamPublishedApi
 public enum class SortDirection(public val value: Int) {
     /** Sort in ascending order (A to Z, 1 to 9, etc.). */
     FORWARD(1),

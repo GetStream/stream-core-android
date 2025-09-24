@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.getstream.android.core.internal.filter
+package io.getstream.android.core.internal.sort
 
-import io.getstream.android.core.api.filter.AnySortComparator
-import io.getstream.android.core.api.filter.SortComparator
-import io.getstream.android.core.api.filter.SortField
+import io.getstream.android.core.api.sort.AnySortComparator
+import io.getstream.android.core.api.sort.SortComparator
+import io.getstream.android.core.api.sort.SortField
 
 /** Private implementation of SortField */
 internal class SortFieldImpl<T, V : Comparable<V>>(

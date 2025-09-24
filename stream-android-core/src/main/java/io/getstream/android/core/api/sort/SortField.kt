@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.getstream.android.core.api.filter
+package io.getstream.android.core.api.sort
 
 import io.getstream.android.core.annotations.StreamInternalApi
 import io.getstream.android.core.annotations.StreamPublishedApi
-import io.getstream.android.core.internal.filter.SortFieldImpl
+import io.getstream.android.core.internal.sort.SortFieldImpl
 
 /**
  * A protocol that defines a sortable field for a specific model type.
