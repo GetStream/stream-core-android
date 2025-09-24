@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.getstream.android.core.internal.filter
+package io.getstream.android.core.internal.sort
 
 import io.getstream.android.core.api.sort.AnySortComparator
 import io.getstream.android.core.api.sort.SortComparator
