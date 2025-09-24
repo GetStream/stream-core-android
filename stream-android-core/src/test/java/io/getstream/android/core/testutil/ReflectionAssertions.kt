@@ -34,12 +34,13 @@ private fun readPrivateFieldInternal(instance: Any?, fieldName: String): Any? {
 }
 
 /** Extension wrapper over [readPrivateField] for ergonomic usage. */
-public fun Any?.readPrivateField(fieldName: String): Any? = readPrivateFieldInternal(this, fieldName)
+public fun Any?.readPrivateField(fieldName: String): Any? =
+    readPrivateFieldInternal(this, fieldName)
 
 /**
- * Asserts that the private field [fieldName] equals [expected].
- * Value classes, primitives, numbers, booleans, and strings are compared with [assertEquals];
- * all other references are compared with [assertSame].
+ * Asserts that the private field [fieldName] equals [expected]. Value classes, primitives, numbers,
+ * booleans, and strings are compared with [assertEquals]; all other references are compared with
+ * [assertSame].
  */
 public fun Any.assertFieldEquals(fieldName: String, expected: Any) {
     val value = readPrivateFieldInternal(this, fieldName)

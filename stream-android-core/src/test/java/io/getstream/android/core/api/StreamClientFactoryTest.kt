@@ -47,8 +47,8 @@ import io.getstream.android.core.internal.http.interceptor.StreamClientInfoInter
 import io.getstream.android.core.internal.http.interceptor.StreamConnectionIdInterceptor
 import io.getstream.android.core.internal.http.interceptor.StreamEndpointErrorInterceptor
 import io.getstream.android.core.internal.serialization.StreamCompositeEventSerializationImpl
-import io.getstream.android.core.internal.socket.StreamWebSocketImpl
 import io.getstream.android.core.internal.socket.StreamSocketSession
+import io.getstream.android.core.internal.socket.StreamWebSocketImpl
 import io.getstream.android.core.testutil.assertFieldEquals
 import io.getstream.android.core.testutil.readPrivateField
 import io.mockk.mockk
@@ -72,7 +72,11 @@ internal class StreamClientFactoryTest {
         object : StreamLoggerProvider {
             override fun taggedLogger(tag: String): StreamLogger =
                 object : StreamLogger {
-                    override fun log(level: StreamLogger.LogLevel, throwable: Throwable?, message: () -> String) {
+                    override fun log(
+                        level: StreamLogger.LogLevel,
+                        throwable: Throwable?,
+                        message: () -> String,
+                    ) {
                         // no-op for tests
                     }
                 }
@@ -96,7 +100,7 @@ internal class StreamClientFactoryTest {
     )
 
     private fun createClient(
-        httpConfig: StreamHttpConfig? = null,
+        httpConfig: StreamHttpConfig? = null
     ): Pair<StreamClient, Dependencies> {
         val deps =
             Dependencies(
@@ -238,7 +242,9 @@ internal class StreamClientFactoryTest {
         val connectionInterceptor = interceptors[2] as StreamConnectionIdInterceptor
         connectionInterceptor.assertFieldEquals("connectionIdHolder", deps.connectionIdHolder)
 
-        val session = (client as StreamClientImpl<*>).readPrivateField("socketSession") as StreamSocketSession<*>
+        val session =
+            (client as StreamClientImpl<*>).readPrivateField("socketSession")
+                as StreamSocketSession<*>
         val jsonSerialization = session.readPrivateField("jsonSerialization")
 
         val authInterceptor = interceptors[3] as StreamAuthInterceptor

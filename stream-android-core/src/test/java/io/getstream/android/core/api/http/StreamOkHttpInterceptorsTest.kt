@@ -28,9 +28,9 @@ import io.getstream.android.core.internal.http.interceptor.StreamAuthInterceptor
 import io.getstream.android.core.internal.http.interceptor.StreamClientInfoInterceptor
 import io.getstream.android.core.internal.http.interceptor.StreamConnectionIdInterceptor
 import io.getstream.android.core.internal.http.interceptor.StreamEndpointErrorInterceptor
-import io.mockk.mockk
 import io.getstream.android.core.testutil.assertFieldEquals
 import io.getstream.android.core.testutil.readPrivateField
+import io.mockk.mockk
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import org.junit.Test

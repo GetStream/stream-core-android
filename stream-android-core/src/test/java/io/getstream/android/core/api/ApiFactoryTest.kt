@@ -18,25 +18,25 @@
 package io.getstream.android.core.api
 
 import io.getstream.android.core.annotations.StreamInternalApi
+import io.getstream.android.core.api.authentication.StreamTokenManager as StreamTokenManagerFactory
 import io.getstream.android.core.api.authentication.StreamTokenProvider
 import io.getstream.android.core.api.log.StreamLogger
 import io.getstream.android.core.api.model.value.StreamUserId
-import io.getstream.android.core.api.serialization.StreamJsonSerialization
-import io.getstream.android.core.api.socket.StreamWebSocketFactory
-import io.getstream.android.core.api.socket.listeners.StreamWebSocketListener
-import io.getstream.android.core.api.subscribe.StreamSubscription
-import io.getstream.android.core.api.subscribe.StreamSubscriptionManager
-import io.getstream.android.core.api.subscribe.StreamSubscriptionManager as StreamSubscriptionManagerFactory
 import io.getstream.android.core.api.processing.StreamBatcher as StreamBatcherFactory
 import io.getstream.android.core.api.processing.StreamRetryProcessor as StreamRetryProcessorFactory
 import io.getstream.android.core.api.processing.StreamSerialProcessingQueue as StreamSerialProcessingQueueFactory
 import io.getstream.android.core.api.processing.StreamSingleFlightProcessor as StreamSingleFlightProcessorFactory
 import io.getstream.android.core.api.serialization.StreamEventSerialization as StreamEventSerializationFactory
+import io.getstream.android.core.api.serialization.StreamJsonSerialization
 import io.getstream.android.core.api.socket.StreamConnectionIdHolder as StreamConnectionIdHolderFactory
 import io.getstream.android.core.api.socket.StreamWebSocket as StreamWebSocketFactoryMethod
 import io.getstream.android.core.api.socket.StreamWebSocketFactory as StreamWebSocketFactoryFactory
+import io.getstream.android.core.api.socket.StreamWebSocketFactory
+import io.getstream.android.core.api.socket.listeners.StreamWebSocketListener
 import io.getstream.android.core.api.socket.monitor.StreamHealthMonitor as StreamHealthMonitorFactory
-import io.getstream.android.core.api.authentication.StreamTokenManager as StreamTokenManagerFactory
+import io.getstream.android.core.api.subscribe.StreamSubscription
+import io.getstream.android.core.api.subscribe.StreamSubscriptionManager as StreamSubscriptionManagerFactory
+import io.getstream.android.core.api.subscribe.StreamSubscriptionManager
 import io.getstream.android.core.internal.authentication.StreamTokenManagerImpl
 import io.getstream.android.core.internal.processing.StreamBatcherImpl
 import io.getstream.android.core.internal.processing.StreamRetryProcessorImpl
@@ -170,7 +170,8 @@ internal class ApiFactoryTest {
         // Given
         val logger = mockk<StreamLogger>(relaxed = true)
         val socketFactory = mockk<StreamWebSocketFactory>(relaxed = true)
-        val subscriptionManager = mockk<StreamSubscriptionManager<StreamWebSocketListener>>(relaxed = true)
+        val subscriptionManager =
+            mockk<StreamSubscriptionManager<StreamWebSocketListener>>(relaxed = true)
 
         // When
         val webSocket =

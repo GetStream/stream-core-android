@@ -1,12 +1,27 @@
+/*
+ * Copyright (c) 2014-2025 Stream.io Inc. All rights reserved.
+ *
+ * Licensed under the Stream License;
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    https://github.com/GetStream/stream-core-android/blob/main/LICENSE
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package io.getstream.android.core.api.sort
 
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
-import org.junit.Test
 import kotlin.collections.sortedWith
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
+import org.junit.Test
 
 internal class SortTest {
 
@@ -32,10 +47,11 @@ internal class SortTest {
         val first = TestModel(score = 10, name = "b")
         val second = TestModel(score = 7, name = "a")
         every { comparator.compare(first, second, SortDirection.REVERSE) } returns 42
-        val sortField = object : SortField<TestModel> {
-            override val comparator: AnySortComparator<TestModel> = comparator
-            override val remote: String = "score"
-        }
+        val sortField =
+            object : SortField<TestModel> {
+                override val comparator: AnySortComparator<TestModel> = comparator
+                override val remote: String = "score"
+            }
         val sort = Sort(field = sortField, direction = SortDirection.REVERSE)
 
         // When
@@ -52,7 +68,12 @@ internal class SortTest {
         val comparator = SortComparator<TestModel, Int> { it.score }
 
         // When
-        val comparison = comparator.compare(lhs = null, rhs = TestModel(score = 5, name = "a"), direction = SortDirection.FORWARD)
+        val comparison =
+            comparator.compare(
+                lhs = null,
+                rhs = TestModel(score = 5, name = "a"),
+                direction = SortDirection.FORWARD,
+            )
 
         // Then
         assertEquals(-1, comparison)
@@ -83,8 +104,10 @@ internal class SortTest {
                 TestModel(score = 2, name = "b"),
                 TestModel(score = 1, name = "a"),
             )
-        val scoreSort = Sort(SortField.create<TestModel, Int>("score") { it.score }, SortDirection.FORWARD)
-        val nameSort = Sort(SortField.create<TestModel, String>("name") { it.name }, SortDirection.FORWARD)
+        val scoreSort =
+            Sort(SortField.create<TestModel, Int>("score") { it.score }, SortDirection.FORWARD)
+        val nameSort =
+            Sort(SortField.create<TestModel, String>("name") { it.name }, SortDirection.FORWARD)
 
         // When
         val sorted = models.sortedWith(listOf(scoreSort, nameSort))

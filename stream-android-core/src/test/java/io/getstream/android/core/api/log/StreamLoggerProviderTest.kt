@@ -47,7 +47,10 @@ internal class StreamLoggerProviderTest {
 
     private fun stubLogDefaults() {
         every { Log.isLoggable(any(), any()) } returns true
-        every { Log.getStackTraceString(any()) } answers { "stack:${firstArg<Throwable>().message}" }
+        every { Log.getStackTraceString(any()) } answers
+            {
+                "stack:${firstArg<Throwable>().message}"
+            }
         every { Log.println(any(), any(), any()) } returns 0
     }
 
@@ -55,7 +58,8 @@ internal class StreamLoggerProviderTest {
     fun `default logger filters messages below min level`() {
         // Given
         stubLogDefaults()
-        val provider = StreamLoggerProvider.defaultAndroidLogger(minLevel = StreamLogger.LogLevel.Info)
+        val provider =
+            StreamLoggerProvider.defaultAndroidLogger(minLevel = StreamLogger.LogLevel.Info)
         val logger = provider.taggedLogger(tag)
 
         // When
@@ -86,10 +90,11 @@ internal class StreamLoggerProviderTest {
         val messages = mutableListOf<String>()
         every { Log.isLoggable(any(), any()) } returns true
         every { Log.getStackTraceString(any()) } answers { "" }
-        every { Log.println(any(), any(), any()) } answers {
-            messages += thirdArg<String>()
-            0
-        }
+        every { Log.println(any(), any(), any()) } answers
+            {
+                messages += thirdArg<String>()
+                0
+            }
         val provider = StreamLoggerProvider.defaultAndroidLogger()
         val logger = provider.taggedLogger(tag)
         val longMessage = buildString(9005) { repeat(9005) { append('x') } }
@@ -109,10 +114,11 @@ internal class StreamLoggerProviderTest {
         // Given
         val captured = mutableListOf<String>()
         stubLogDefaults()
-        every { Log.println(any(), any(), any()) } answers {
-            captured += thirdArg<String>()
-            0
-        }
+        every { Log.println(any(), any(), any()) } answers
+            {
+                captured += thirdArg<String>()
+                0
+            }
         val provider = StreamLoggerProvider.defaultAndroidLogger()
         val logger = provider.taggedLogger(tag)
         val throwable = IllegalStateException("boom")
@@ -131,10 +137,11 @@ internal class StreamLoggerProviderTest {
         // Given
         val captured = mutableListOf<String>()
         stubLogDefaults()
-        every { Log.println(any(), any(), any()) } answers {
-            captured += thirdArg<String>()
-            0
-        }
+        every { Log.println(any(), any(), any()) } answers
+            {
+                captured += thirdArg<String>()
+                0
+            }
         val provider = StreamLoggerProvider.defaultAndroidLogger()
         val logger = provider.taggedLogger(tag)
 
