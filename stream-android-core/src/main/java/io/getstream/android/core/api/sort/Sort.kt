@@ -15,6 +15,8 @@
  */
 package io.getstream.android.core.api.sort
 
+import io.getstream.android.core.annotations.StreamPublishedApi
+
 /**
  * A sort configuration that combines a sort field with a direction.
  *
@@ -22,6 +24,7 @@ package io.getstream.android.core.api.sort
  * associated model type. It provides both local sorting capabilities and the ability to generate
  * remote API request parameters.
  */
+@StreamPublishedApi
 public open class Sort<T>(public val field: SortField<T>, public val direction: SortDirection) :
     Comparator<T> {
 

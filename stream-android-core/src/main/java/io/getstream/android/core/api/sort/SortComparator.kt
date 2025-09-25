@@ -16,6 +16,7 @@
 package io.getstream.android.core.api.sort
 
 import io.getstream.android.core.annotations.StreamInternalApi
+import io.getstream.android.core.annotations.StreamPublishedApi
 
 /**
  * A comparator that can sort model instances by extracting comparable values.
@@ -28,6 +29,7 @@ import io.getstream.android.core.annotations.StreamInternalApi
  * @param V The type of the comparable value extracted from the model instances.
  * @property value A lambda that extracts a comparable value from a model instance.
  */
+@StreamPublishedApi
 public class SortComparator<T, V : Comparable<V>>(public val value: (T) -> V) {
 
     /**
@@ -70,6 +72,7 @@ public class SortComparator<T, V : Comparable<V>>(public val value: (T) -> V) {
  * Type erased type avoids making SortField generic while keeping the underlying value type intact
  * (no runtime type checks while sorting).
  */
+@StreamPublishedApi
 public class AnySortComparator<T>(private val compare: (T?, T?, SortDirection) -> Int) {
 
     /**
