@@ -64,7 +64,7 @@ internal class StreamInternalModelSerializationTest {
     }
 
     @Test(expected = JsonDataException::class)
-    fun `StreamWSAuthMessageRequest missing required fields yields null`() {
+    fun `StreamWSAuthMessageRequest missing required fields throws`() {
         // Given
         val adapter = moshi.adapter(StreamWSAuthMessageRequest::class.java)
         val invalidJson = "{\"products\":null,\"token\":null}"
@@ -76,7 +76,7 @@ internal class StreamInternalModelSerializationTest {
     }
 
     @Test(expected = JsonDataException::class)
-    fun `StreamClientConnectedEvent missing connectionId yields null`() {
+    fun `StreamClientConnectedEvent missing connectionId throws`() {
         // Given
         val adapter = moshi.adapter(StreamClientConnectedEvent::class.java)
         val user =
