@@ -18,7 +18,6 @@ package io.getstream.android.core.internal.model
 import com.squareup.moshi.JsonDataException
 import io.getstream.android.core.api.model.connection.StreamConnectedUser
 import io.getstream.android.core.internal.model.authentication.StreamWSAuthMessageRequest
-import io.getstream.android.core.internal.model.events.EVENT_TYPE_CONNECTION_ERROR
 import io.getstream.android.core.internal.model.events.EVENT_TYPE_CONNECTION_OK
 import io.getstream.android.core.internal.model.events.StreamClientConnectedEvent
 import io.getstream.android.core.internal.model.events.StreamClientConnectionErrorEvent
