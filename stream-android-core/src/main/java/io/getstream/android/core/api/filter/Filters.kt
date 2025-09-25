@@ -20,6 +20,7 @@ import io.getstream.android.core.internal.filter.BinaryOperator
 import io.getstream.android.core.internal.filter.CollectionOperator
 
 /** Utility class for building filters. */
+@StreamPublishedApi
 public object Filters {
     /**
      * Creates a filter that combines multiple filters with a logical AND operation.

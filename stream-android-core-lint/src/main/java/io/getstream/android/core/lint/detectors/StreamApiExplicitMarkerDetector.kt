@@ -144,8 +144,11 @@ class StreamApiExplicitMarkerDetector : Detector(), Detector.UastScanner {
     private fun JavaContext.packageMatchesConfig(pkg: String): Boolean {
         val patterns = configuredPackageGlobs()
 
-        // Default if not configured → only io.getstream.android.core.*
-        val effectivePatterns = patterns.ifEmpty { listOf("io.getstream.android.core.api") }
+        // Default if not configured → io.getstream.android.core.api and its subpackages.
+        val effectivePatterns =
+            patterns.ifEmpty {
+                listOf("io.getstream.android.core.api", "io.getstream.android.core.api.*")
+            }
 
         val included = effectivePatterns.any { pkgMatchesGlob(pkg, it) }
         val excluded = packageMatchesExcludeConfig(pkg)

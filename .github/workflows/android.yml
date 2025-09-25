@@ -48,7 +48,7 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v3.1.0
       - uses: GetStream/android-ci-actions/actions/setup-java@main
-      - name: spotless
+      - name: Run spotless check
         run: ./gradlew spotlessCheck --scan
   lint:
     name: Lint
@@ -57,7 +57,7 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v3.1.0
       - uses: GetStream/android-ci-actions/actions/setup-java@main
-      - name: spotless
+      - name: Run lint check
         run: ./gradlew lint
 
   unitTest:
