@@ -44,9 +44,7 @@ public fun NetworkInfoCard(snapshot: StreamNetworkInfo.Snapshot?) {
     OutlinedCard(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.outlinedCardColors(
-            containerColor = MaterialTheme.colorScheme.surface,
-        ),
+        colors = CardDefaults.outlinedCardColors(containerColor = MaterialTheme.colorScheme.surface),
     ) {
         if (snapshot == null) {
             Column(
@@ -101,15 +99,9 @@ public fun NetworkInfoCard(snapshot: StreamNetworkInfo.Snapshot?) {
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Medium,
                 )
-                Text(
-                    text = signalData.description,
-                    style = MaterialTheme.typography.bodyMedium,
-                )
+                Text(text = signalData.description, style = MaterialTheme.typography.bodyMedium)
                 signalData.progress?.let { progress ->
-                    LinearProgressIndicator(
-                        progress = progress,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
+                    LinearProgressIndicator(progress = progress, modifier = Modifier.fillMaxWidth())
                 }
             }
 
@@ -147,11 +139,7 @@ public fun NetworkInfoCard(snapshot: StreamNetworkInfo.Snapshot?) {
                         },
                     alert = snapshot.metered == StreamNetworkInfo.Metered.UNKNOWN_OR_METERED,
                 )
-                NetworkFactRow(
-                    label = "Priority",
-                    value = snapshot.priority.label,
-                    state = null,
-                )
+                NetworkFactRow(label = "Priority", value = snapshot.priority.label, state = null)
             }
 
             Divider()
@@ -206,9 +194,7 @@ public fun NetworkInfoCard(snapshot: StreamNetworkInfo.Snapshot?) {
 @Preview(showBackground = true)
 @Composable
 private fun NetworkInfoCardPreview() {
-    StreamandroidcoreTheme {
-        NetworkInfoCard(sampleSnapshot())
-    }
+    StreamandroidcoreTheme { NetworkInfoCard(sampleSnapshot()) }
 }
 
 @OptIn(ExperimentalTime::class)

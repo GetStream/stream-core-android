@@ -64,7 +64,8 @@ internal class StreamClientImpl<T>(
     override val connectionState: StateFlow<StreamConnectionState>
         get() = mutableConnectionState.asStateFlow()
 
-    private var internalNetworkInfo: MutableStateFlow<StreamNetworkInfo.Snapshot?> = MutableStateFlow(null)
+    private var internalNetworkInfo: MutableStateFlow<StreamNetworkInfo.Snapshot?> =
+        MutableStateFlow(null)
 
     @StreamInternalApi
     override val networkInfo: StateFlow<StreamNetworkInfo.Snapshot?>
@@ -86,13 +87,11 @@ internal class StreamClientImpl<T>(
                                 ) {
                                     logger.v { "[connect] Network connected: $snapshot" }
                                     internalNetworkInfo.update { snapshot }
-                                    connect()
                                 }
 
                                 override suspend fun onNetworkLost(permanent: Boolean) {
                                     logger.v { "[connect] Network lost" }
                                     internalNetworkInfo.update { null }
-                                    disconnect()
                                 }
 
                                 override suspend fun onNetworkPropertiesChanged(

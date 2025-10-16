@@ -40,9 +40,7 @@ public fun ConnectionStateCard(state: StreamConnectionState) {
     OutlinedCard(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.outlinedCardColors(
-            containerColor = MaterialTheme.colorScheme.surface,
-        ),
+        colors = CardDefaults.outlinedCardColors(containerColor = MaterialTheme.colorScheme.surface),
     ) {
         Column(
             modifier = Modifier.padding(20.dp),
@@ -82,30 +80,14 @@ public fun ConnectionStateCard(state: StreamConnectionState) {
 
                 is StreamConnectionState.Connecting.Opening -> {
                     Divider()
-                    NetworkFactRow(
-                        label = "Stage",
-                        value = "Opening socket",
-                        state = null,
-                    )
-                    NetworkFactRow(
-                        label = "User",
-                        value = state.userId,
-                        state = null,
-                    )
+                    NetworkFactRow(label = "Stage", value = "Opening socket", state = null)
+                    NetworkFactRow(label = "User", value = state.userId, state = null)
                 }
 
                 is StreamConnectionState.Connecting.Authenticating -> {
                     Divider()
-                    NetworkFactRow(
-                        label = "Stage",
-                        value = "Authenticating",
-                        state = null,
-                    )
-                    NetworkFactRow(
-                        label = "User",
-                        value = state.userId,
-                        state = null,
-                    )
+                    NetworkFactRow(label = "Stage", value = "Authenticating", state = null)
+                    NetworkFactRow(label = "User", value = state.userId, state = null)
                 }
 
                 is StreamConnectionState.Disconnected -> {
@@ -120,11 +102,7 @@ public fun ConnectionStateCard(state: StreamConnectionState) {
 
                 StreamConnectionState.Idle -> {
                     Divider()
-                    NetworkFactRow(
-                        label = "Details",
-                        value = "Client idle",
-                        state = null,
-                    )
+                    NetworkFactRow(label = "Details", value = "Client idle", state = null)
                 }
             }
         }

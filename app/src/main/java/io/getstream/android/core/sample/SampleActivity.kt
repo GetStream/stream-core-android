@@ -98,8 +98,7 @@ class SampleActivity : ComponentActivity() {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     Column(
                         modifier =
-                            Modifier
-                                .fillMaxSize()
+                            Modifier.fillMaxSize()
                                 .padding(innerPadding)
                                 .verticalScroll(scrollState)
                                 .padding(16.dp),

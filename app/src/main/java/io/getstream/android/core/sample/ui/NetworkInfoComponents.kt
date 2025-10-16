@@ -31,7 +31,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import io.getstream.android.core.api.model.connection.StreamConnectedUser
 import io.getstream.android.core.api.model.connection.StreamConnectionState
@@ -41,12 +40,11 @@ import io.getstream.android.core.api.model.connection.network.StreamNetworkInfo
 internal fun TransportChip(label: String) {
     Box(
         modifier =
-            Modifier
-                .background(
+            Modifier.background(
                     color = MaterialTheme.colorScheme.secondaryContainer,
                     shape = RoundedCornerShape(50),
                 )
-                .padding(horizontal = 12.dp, vertical = 6.dp),
+                .padding(horizontal = 12.dp, vertical = 6.dp)
     ) {
         Text(
             text = label,
@@ -57,12 +55,7 @@ internal fun TransportChip(label: String) {
 }
 
 @Composable
-internal fun NetworkFactRow(
-    label: String,
-    value: String,
-    state: Boolean?,
-    alert: Boolean = false,
-) {
+internal fun NetworkFactRow(label: String, value: String, state: Boolean?, alert: Boolean = false) {
     val indicatorColor: Color =
         when (state) {
             true -> MaterialTheme.colorScheme.primary
@@ -77,16 +70,8 @@ internal fun NetworkFactRow(
         }
     val valueColor = if (alert) MaterialTheme.colorScheme.error else baseValueColor
 
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Box(
-            modifier =
-                Modifier
-                    .size(10.dp)
-                    .background(indicatorColor, CircleShape),
-        )
+    Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        Box(modifier = Modifier.size(10.dp).background(indicatorColor, CircleShape))
         Spacer(modifier = Modifier.width(12.dp))
         Text(text = label, style = MaterialTheme.typography.bodyMedium)
         Spacer(modifier = Modifier.weight(1f))
@@ -111,8 +96,7 @@ private fun StreamNetworkInfo.Signal?.level(): Int? =
 
 private fun StreamNetworkInfo.Signal?.summary(): String =
     when (this) {
-        is StreamNetworkInfo.Signal.Wifi ->
-            "Wi-Fi RSSI: ${rssiDbm ?: "?"} dBm"
+        is StreamNetworkInfo.Signal.Wifi -> "Wi-Fi RSSI: ${rssiDbm ?: "?"} dBm"
         is StreamNetworkInfo.Signal.Cellular ->
             "Cellular ${rat ?: "Radio"} RSRP: ${rsrpDbm ?: "?"} dBm"
         is StreamNetworkInfo.Signal.Generic -> "Generic signal: $value"

@@ -182,7 +182,8 @@ internal class StreamNetworkSnapshotBuilder(
         val addresses = linkAddresses.mapNotNull { it.address?.hostAddress }
         val dnsServers = dnsServers.mapNotNull { it.hostAddress }
         val domains = domains?.split(" ")?.filter { it.isNotBlank() } ?: emptyList()
-        val mtuValue = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) mtu.takeIf { it > 0 } else null
+        val mtuValue =
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) mtu.takeIf { it > 0 } else null
         val httpProxyValue = httpProxy?.let { "${it.host}:${it.port}" }
         return Link(
             interfaceName = interfaceName,

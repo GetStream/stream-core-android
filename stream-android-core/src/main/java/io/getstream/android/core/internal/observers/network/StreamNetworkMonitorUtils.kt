@@ -33,7 +33,8 @@ internal fun NetworkCapabilities.safeHasTransport(transport: Int): Boolean? =
 internal fun sanitizeSsid(info: WifiInfo): String? {
     val raw = info.ssid?.trim('"') ?: return null
     val isPlatformUnknown =
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) raw == WifiManager.UNKNOWN_SSID else false
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) raw == WifiManager.UNKNOWN_SSID
+        else false
     val isLegacyUnknown = raw == "<unknown ssid>"
     return raw.takeUnless { isPlatformUnknown || isLegacyUnknown }
 }

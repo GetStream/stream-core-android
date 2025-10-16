@@ -135,6 +135,6 @@ fun createStreamClient(
                     override fun deserialize(raw: String): Result<Unit> = Result.success(Unit)
                 }
             ),
-        batcher = batcher
+        batcher = batcher,
     )
 }

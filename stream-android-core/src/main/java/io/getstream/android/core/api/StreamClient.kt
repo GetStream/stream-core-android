@@ -18,7 +18,6 @@ package io.getstream.android.core.api
 import io.getstream.android.core.annotations.StreamInternalApi
 import io.getstream.android.core.api.authentication.StreamTokenManager
 import io.getstream.android.core.api.authentication.StreamTokenProvider
-import io.getstream.android.core.api.components.StreamAndroidComponentsProvider
 import io.getstream.android.core.api.http.StreamOkHttpInterceptors
 import io.getstream.android.core.api.log.StreamLoggerProvider
 import io.getstream.android.core.api.model.config.StreamClientSerializationConfig
@@ -118,8 +117,7 @@ public interface StreamClient {
      * - Hot & conflated: new collectors receive the latest value immediately.
      * - `null` if no network is available.
      */
-    @StreamInternalApi
-    public val networkInfo: StateFlow<StreamNetworkInfo.Snapshot?>
+    @StreamInternalApi public val networkInfo: StateFlow<StreamNetworkInfo.Snapshot?>
 
     /**
      * Establishes a connection for the current user.
