@@ -1,0 +1,79 @@
+/*
+ * Copyright (c) 2014-2025 Stream.io Inc. All rights reserved.
+ *
+ * Licensed under the Stream License;
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    https://github.com/GetStream/stream-core-android/blob/main/LICENSE
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package io.getstream.android.core.internal.observers.network
+
+import android.net.NetworkCapabilities
+import android.net.wifi.WifiInfo
+import android.os.Build
+import android.telephony.SignalStrength
+import android.telephony.TelephonyManager
+import io.mockk.MockKAnnotations
+import io.mockk.every
+import io.mockk.impl.annotations.MockK
+import io.mockk.mockk
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
+import kotlin.test.BeforeTest
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertNull
+import kotlin.test.assertTrue
+
+@RunWith(RobolectricTestRunner::class)
+@Config(sdk = [Build.VERSION_CODES.P])
+internal class StreamNetworkMonitorUtilsTest {
+
+    @MockK(relaxed = true) lateinit var capabilities: NetworkCapabilities
+
+    @BeforeTest
+    fun setup() {
+        MockKAnnotations.init(this)
+    }
+
+    @Test
+    fun `safeHasCapability returns value or null on error`() {
+        every { capabilities.hasCapability(1) } returns true
+        assertTrue(capabilities.safeHasCapability(1) == true)
+
+        every { capabilities.hasCapability(2) } throws SecurityException("boom")
+        assertNull(capabilities.safeHasCapability(2))
+    }
+
+    @Test
+    fun `sanitizeSsid trims markers and ignores unknown`() {
+        val info = mockk<WifiInfo> {
+            every { ssid } returns "\"Stream\""
+        }
+        assertEquals("Stream", sanitizeSsid(info))
+
+        every { info.ssid } returns "<unknown ssid>"
+        assertNull(sanitizeSsid(info))
+    }
+
+    @Test
+    fun `telephony helpers unwrap signal values`() {
+        val manager = mockk<TelephonyManager> {
+            every { signalStrength } returns mockk(relaxed = true)
+        }
+        assertEquals(manager.signalStrength, telephonySignalStrength(manager))
+
+        val nrSignalStrength = mockk<SignalStrength>(relaxed = true) {
+            every { level } returns 3
+        }
+        assertEquals(3, signalLevel(nrSignalStrength))
+    }
+}
