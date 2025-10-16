@@ -96,6 +96,7 @@ class StreamClientIImplTest {
             mutableConnectionState = connFlow,
             scope = scope,
             subscriptionManager = subscriptionManager,
+            networkMonitor = mockk(relaxed = true),
         )
 
     @Test

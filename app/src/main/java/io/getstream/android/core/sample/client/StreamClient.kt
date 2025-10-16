@@ -15,9 +15,11 @@
  */
 package io.getstream.android.core.sample.client
 
+import android.content.Context
 import io.getstream.android.core.api.StreamClient
 import io.getstream.android.core.api.authentication.StreamTokenManager
 import io.getstream.android.core.api.authentication.StreamTokenProvider
+import io.getstream.android.core.api.components.StreamAndroidComponentsProvider
 import io.getstream.android.core.api.log.StreamLogger
 import io.getstream.android.core.api.log.StreamLoggerProvider
 import io.getstream.android.core.api.model.config.StreamClientSerializationConfig
@@ -25,6 +27,7 @@ import io.getstream.android.core.api.model.value.StreamApiKey
 import io.getstream.android.core.api.model.value.StreamHttpClientInfoHeader
 import io.getstream.android.core.api.model.value.StreamUserId
 import io.getstream.android.core.api.model.value.StreamWsUrl
+import io.getstream.android.core.api.observers.network.StreamNetworkMonitor
 import io.getstream.android.core.api.processing.StreamBatcher
 import io.getstream.android.core.api.processing.StreamRetryProcessor
 import io.getstream.android.core.api.processing.StreamSerialProcessingQueue
@@ -49,6 +52,7 @@ import kotlinx.coroutines.CoroutineScope
  * @return A new [createStreamClient] instance.
  */
 fun createStreamClient(
+    context: Context,
     scope: CoroutineScope,
     apiKey: StreamApiKey,
     userId: StreamUserId,
@@ -88,6 +92,23 @@ fun createStreamClient(
             maxDelayMs = 1_000L,
         )
 
+    val androidComponentsProvider = StreamAndroidComponentsProvider(context)
+    val connectivityManager = androidComponentsProvider.connectivityManager().getOrThrow()
+    val wifiManager = androidComponentsProvider.wifiManager().getOrThrow()
+    val telephonyManager = androidComponentsProvider.telephonyManager().getOrThrow()
+    val networkMonitor =
+        StreamNetworkMonitor(
+            logger = logProvider.taggedLogger("SCNetworkMonitor"),
+            scope = scope,
+            connectivityManager = connectivityManager,
+            wifiManager = wifiManager,
+            telephonyManager = telephonyManager,
+            subscriptionManager =
+                StreamSubscriptionManager(
+                    logger = logProvider.taggedLogger("SCNetworkMonitorSubscriptions")
+                ),
+        )
+
     return StreamClient(
         scope = scope,
         apiKey = apiKey,
@@ -105,6 +126,7 @@ fun createStreamClient(
         connectionIdHolder = connectionIdHolder,
         socketFactory = socketFactory,
         healthMonitor = healthMonitor,
+        networkMonitor = networkMonitor,
         serializationConfig =
             StreamClientSerializationConfig.default(
                 object : StreamEventSerialization<Unit> {
@@ -113,6 +135,6 @@ fun createStreamClient(
                     override fun deserialize(raw: String): Result<Unit> = Result.success(Unit)
                 }
             ),
-        batcher = batcher,
+        batcher = batcher
     )
 }
