@@ -76,9 +76,13 @@ internal class StreamNetworkSnapshotBuilder(
             }
 
         val congested =
-            when (networkCapabilities.flag(NetworkCapabilities.NET_CAPABILITY_NOT_CONGESTED)) {
-                true -> false
-                else -> null
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                when (networkCapabilities.flag(NetworkCapabilities.NET_CAPABILITY_NOT_CONGESTED)) {
+                    true -> false
+                    else -> null
+                }
+            } else {
+                null
             }
         val suspended =
             when (networkCapabilities.flag(NetworkCapabilities.NET_CAPABILITY_NOT_SUSPENDED)) {
