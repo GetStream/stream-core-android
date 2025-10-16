@@ -17,7 +17,6 @@
 
 package io.getstream.android.core.api
 
-import android.net.ConnectivityManager
 import io.getstream.android.core.annotations.StreamInternalApi
 import io.getstream.android.core.api.authentication.StreamTokenManager
 import io.getstream.android.core.api.authentication.StreamTokenProvider
@@ -52,7 +51,6 @@ import io.getstream.android.core.internal.socket.StreamSocketSession
 import io.getstream.android.core.internal.socket.StreamWebSocketImpl
 import io.getstream.android.core.testutil.assertFieldEquals
 import io.getstream.android.core.testutil.readPrivateField
-import io.mockk.every
 import io.mockk.mockk
 import kotlin.test.assertEquals
 import kotlin.test.assertNotSame

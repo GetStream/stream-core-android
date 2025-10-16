@@ -96,7 +96,12 @@ class StreamClientIImplTest {
             mutableConnectionState = connFlow,
             scope = scope,
             subscriptionManager = subscriptionManager,
-            networkMonitor = mockk(relaxed = true),
+            networkMonitor =
+                mockk(relaxed = true) {
+                    every { start() } returns Result.success(Unit)
+                    every { stop() } returns Result.success(Unit)
+                    every { subscribe(any(), any()) } returns Result.success(mockk(relaxed = true))
+                },
         )
 
     @Test

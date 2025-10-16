@@ -93,10 +93,10 @@ internal class StreamNetworkSnapshotBuilder(
             } else {
                 null
             }
-            when (networkCapabilities.flag(NetworkCapabilities.NET_CAPABILITY_NOT_SUSPENDED)) {
-                true -> false
-                else -> null
-            }
+        when (networkCapabilities.flag(NetworkCapabilities.NET_CAPABILITY_NOT_SUSPENDED)) {
+            true -> false
+            else -> null
+        }
         val bandwidthConstrained =
             when (
                 networkCapabilities.flag(

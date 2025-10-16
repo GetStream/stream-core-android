@@ -28,10 +28,6 @@ import io.mockk.MockKAnnotations
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.mockk
-import org.junit.runner.RunWith
-import org.robolectric.RobolectricTestRunner
-import org.robolectric.annotation.Config
-import kotlin.intArrayOf
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -39,7 +35,9 @@ import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 import kotlin.time.ExperimentalTime
-
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
 
 @OptIn(ExperimentalTime::class)
 @RunWith(RobolectricTestRunner::class)
@@ -66,19 +64,40 @@ internal class StreamNetworkSnapshotBuilderTest {
 
         every { capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) } returns true
         every { capabilities.hasTransport(NetworkCapabilities.TRANSPORT_VPN) } returns false
-        every { capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) } returns true
-        every { capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED) } returns true
-        every { capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_CAPTIVE_PORTAL) } returns false
-        every { capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_NOT_VPN) } returns true
-        every { capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_TRUSTED) } returns true
-        every { capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_LOCAL_NETWORK) } returns false
-        every { capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_TEMPORARILY_NOT_METERED) } returns true
-        every { capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_NOT_CONGESTED) } returns true
-        every { capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_NOT_SUSPENDED) } returns true
-        every { capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_NOT_BANDWIDTH_CONSTRAINED) } returns true
-        every { capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_PRIORITIZE_LATENCY) } returns true
-        every { capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_PRIORITIZE_BANDWIDTH) } returns false
-        every { capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_NOT_ROAMING) } returns true
+        every { capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) } returns
+            true
+        every { capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED) } returns
+            true
+        every {
+            capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_CAPTIVE_PORTAL)
+        } returns false
+        every { capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_NOT_VPN) } returns
+            true
+        every { capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_TRUSTED) } returns
+            true
+        every {
+            capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_LOCAL_NETWORK)
+        } returns false
+        every {
+            capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_TEMPORARILY_NOT_METERED)
+        } returns true
+        every {
+            capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_NOT_CONGESTED)
+        } returns true
+        every {
+            capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_NOT_SUSPENDED)
+        } returns true
+        every {
+            capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_NOT_BANDWIDTH_CONSTRAINED)
+        } returns true
+        every {
+            capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_PRIORITIZE_LATENCY)
+        } returns true
+        every {
+            capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_PRIORITIZE_BANDWIDTH)
+        } returns false
+        every { capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_NOT_ROAMING) } returns
+            true
         every { capabilities.linkDownstreamBandwidthKbps } returns 50_000
         every { capabilities.linkUpstreamBandwidthKbps } returns 10_000
 

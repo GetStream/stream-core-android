@@ -24,14 +24,14 @@ import io.mockk.MockKAnnotations
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.mockk
-import org.junit.runner.RunWith
-import org.robolectric.RobolectricTestRunner
-import org.robolectric.annotation.Config
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
 
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [Build.VERSION_CODES.P])
@@ -55,9 +55,7 @@ internal class StreamNetworkMonitorUtilsTest {
 
     @Test
     fun `sanitizeSsid trims markers and ignores unknown`() {
-        val info = mockk<WifiInfo> {
-            every { ssid } returns "\"Stream\""
-        }
+        val info = mockk<WifiInfo> { every { ssid } returns "\"Stream\"" }
         assertEquals("Stream", sanitizeSsid(info))
 
         every { info.ssid } returns "<unknown ssid>"
@@ -66,14 +64,11 @@ internal class StreamNetworkMonitorUtilsTest {
 
     @Test
     fun `telephony helpers unwrap signal values`() {
-        val manager = mockk<TelephonyManager> {
-            every { signalStrength } returns mockk(relaxed = true)
-        }
+        val manager =
+            mockk<TelephonyManager> { every { signalStrength } returns mockk(relaxed = true) }
         assertEquals(manager.signalStrength, telephonySignalStrength(manager))
 
-        val nrSignalStrength = mockk<SignalStrength>(relaxed = true) {
-            every { level } returns 3
-        }
+        val nrSignalStrength = mockk<SignalStrength>(relaxed = true) { every { level } returns 3 }
         assertEquals(3, signalLevel(nrSignalStrength))
     }
 }

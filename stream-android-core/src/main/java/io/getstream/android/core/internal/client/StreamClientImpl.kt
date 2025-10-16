@@ -76,41 +76,6 @@ internal class StreamClientImpl<T>(
 
     override suspend fun connect(): Result<StreamConnectedUser> =
         singleFlight.run(connectKey) {
-            if (networkMonitorHandle == null) {
-                logger.v { "[connect] Starting network monitor" }
-                networkMonitorHandle =
-                    networkMonitor
-                        .subscribe(
-                            object : StreamNetworkMonitorListener {
-                                override suspend fun onNetworkConnected(
-                                    snapshot: StreamNetworkInfo.Snapshot?
-                                ) {
-                                    logger.v { "[connect] Network connected: $snapshot" }
-                                    internalNetworkInfo.update { snapshot }
-                                }
-
-                                override suspend fun onNetworkLost(permanent: Boolean) {
-                                    logger.v { "[connect] Network lost" }
-                                    internalNetworkInfo.update { null }
-                                }
-
-                                override suspend fun onNetworkPropertiesChanged(
-                                    snapshot: StreamNetworkInfo.Snapshot
-                                ) {
-                                    logger.v { "[connect] Network changed: $snapshot" }
-                                    internalNetworkInfo.update { snapshot }
-                                }
-                            },
-                            StreamSubscriptionManager.Options(
-                                retention =
-                                    StreamSubscriptionManager.Options.Retention.KEEP_UNTIL_CANCELLED
-                            ),
-                        )
-                        .getOrThrow()
-            }
-
-            networkMonitor.start()
-
             val currentState = connectionState.value
             if (currentState is StreamConnectionState.Connected) {
                 logger.w { "[connect] Already connected!" }
@@ -124,7 +89,7 @@ internal class StreamClientImpl<T>(
                             object : StreamClientListener {
                                 override fun onState(state: StreamConnectionState) {
                                     logger.v { "[client#onState]: $state" }
-                                    mutableConnectionState.update(state)
+                                    mutableConnectionState.update { state }
                                     subscriptionManager.forEach { it.onState(state) }
                                 }
 
@@ -158,6 +123,42 @@ internal class StreamClientImpl<T>(
                 .fold(
                     onSuccess = { connected ->
                         logger.d { "Connected to socket: $connected" }
+                        if (networkMonitorHandle == null) {
+                            logger.v { "[connect] Starting network monitor" }
+                            networkMonitorHandle =
+                                networkMonitor
+                                    .subscribe(
+                                        object : StreamNetworkMonitorListener {
+                                            override suspend fun onNetworkConnected(
+                                                snapshot: StreamNetworkInfo.Snapshot?
+                                            ) {
+                                                logger.v {
+                                                    "[connect] Network connected: $snapshot"
+                                                }
+                                                internalNetworkInfo.update { snapshot }
+                                            }
+
+                                            override suspend fun onNetworkLost(permanent: Boolean) {
+                                                logger.v { "[connect] Network lost" }
+                                                internalNetworkInfo.update { null }
+                                            }
+
+                                            override suspend fun onNetworkPropertiesChanged(
+                                                snapshot: StreamNetworkInfo.Snapshot
+                                            ) {
+                                                logger.v { "[connect] Network changed: $snapshot" }
+                                                internalNetworkInfo.update { snapshot }
+                                            }
+                                        },
+                                        StreamSubscriptionManager.Options(
+                                            retention =
+                                                StreamSubscriptionManager.Options.Retention
+                                                    .KEEP_UNTIL_CANCELLED
+                                        ),
+                                    )
+                                    .getOrThrow()
+                        }
+                        networkMonitor.start()
                         mutableConnectionState.update(connected)
                         connectionIdHolder.setConnectionId(connected.connectionId).map {
                             connected.connectedUser

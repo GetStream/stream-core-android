@@ -30,14 +30,14 @@ public interface StreamNetworkMonitorListener {
      *
      * @param snapshot A [StreamNetworkInfo.Snapshot] describing the newly connected network.
      */
-    public suspend fun onNetworkConnected(snapshot: StreamNetworkInfo.Snapshot?)
+    public suspend fun onNetworkConnected(snapshot: StreamNetworkInfo.Snapshot?) {}
 
     /**
      * Called when the network is lost.
      *
      * @param permanent True if the network is lost permanently (e.g., due to airplane mode).
      */
-    public suspend fun onNetworkLost(permanent: Boolean = false)
+    public suspend fun onNetworkLost(permanent: Boolean = false) {}
 
     /**
      * Called when the properties of the currently connected network change while the connection
@@ -45,5 +45,5 @@ public interface StreamNetworkMonitorListener {
      *
      * @param snapshot A [StreamNetworkInfo.Snapshot] containing the updated properties.
      */
-    public suspend fun onNetworkPropertiesChanged(snapshot: StreamNetworkInfo.Snapshot)
+    public suspend fun onNetworkPropertiesChanged(snapshot: StreamNetworkInfo.Snapshot) {}
 }

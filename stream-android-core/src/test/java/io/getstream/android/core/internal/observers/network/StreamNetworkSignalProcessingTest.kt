@@ -15,7 +15,6 @@
  */
 package io.getstream.android.core.internal.observers.network
 
-import android.net.NetworkCapabilities
 import android.net.wifi.WifiInfo
 import android.net.wifi.WifiManager
 import android.os.Build
@@ -28,7 +27,6 @@ import io.mockk.MockKAnnotations
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.mockk
-import io.mockk.mockkObject
 import io.mockk.mockkStatic
 import io.mockk.unmockkAll
 import kotlin.test.AfterTest
@@ -37,8 +35,6 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
 import kotlin.test.assertNull
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import org.junit.Assert.assertTrue
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
@@ -65,12 +61,13 @@ internal class StreamNetworkSignalProcessingTest {
 
     @Test
     fun `bestEffortSignal returns wifi signal when wifi transport available`() {
-        val wifiInfo = mockk<WifiInfo> {
-            every { rssi } returns -45
-            every { ssid } returns "\"Stream\""
-            every { bssid } returns "00:11:22:33:44:55"
-            every { frequency } returns 5200
-        }
+        val wifiInfo =
+            mockk<WifiInfo> {
+                every { rssi } returns -45
+                every { ssid } returns "\"Stream\""
+                every { bssid } returns "00:11:22:33:44:55"
+                every { frequency } returns 5200
+            }
         every { wifiManager.connectionInfo } returns wifiInfo
 
         val signal =
@@ -91,11 +88,12 @@ internal class StreamNetworkSignalProcessingTest {
     @Test
     fun `cellularSignal returns NR details when available`() {
         val strength = mockk<SignalStrength>(relaxed = true)
-        val nrStrength = mockk<CellSignalStrengthNr>(relaxed = true) {
-            every { ssRsrp } returns -95
-            every { ssRsrq } returns -10
-            every { ssSinr } returns 18
-        }
+        val nrStrength =
+            mockk<CellSignalStrengthNr>(relaxed = true) {
+                every { ssRsrp } returns -95
+                every { ssRsrq } returns -10
+                every { ssSinr } returns 18
+            }
 
         mockkStatic(
             "io.getstream.android.core.internal.observers.network.StreamNetworkMonitorUtilsKt"
