@@ -152,13 +152,7 @@ internal class StreamClientFactoryTest {
                 httpConfig = httpConfig,
                 serializationConfig = serializationConfig,
                 logProvider = logProvider,
-                androidComponentsProvider =
-                    mockk(relaxed = true) {
-                        every { connectivityManager() } returns
-                            Result.success<ConnectivityManager>(mockk(relaxed = true))
-                        every { wifiManager() } returns Result.success(mockk(relaxed = true))
-                        every { telephonyManager() } returns Result.success(mockk(relaxed = true))
-                    },
+                networkMonitor = mockk(relaxed = true),
             )
 
         return client to deps
