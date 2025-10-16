@@ -85,6 +85,14 @@ internal class StreamNetworkSnapshotBuilder(
                 null
             }
         val suspended =
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                when (networkCapabilities.flag(NetworkCapabilities.NET_CAPABILITY_NOT_SUSPENDED)) {
+                    true -> false
+                    else -> null
+                }
+            } else {
+                null
+            }
             when (networkCapabilities.flag(NetworkCapabilities.NET_CAPABILITY_NOT_SUSPENDED)) {
                 true -> false
                 else -> null
