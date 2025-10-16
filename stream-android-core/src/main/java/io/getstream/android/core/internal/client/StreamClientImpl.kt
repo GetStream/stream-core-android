@@ -180,6 +180,7 @@ internal class StreamClientImpl<T>(
             connectionIdHolder.clear()
             socketSession.disconnect()
             handle?.cancel()
+            networkMonitor.stop()
             networkMonitorHandle?.cancel()
             networkMonitorHandle = null
             handle = null
