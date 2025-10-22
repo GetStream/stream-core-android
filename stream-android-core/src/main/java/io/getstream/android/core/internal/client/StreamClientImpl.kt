@@ -68,7 +68,6 @@ internal class StreamClientImpl<T>(
     override val networkState: StateFlow<StreamNetworkState>
         get() = mutableNetworkState.asStateFlow()
 
-
     override fun subscribe(listener: StreamClientListener): Result<StreamSubscription> =
         subscriptionManager.subscribe(listener)
 
@@ -142,11 +141,12 @@ internal class StreamClientImpl<T>(
 
                                             override suspend fun onNetworkLost(permanent: Boolean) {
                                                 logger.v { "[connect] Network lost" }
-                                                val state = if (permanent) {
-                                                    StreamNetworkState.Unavailable
-                                                } else {
-                                                    StreamNetworkState.Disconnected
-                                                }
+                                                val state =
+                                                    if (permanent) {
+                                                        StreamNetworkState.Unavailable
+                                                    } else {
+                                                        StreamNetworkState.Disconnected
+                                                    }
                                                 mutableNetworkState.update(state)
                                                 subscriptionManager.forEach {
                                                     it.onNetworkState(state)
@@ -157,9 +157,13 @@ internal class StreamClientImpl<T>(
                                                 snapshot: StreamNetworkInfo.Snapshot
                                             ) {
                                                 logger.v { "[connect] Network changed: $snapshot" }
-                                                mutableNetworkState.update(StreamNetworkState.Available(snapshot))
+                                                mutableNetworkState.update(
+                                                    StreamNetworkState.Available(snapshot)
+                                                )
                                                 subscriptionManager.forEach {
-                                                    it.onNetworkState(StreamNetworkState.Available(snapshot))
+                                                    it.onNetworkState(
+                                                        StreamNetworkState.Available(snapshot)
+                                                    )
                                                 }
                                             }
                                         },
