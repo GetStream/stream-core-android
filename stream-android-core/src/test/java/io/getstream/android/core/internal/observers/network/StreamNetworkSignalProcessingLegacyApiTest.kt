@@ -15,45 +15,46 @@
  */
 package io.getstream.android.core.internal.observers.network
 
-import android.net.NetworkCapabilities
+import android.net.wifi.WifiManager
 import android.os.Build
+import android.telephony.TelephonyManager
+import io.getstream.android.core.api.model.connection.network.StreamNetworkInfo.Transport
 import io.mockk.MockKAnnotations
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertNull
-import kotlin.test.assertTrue
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [Build.VERSION_CODES.P])
-internal class StreamNetworkMonitorUtilsTest {
+@Config(sdk = [Build.VERSION_CODES.LOLLIPOP])
+internal class StreamNetworkSignalProcessingLegacyApiTest {
 
-    @MockK(relaxed = true) lateinit var capabilities: NetworkCapabilities
+    @MockK(relaxed = true) lateinit var wifiManager: WifiManager
+    @MockK(relaxed = true) lateinit var telephonyManager: TelephonyManager
+
+    private lateinit var processing: StreamNetworkSignalProcessing
 
     @BeforeTest
-    fun setup() {
-        MockKAnnotations.init(this)
+    fun setUp() {
+        MockKAnnotations.init(this, relaxUnitFun = true)
+        every { wifiManager.connectionInfo } returns null
+        processing = StreamNetworkSignalProcessing()
     }
 
     @Test
-    fun `safeHasCapability returns value or null on error`() {
-        every { capabilities.hasCapability(1) } returns true
-        assertTrue(capabilities.safeHasCapability(1) == true)
+    fun `best effort signal returns null on legacy devices`() {
+        val signal =
+            processing.bestEffortSignal(
+                wifiManager,
+                telephonyManager,
+                capabilities = null,
+                transports = setOf(Transport.WIFI, Transport.CELLULAR),
+            )
 
-        every { capabilities.hasCapability(2) } throws SecurityException("boom")
-        assertNull(capabilities.safeHasCapability(2))
-    }
-
-    @Test
-    fun `safeHasTransport returns value or null on error`() {
-        every { capabilities.hasTransport(1) } returns true
-        assertTrue(capabilities.safeHasTransport(1) == true)
-
-        every { capabilities.hasTransport(2) } throws SecurityException("boom")
-        assertNull(capabilities.safeHasTransport(2))
+        assertNull(signal)
     }
 }

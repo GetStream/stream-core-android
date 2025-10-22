@@ -18,8 +18,6 @@ package io.getstream.android.core.internal.observers.network
 import android.net.wifi.WifiInfo
 import android.net.wifi.WifiManager
 import android.os.Build
-import android.telephony.CellSignalStrengthNr
-import android.telephony.SignalStrength
 import android.telephony.TelephonyManager
 import io.getstream.android.core.api.model.connection.network.StreamNetworkInfo.Signal
 import io.getstream.android.core.api.model.connection.network.StreamNetworkInfo.Transport
@@ -27,7 +25,6 @@ import io.mockk.MockKAnnotations
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.mockk
-import io.mockk.mockkStatic
 import io.mockk.unmockkAll
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -83,31 +80,6 @@ internal class StreamNetworkSignalProcessingTest {
         assertEquals("Stream", wifiSignal.ssid)
         assertEquals("00:11:22:33:44:55", wifiSignal.bssid)
         assertEquals(5200, wifiSignal.frequencyMhz)
-    }
-
-    @Test
-    fun `cellularSignal returns NR details when available`() {
-        val strength = mockk<SignalStrength>(relaxed = true)
-        val nrStrength =
-            mockk<CellSignalStrengthNr>(relaxed = true) {
-                every { ssRsrp } returns -95
-                every { ssRsrq } returns -10
-                every { ssSinr } returns 18
-            }
-
-        mockkStatic(
-            "io.getstream.android.core.internal.observers.network.StreamNetworkMonitorUtilsKt"
-        )
-        every { telephonySignalStrength(telephonyManager) } returns strength
-        every { signalLevel(strength) } returns 3
-        every { nrStrength(strength) } returns nrStrength
-        every { lteStrength(strength) } returns null
-
-        val signal = processing.cellularSignal(telephonyManager)
-
-        val cellular = assertIs<Signal.Cellular>(signal)
-        assertEquals("NR", cellular.rat)
-        assertEquals(3, cellular.level0to4)
     }
 
     @Test

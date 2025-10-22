@@ -15,30 +15,28 @@
  */
 package io.getstream.android.core.internal.observers.network
 
-import android.annotation.SuppressLint
 import android.net.NetworkCapabilities
+import android.net.wifi.WifiInfo
 import android.net.wifi.WifiManager
 import android.os.Build
+import android.telephony.CellSignalStrengthLte
+import android.telephony.CellSignalStrengthNr
+import android.telephony.SignalStrength
 import android.telephony.TelephonyManager
 import io.getstream.android.core.api.model.connection.network.StreamNetworkInfo.Signal
 import io.getstream.android.core.api.model.connection.network.StreamNetworkInfo.Transport
 
 internal class StreamNetworkSignalProcessing {
 
-    @SuppressLint("MissingPermission")
     fun bestEffortSignal(
         wifiManager: WifiManager,
         telephonyManager: TelephonyManager,
         capabilities: NetworkCapabilities?,
         transports: Set<Transport>,
     ): Signal? {
-        val genericValue =
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                capabilities?.signalStrength?.takeIf { it != Int.MIN_VALUE }
-            } else {
-                null
-            }
-        if (genericValue != null) return Signal.Generic(genericValue)
+        genericSignal(capabilities)?.let {
+            return it
+        }
 
         return when {
             Transport.WIFI in transports -> wifiSignal(wifiManager)
@@ -47,7 +45,6 @@ internal class StreamNetworkSignalProcessing {
         }
     }
 
-    @SuppressLint("MissingPermission")
     fun wifiSignal(wifiManager: WifiManager): Signal.Wifi? {
         val info = wifiManager.connectionInfo ?: return null
         val rssi = info.rssi
@@ -60,36 +57,27 @@ internal class StreamNetworkSignalProcessing {
         )
     }
 
-    @SuppressLint("MissingPermission")
     fun cellularSignal(telephonyManager: TelephonyManager): Signal.Cellular? {
         val strength = telephonySignalStrength(telephonyManager) ?: return null
         val level = signalLevel(strength)
 
-        val nr = nrStrength(strength)
-        if (nr != null) {
-            val rsrp = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) nr.ssRsrp else null
-            val rsrq = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) nr.ssRsrq else null
-            val sinr = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) nr.ssSinr else null
+        nrReport(strength)?.let { nr ->
             return Signal.Cellular(
                 rat = "NR",
                 level0to4 = level,
-                rsrpDbm = rsrp,
-                rsrqDb = rsrq,
-                sinrDb = sinr,
+                rsrpDbm = nr.ssRsrpValue(),
+                rsrqDb = nr.ssRsrqValue(),
+                sinrDb = nr.ssSinrValue(),
             )
         }
 
-        val lte = lteStrength(strength)
-        if (lte != null) {
-            val rsrp = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) lte.rsrp else null
-            val rsrq = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) lte.rsrq else null
-            val sinr = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) lte.rssnr else null
+        lteReport(strength)?.let { lte ->
             return Signal.Cellular(
                 rat = "LTE",
                 level0to4 = level,
-                rsrpDbm = rsrp,
-                rsrqDb = rsrq,
-                sinrDb = sinr,
+                rsrpDbm = lte.rsrpValue(),
+                rsrqDb = lte.rsrqValue(),
+                sinrDb = lte.rssnrValue(),
             )
         }
 
@@ -101,4 +89,65 @@ internal class StreamNetworkSignalProcessing {
             sinrDb = null,
         )
     }
+
+    private fun genericSignal(capabilities: NetworkCapabilities?): Signal.Generic? {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+            return null
+        }
+        val strength = capabilities?.signalStrength?.takeIf { it != Int.MIN_VALUE } ?: return null
+        return Signal.Generic(strength)
+    }
+
+    private fun sanitizeSsid(info: WifiInfo): String? {
+        val raw = info.ssid?.trim('"') ?: return null
+        val isPlatformUnknown =
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                raw == WifiManager.UNKNOWN_SSID
+            } else {
+                false
+            }
+        val isLegacyUnknown = raw == "<unknown ssid>"
+        return raw.takeUnless { isPlatformUnknown || isLegacyUnknown }
+    }
+
+    private fun wifiSignalLevel(rssi: Int, numLevels: Int = 5): Int? =
+        runCatching { WifiManager.calculateSignalLevel(rssi, numLevels) }.getOrNull()
+
+    private fun telephonySignalStrength(manager: TelephonyManager): SignalStrength? =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) manager.signalStrength else null
+
+    private fun signalLevel(strength: SignalStrength?): Int? =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) strength?.level else null
+
+    private fun nrReport(strength: SignalStrength?): CellSignalStrengthNr? =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            strength?.cellSignalStrengths?.filterIsInstance<CellSignalStrengthNr>()?.firstOrNull()
+        } else {
+            null
+        }
+
+    private fun lteReport(strength: SignalStrength?): CellSignalStrengthLte? =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            strength?.cellSignalStrengths?.filterIsInstance<CellSignalStrengthLte>()?.firstOrNull()
+        } else {
+            null
+        }
+
+    private fun CellSignalStrengthNr.ssRsrpValue(): Int? =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) ssRsrp else null
+
+    private fun CellSignalStrengthNr.ssRsrqValue(): Int? =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) ssRsrq else null
+
+    private fun CellSignalStrengthNr.ssSinrValue(): Int? =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) ssSinr else null
+
+    private fun CellSignalStrengthLte.rsrpValue(): Int? =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) rsrp else null
+
+    private fun CellSignalStrengthLte.rsrqValue(): Int? =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) rsrq else null
+
+    private fun CellSignalStrengthLte.rssnrValue(): Int? =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) rssnr else null
 }
