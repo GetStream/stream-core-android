@@ -25,7 +25,7 @@ import io.getstream.android.core.api.model.config.StreamHttpConfig
 import io.getstream.android.core.api.model.config.StreamSocketConfig
 import io.getstream.android.core.api.model.connection.StreamConnectedUser
 import io.getstream.android.core.api.model.connection.StreamConnectionState
-import io.getstream.android.core.api.model.connection.network.StreamNetworkInfo
+import io.getstream.android.core.api.model.connection.network.StreamNetworkState
 import io.getstream.android.core.api.model.value.StreamApiKey
 import io.getstream.android.core.api.model.value.StreamHttpClientInfoHeader
 import io.getstream.android.core.api.model.value.StreamUserId
@@ -117,7 +117,7 @@ public interface StreamClient {
      * - Hot & conflated: new collectors receive the latest value immediately.
      * - `null` if no network is available.
      */
-    @StreamInternalApi public val networkInfo: StateFlow<StreamNetworkInfo.Snapshot?>
+    @StreamInternalApi public val networkState: StateFlow<StreamNetworkState>
 
     /**
      * Establishes a connection for the current user.
@@ -291,6 +291,7 @@ public fun StreamClient(
         serialQueue = serialQueue,
         connectionIdHolder = connectionIdHolder,
         logger = clientLogger,
+        mutableNetworkState = MutableStateFlow(StreamNetworkState.Unknown),
         mutableConnectionState = MutableStateFlow(StreamConnectionState.Idle),
         subscriptionManager = clientSubscriptionManager,
         networkMonitor = networkMonitor,

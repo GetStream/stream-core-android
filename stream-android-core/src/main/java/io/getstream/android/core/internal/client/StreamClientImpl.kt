@@ -15,7 +15,6 @@
  */
 package io.getstream.android.core.internal.client
 
-import io.getstream.android.core.annotations.StreamInternalApi
 import io.getstream.android.core.api.StreamClient
 import io.getstream.android.core.api.authentication.StreamTokenManager
 import io.getstream.android.core.api.log.StreamLogger
@@ -23,6 +22,7 @@ import io.getstream.android.core.api.model.StreamTypedKey.Companion.randomExecut
 import io.getstream.android.core.api.model.connection.StreamConnectedUser
 import io.getstream.android.core.api.model.connection.StreamConnectionState
 import io.getstream.android.core.api.model.connection.network.StreamNetworkInfo
+import io.getstream.android.core.api.model.connection.network.StreamNetworkState
 import io.getstream.android.core.api.model.value.StreamUserId
 import io.getstream.android.core.api.observers.network.StreamNetworkMonitor
 import io.getstream.android.core.api.observers.network.StreamNetworkMonitorListener
@@ -48,6 +48,7 @@ internal class StreamClientImpl<T>(
     private val serialQueue: StreamSerialProcessingQueue,
     private val connectionIdHolder: StreamConnectionIdHolder,
     private val socketSession: StreamSocketSession<T>,
+    private var mutableNetworkState: MutableStateFlow<StreamNetworkState>,
     private val mutableConnectionState: MutableStateFlow<StreamConnectionState>,
     private val logger: StreamLogger,
     private val subscriptionManager: StreamSubscriptionManager<StreamClientListener>,
@@ -64,12 +65,9 @@ internal class StreamClientImpl<T>(
     override val connectionState: StateFlow<StreamConnectionState>
         get() = mutableConnectionState.asStateFlow()
 
-    private var internalNetworkInfo: MutableStateFlow<StreamNetworkInfo.Snapshot?> =
-        MutableStateFlow(null)
+    override val networkState: StateFlow<StreamNetworkState>
+        get() = mutableNetworkState.asStateFlow()
 
-    @StreamInternalApi
-    override val networkInfo: StateFlow<StreamNetworkInfo.Snapshot?>
-        get() = internalNetworkInfo.asStateFlow()
 
     override fun subscribe(listener: StreamClientListener): Result<StreamSubscription> =
         subscriptionManager.subscribe(listener)
@@ -135,19 +133,34 @@ internal class StreamClientImpl<T>(
                                                 logger.v {
                                                     "[connect] Network connected: $snapshot"
                                                 }
-                                                internalNetworkInfo.update(snapshot)
+                                                val state = StreamNetworkState.Available(snapshot)
+                                                mutableNetworkState.update(state)
+                                                subscriptionManager.forEach {
+                                                    it.onNetworkState(state)
+                                                }
                                             }
 
                                             override suspend fun onNetworkLost(permanent: Boolean) {
                                                 logger.v { "[connect] Network lost" }
-                                                internalNetworkInfo.update(null)
+                                                val state = if (permanent) {
+                                                    StreamNetworkState.Unavailable
+                                                } else {
+                                                    StreamNetworkState.Disconnected
+                                                }
+                                                mutableNetworkState.update(state)
+                                                subscriptionManager.forEach {
+                                                    it.onNetworkState(state)
+                                                }
                                             }
 
                                             override suspend fun onNetworkPropertiesChanged(
                                                 snapshot: StreamNetworkInfo.Snapshot
                                             ) {
                                                 logger.v { "[connect] Network changed: $snapshot" }
-                                                internalNetworkInfo.update(snapshot)
+                                                mutableNetworkState.update(StreamNetworkState.Available(snapshot))
+                                                subscriptionManager.forEach {
+                                                    it.onNetworkState(StreamNetworkState.Available(snapshot))
+                                                }
                                             }
                                         },
                                         StreamSubscriptionManager.Options(

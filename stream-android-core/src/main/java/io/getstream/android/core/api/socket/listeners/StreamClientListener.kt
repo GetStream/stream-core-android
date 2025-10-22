@@ -17,6 +17,8 @@ package io.getstream.android.core.api.socket.listeners
 
 import io.getstream.android.core.annotations.StreamInternalApi
 import io.getstream.android.core.api.model.connection.StreamConnectionState
+import io.getstream.android.core.api.model.connection.network.StreamNetworkInfo
+import io.getstream.android.core.api.model.connection.network.StreamNetworkState
 
 /**
  * Listener interface for Feeds socket events.
@@ -46,4 +48,11 @@ public interface StreamClientListener {
      * @param err The error that occurred.
      */
     public fun onError(err: Throwable) {}
+
+    /**
+     * Called when the network connection changes.
+     *
+     * @param state The new network state.
+     */
+    public fun onNetworkState(state: StreamNetworkState) {}
 }
