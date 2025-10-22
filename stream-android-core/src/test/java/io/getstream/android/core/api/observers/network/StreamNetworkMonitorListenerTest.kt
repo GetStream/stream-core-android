@@ -17,12 +17,11 @@ package io.getstream.android.core.api.observers.network
 
 import io.getstream.android.core.api.model.connection.network.StreamNetworkInfo
 import kotlin.test.Test
-import kotlin.test.assertEquals
+import kotlin.test.assertContentEquals
 import kotlin.test.assertTrue
+import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
-import kotlin.test.assertContentEquals
-import kotlin.time.ExperimentalTime
 
 @OptIn(ExperimentalCoroutinesApi::class, ExperimentalTime::class)
 internal class StreamNetworkMonitorListenerTest {
@@ -33,9 +32,7 @@ internal class StreamNetworkMonitorListenerTest {
 
         listener.onNetworkConnected(null)
         listener.onNetworkLost()
-        listener.onNetworkPropertiesChanged(
-            StreamNetworkInfo.Snapshot(transports = emptySet()),
-        )
+        listener.onNetworkPropertiesChanged(StreamNetworkInfo.Snapshot(transports = emptySet()))
     }
 
     @Test
