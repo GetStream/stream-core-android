@@ -89,7 +89,7 @@ internal class StreamClientImpl<T>(
                             object : StreamClientListener {
                                 override fun onState(state: StreamConnectionState) {
                                     logger.v { "[client#onState]: $state" }
-                                    mutableConnectionState.update { state }
+                                    mutableConnectionState.update(state)
                                     subscriptionManager.forEach { it.onState(state) }
                                 }
 
@@ -135,19 +135,19 @@ internal class StreamClientImpl<T>(
                                                 logger.v {
                                                     "[connect] Network connected: $snapshot"
                                                 }
-                                                internalNetworkInfo.update { snapshot }
+                                                internalNetworkInfo.update(snapshot)
                                             }
 
                                             override suspend fun onNetworkLost(permanent: Boolean) {
                                                 logger.v { "[connect] Network lost" }
-                                                internalNetworkInfo.update { null }
+                                                internalNetworkInfo.update(null)
                                             }
 
                                             override suspend fun onNetworkPropertiesChanged(
                                                 snapshot: StreamNetworkInfo.Snapshot
                                             ) {
                                                 logger.v { "[connect] Network changed: $snapshot" }
-                                                internalNetworkInfo.update { snapshot }
+                                                internalNetworkInfo.update(snapshot)
                                             }
                                         },
                                         StreamSubscriptionManager.Options(
@@ -189,7 +189,7 @@ internal class StreamClientImpl<T>(
             singleFlight.clear(true)
         }
 
-    private fun MutableStateFlow<StreamConnectionState>.update(state: StreamConnectionState) {
+    private fun <T> MutableStateFlow<T>.update(state: T) {
         this.update { state }
     }
 }
