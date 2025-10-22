@@ -26,16 +26,17 @@ import io.getstream.android.core.api.model.connection.network.StreamNetworkState
 import io.getstream.android.core.api.model.event.StreamClientWsEvent
 import io.getstream.android.core.api.model.value.StreamToken
 import io.getstream.android.core.api.model.value.StreamUserId
+import io.getstream.android.core.api.observers.network.StreamNetworkMonitor
+import io.getstream.android.core.api.observers.network.StreamNetworkMonitorListener
 import io.getstream.android.core.api.processing.StreamSerialProcessingQueue
 import io.getstream.android.core.api.processing.StreamSingleFlightProcessor
 import io.getstream.android.core.api.socket.StreamConnectionIdHolder
 import io.getstream.android.core.api.socket.listeners.StreamClientListener
 import io.getstream.android.core.api.subscribe.StreamSubscription
 import io.getstream.android.core.api.subscribe.StreamSubscriptionManager
-import io.getstream.android.core.api.observers.network.StreamNetworkMonitor
-import io.getstream.android.core.api.observers.network.StreamNetworkMonitorListener
 import io.getstream.android.core.internal.socket.StreamSocketSession
 import io.mockk.*
+import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
@@ -45,7 +46,6 @@ import org.bouncycastle.util.test.SimpleTest.runTest
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
-import kotlin.time.ExperimentalTime
 
 @OptIn(ExperimentalTime::class)
 class StreamClientIImplTest {
@@ -157,9 +157,9 @@ class StreamClientIImplTest {
 
             val networkHandle = mockk<StreamSubscription>(relaxed = true)
             val networkHandleField =
-                client.javaClass
-                    .getDeclaredField("networkMonitorHandle")
-                    .apply { isAccessible = true }
+                client.javaClass.getDeclaredField("networkMonitorHandle").apply {
+                    isAccessible = true
+                }
             networkHandleField.set(client, networkHandle)
 
             every { connectionIdHolder.clear() } returns Result.success(Unit)
@@ -248,12 +248,13 @@ class StreamClientIImplTest {
         listener.onNetworkPropertiesChanged(updatedSnapshot)
         assertEquals(StreamNetworkState.Available(updatedSnapshot), networkFlow.value)
 
-        val expectedStates = listOf(
-            StreamNetworkState.Available(connectedSnapshot),
-            StreamNetworkState.Disconnected,
-            StreamNetworkState.Unavailable,
-            StreamNetworkState.Available(updatedSnapshot),
-        )
+        val expectedStates =
+            listOf(
+                StreamNetworkState.Available(connectedSnapshot),
+                StreamNetworkState.Disconnected,
+                StreamNetworkState.Unavailable,
+                StreamNetworkState.Available(updatedSnapshot),
+            )
         assertTrue(forwardedStates.containsAll(expectedStates))
     }
 
