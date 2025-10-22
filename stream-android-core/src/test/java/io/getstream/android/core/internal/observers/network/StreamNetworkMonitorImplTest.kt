@@ -41,9 +41,9 @@ import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
+import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
-import org.junit.runner.RunWith
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
@@ -86,10 +86,12 @@ internal class StreamNetworkMonitorImplTest {
         every { connectivityManager.activeNetwork } returns network
         every { connectivityManager.getNetworkCapabilities(network) } returns capabilities
         every { connectivityManager.getLinkProperties(network) } returns linkProperties
-        every { snapshotBuilder.build(network, capabilities, linkProperties) } returns Result.success(snapshot)
+        every { snapshotBuilder.build(network, capabilities, linkProperties) } returns
+            Result.success(snapshot)
 
         val callbackSlot = slot<StreamNetworkMonitorCallback>()
-        every { connectivityManager.registerDefaultNetworkCallback(capture(callbackSlot)) } just runs
+        every { connectivityManager.registerDefaultNetworkCallback(capture(callbackSlot)) } just
+            runs
 
         monitor.start().getOrThrow()
         callbackSlot.captured.onAvailable(network)
@@ -109,12 +111,12 @@ internal class StreamNetworkMonitorImplTest {
         every { connectivityManager.activeNetwork } returns network
         every { connectivityManager.getNetworkCapabilities(network) } returns capabilities
         every { connectivityManager.getLinkProperties(network) } returns linkProperties
-        every {
-            snapshotBuilder.build(network, capabilities, linkProperties)
-        } returnsMany listOf(Result.success(initialSnapshot), Result.failure(IllegalStateException("boom")))
+        every { snapshotBuilder.build(network, capabilities, linkProperties) } returnsMany
+            listOf(Result.success(initialSnapshot), Result.failure(IllegalStateException("boom")))
 
         val callbackSlot = slot<StreamNetworkMonitorCallback>()
-        every { connectivityManager.registerDefaultNetworkCallback(capture(callbackSlot)) } just runs
+        every { connectivityManager.registerDefaultNetworkCallback(capture(callbackSlot)) } just
+            runs
 
         monitor.start()
         callbackSlot.captured.onAvailable(network)
@@ -136,10 +138,12 @@ internal class StreamNetworkMonitorImplTest {
         every { connectivityManager.activeNetwork } returns network
         every { connectivityManager.getNetworkCapabilities(network) } returns capabilities
         every { connectivityManager.getLinkProperties(network) } returns linkProperties
-        every { snapshotBuilder.build(network, capabilities, linkProperties) } returns Result.success(snapshot)
+        every { snapshotBuilder.build(network, capabilities, linkProperties) } returns
+            Result.success(snapshot)
 
         val callbackSlot = slot<StreamNetworkMonitorCallback>()
-        every { connectivityManager.registerDefaultNetworkCallback(capture(callbackSlot)) } just runs
+        every { connectivityManager.registerDefaultNetworkCallback(capture(callbackSlot)) } just
+            runs
 
         monitor.start()
         val callback = callbackSlot.captured
@@ -167,11 +171,17 @@ internal class StreamNetworkMonitorImplTest {
         every { connectivityManager.activeNetwork } returns network
         every { connectivityManager.getNetworkCapabilities(network) } returns capabilities
         every { connectivityManager.getLinkProperties(network) } returns linkProperties
-        every { snapshotBuilder.build(network, capabilities, linkProperties) } returns Result.success(snapshot)
+        every { snapshotBuilder.build(network, capabilities, linkProperties) } returns
+            Result.success(snapshot)
 
         val callbackSlot = slot<StreamNetworkMonitorCallback>()
-        every { connectivityManager.registerDefaultNetworkCallback(capture(callbackSlot)) } just runs
-        every { connectivityManager.unregisterNetworkCallback(any<ConnectivityManager.NetworkCallback>()) } just runs
+        every { connectivityManager.registerDefaultNetworkCallback(capture(callbackSlot)) } just
+            runs
+        every {
+            connectivityManager.unregisterNetworkCallback(
+                any<ConnectivityManager.NetworkCallback>()
+            )
+        } just runs
 
         monitor.start()
         val callback = callbackSlot.captured
@@ -180,7 +190,8 @@ internal class StreamNetworkMonitorImplTest {
         verify { connectivityManager.unregisterNetworkCallback(callback) }
     }
 
-    private class RecordingSubscriptionManager : StreamSubscriptionManager<StreamNetworkMonitorListener> {
+    private class RecordingSubscriptionManager :
+        StreamSubscriptionManager<StreamNetworkMonitorListener> {
         private val listeners = mutableSetOf<StreamNetworkMonitorListener>()
 
         override fun subscribe(

@@ -74,10 +74,12 @@ internal class StreamNetworkMonitorCallback(
     }
 
     private fun resolveInitialState(): ActiveNetworkState? {
-        val defaultNetwork = resolveDefaultNetwork() ?: run {
-            logger.v { "No active network available at start" }
-            return null
-        }
+        val defaultNetwork =
+            resolveDefaultNetwork()
+                ?: run {
+                    logger.v { "No active network available at start" }
+                    return null
+                }
         val capabilities = connectivityManager.getNetworkCapabilities(defaultNetwork)
         val linkProperties = connectivityManager.getLinkProperties(defaultNetwork)
         val snapshot = buildSnapshot(defaultNetwork, capabilities, linkProperties) ?: return null
@@ -96,12 +98,10 @@ internal class StreamNetworkMonitorCallback(
         capabilities: NetworkCapabilities?,
         linkProperties: LinkProperties?,
     ): StreamNetworkInfo.Snapshot? =
-        snapshotBuilder
-            .build(network, capabilities, linkProperties)
-            .getOrElse { throwable ->
-                logger.e(throwable) { "Failed to assemble network snapshot" }
-                null
-            }
+        snapshotBuilder.build(network, capabilities, linkProperties).getOrElse { throwable ->
+            logger.e(throwable) { "Failed to assemble network snapshot" }
+            null
+        }
 
     private fun handleUpdate(
         network: Network,

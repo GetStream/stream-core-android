@@ -26,9 +26,9 @@ import io.getstream.android.core.api.observers.network.StreamNetworkMonitorListe
 import io.getstream.android.core.api.subscribe.StreamSubscription
 import io.getstream.android.core.api.subscribe.StreamSubscriptionManager
 import io.mockk.MockKAnnotations
-import io.mockk.coVerify
 import io.mockk.clearMocks
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.just
@@ -103,7 +103,8 @@ internal class StreamNetworkMonitorCallbackTest {
         every { connectivityManager.activeNetwork } returns network
         every { connectivityManager.getNetworkCapabilities(network) } returns capabilities
         every { connectivityManager.getLinkProperties(network) } returns linkProperties
-        every { snapshotBuilder.build(network, capabilities, linkProperties) } returns Result.success(snapshot)
+        every { snapshotBuilder.build(network, capabilities, linkProperties) } returns
+            Result.success(snapshot)
 
         callback.onRegistered()
         scope.advanceUntilIdle()
@@ -150,7 +151,8 @@ internal class StreamNetworkMonitorCallbackTest {
         every { connectivityManager.activeNetwork } returns network
         every { connectivityManager.getNetworkCapabilities(network) } returns capabilities
         every { connectivityManager.getLinkProperties(network) } returns linkProperties
-        every { snapshotBuilder.build(network, capabilities, linkProperties) } returns Result.success(snapshot)
+        every { snapshotBuilder.build(network, capabilities, linkProperties) } returns
+            Result.success(snapshot)
 
         callback.onAvailable(network)
         scope.advanceUntilIdle()
@@ -169,12 +171,18 @@ internal class StreamNetworkMonitorCallbackTest {
         every { connectivityManager.activeNetwork } returns network
         every { connectivityManager.getNetworkCapabilities(network) } returns capabilities
         every { connectivityManager.getLinkProperties(network) } returns linkProperties
-        every { snapshotBuilder.build(network, capabilities, linkProperties) } returns Result.failure(error)
+        every { snapshotBuilder.build(network, capabilities, linkProperties) } returns
+            Result.failure(error)
 
         callback.onAvailable(network)
         scope.advanceUntilIdle()
 
-        verify { logger.e(error, match { it?.invoke()?.contains("Failed to assemble network snapshot") == true }) }
+        verify {
+            logger.e(
+                error,
+                match { it?.invoke()?.contains("Failed to assemble network snapshot") == true },
+            )
+        }
         coVerify(exactly = 0) { primaryListener.onNetworkConnected(any()) }
     }
 
@@ -189,9 +197,8 @@ internal class StreamNetworkMonitorCallbackTest {
         every { connectivityManager.activeNetwork } returns network
         every { connectivityManager.getNetworkCapabilities(network) } returns capabilities
         every { connectivityManager.getLinkProperties(network) } returns linkProperties
-        every {
-            snapshotBuilder.build(network, capabilities, linkProperties)
-        } returnsMany listOf(Result.success(initialSnapshot), Result.success(updatedSnapshot))
+        every { snapshotBuilder.build(network, capabilities, linkProperties) } returnsMany
+            listOf(Result.success(initialSnapshot), Result.success(updatedSnapshot))
 
         callback.onAvailable(network)
         scope.advanceUntilIdle()
@@ -214,9 +221,8 @@ internal class StreamNetworkMonitorCallbackTest {
         every { connectivityManager.activeNetwork } returns network
         every { connectivityManager.getNetworkCapabilities(network) } returns capabilities
         every { connectivityManager.getLinkProperties(network) } returns linkProperties
-        every {
-            snapshotBuilder.build(network, capabilities, linkProperties)
-        } returnsMany listOf(Result.success(snapshot), Result.success(snapshot))
+        every { snapshotBuilder.build(network, capabilities, linkProperties) } returnsMany
+            listOf(Result.success(snapshot), Result.success(snapshot))
 
         callback.onAvailable(network)
         scope.advanceUntilIdle()
@@ -239,10 +245,10 @@ internal class StreamNetworkMonitorCallbackTest {
 
         every { connectivityManager.activeNetwork } returns network
         every { connectivityManager.getNetworkCapabilities(network) } returns capabilities
-        every { connectivityManager.getLinkProperties(network) } returnsMany listOf(initialLink, updatedLink)
-        every {
-            snapshotBuilder.build(network, capabilities, any())
-        } returnsMany listOf(Result.success(initialSnapshot), Result.success(updatedSnapshot))
+        every { connectivityManager.getLinkProperties(network) } returnsMany
+            listOf(initialLink, updatedLink)
+        every { snapshotBuilder.build(network, capabilities, any()) } returnsMany
+            listOf(Result.success(initialSnapshot), Result.success(updatedSnapshot))
 
         callback.onAvailable(network)
         scope.advanceUntilIdle()
@@ -263,7 +269,8 @@ internal class StreamNetworkMonitorCallbackTest {
         every { connectivityManager.activeNetwork } returns network
         every { connectivityManager.getNetworkCapabilities(network) } returns capabilities
         every { connectivityManager.getLinkProperties(network) } returns linkProperties
-        every { snapshotBuilder.build(network, capabilities, linkProperties) } returns Result.success(snapshot)
+        every { snapshotBuilder.build(network, capabilities, linkProperties) } returns
+            Result.success(snapshot)
 
         callback.onAvailable(network)
         scope.advanceUntilIdle()
@@ -291,7 +298,8 @@ internal class StreamNetworkMonitorCallbackTest {
         every { connectivityManager.activeNetwork } returns network
         every { connectivityManager.getNetworkCapabilities(network) } returns capabilities
         every { connectivityManager.getLinkProperties(network) } returns linkProperties
-        every { snapshotBuilder.build(network, capabilities, linkProperties) } returns Result.success(snapshot)
+        every { snapshotBuilder.build(network, capabilities, linkProperties) } returns
+            Result.success(snapshot)
 
         callback.onAvailable(network)
         scope.advanceUntilIdle()
@@ -317,7 +325,8 @@ internal class StreamNetworkMonitorCallbackTest {
         every { connectivityManager.activeNetwork } returns network
         every { connectivityManager.getNetworkCapabilities(network) } returns capabilities
         every { connectivityManager.getLinkProperties(network) } returns linkProperties
-        every { snapshotBuilder.build(network, capabilities, linkProperties) } returns Result.success(snapshot)
+        every { snapshotBuilder.build(network, capabilities, linkProperties) } returns
+            Result.success(snapshot)
 
         callback.onAvailable(network)
         scope.advanceUntilIdle()
@@ -347,14 +356,20 @@ internal class StreamNetworkMonitorCallbackTest {
         every { connectivityManager.activeNetwork } returns network
         every { connectivityManager.getNetworkCapabilities(network) } returns capabilities
         every { connectivityManager.getLinkProperties(network) } returns linkProperties
-        every { snapshotBuilder.build(network, capabilities, linkProperties) } returns Result.success(snapshot)
+        every { snapshotBuilder.build(network, capabilities, linkProperties) } returns
+            Result.success(snapshot)
         coEvery { failingListener.onNetworkConnected(snapshot) } throws error
         coEvery { healthyListener.onNetworkConnected(snapshot) } just runs
 
         callback.onAvailable(network)
         scope.advanceUntilIdle()
 
-        verify { logger.e(error, match { it?.invoke()?.contains("Network monitor listener failure") == true }) }
+        verify {
+            logger.e(
+                error,
+                match { it?.invoke()?.contains("Network monitor listener failure") == true },
+            )
+        }
         coVerify { healthyListener.onNetworkConnected(snapshot) }
     }
 
@@ -369,18 +384,27 @@ internal class StreamNetworkMonitorCallbackTest {
         every { connectivityManager.activeNetwork } returns network
         every { connectivityManager.getNetworkCapabilities(network) } returns capabilities
         every { connectivityManager.getLinkProperties(network) } returns linkProperties
-        every { snapshotBuilder.build(network, capabilities, linkProperties) } returns Result.success(snapshot)
+        every { snapshotBuilder.build(network, capabilities, linkProperties) } returns
+            Result.success(snapshot)
 
         subscriptionManager.forEachFailure = error
 
         callback.onAvailable(network)
         scope.advanceUntilIdle()
 
-        verify { logger.e(error, match { it?.invoke()?.contains("Failed to iterate network monitor listeners") == true }) }
+        verify {
+            logger.e(
+                error,
+                match {
+                    it?.invoke()?.contains("Failed to iterate network monitor listeners") == true
+                },
+            )
+        }
         coVerify(exactly = 0) { primaryListener.onNetworkConnected(any()) }
     }
 
-    private class RecordingSubscriptionManager : StreamSubscriptionManager<StreamNetworkMonitorListener> {
+    private class RecordingSubscriptionManager :
+        StreamSubscriptionManager<StreamNetworkMonitorListener> {
         private val listeners = linkedSetOf<StreamNetworkMonitorListener>()
         var forEachFailure: Throwable? = null
 
@@ -389,15 +413,18 @@ internal class StreamNetworkMonitorCallbackTest {
             options: StreamSubscriptionManager.Options,
         ): Result<StreamSubscription> {
             listeners += listener
-            return Result.success(object : StreamSubscription {
-                private var cancelled = false
-                override fun cancel() {
-                    if (!cancelled) {
-                        cancelled = true
-                        listeners -= listener
+            return Result.success(
+                object : StreamSubscription {
+                    private var cancelled = false
+
+                    override fun cancel() {
+                        if (!cancelled) {
+                            cancelled = true
+                            listeners -= listener
+                        }
                     }
                 }
-            })
+            )
         }
 
         override fun clear(): Result<Unit> {

@@ -18,10 +18,6 @@ package io.getstream.android.core.internal.observers.network
 import android.net.NetworkCapabilities
 import android.net.wifi.WifiInfo
 import android.os.Build
-import android.telephony.CellSignalStrengthLte
-import android.telephony.CellSignalStrengthNr
-import android.telephony.SignalStrength
-import android.telephony.TelephonyManager
 import io.mockk.MockKAnnotations
 import io.mockk.every
 import io.mockk.impl.annotations.MockK

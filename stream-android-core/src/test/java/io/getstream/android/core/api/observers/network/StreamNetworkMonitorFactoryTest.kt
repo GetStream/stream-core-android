@@ -31,7 +31,8 @@ internal class StreamNetworkMonitorFactoryTest {
     @Test
     fun `factory creates monitor instance`() {
         val logger = mockk<StreamLogger>(relaxed = true)
-        val subscriptionManager = mockk<StreamSubscriptionManager<StreamNetworkMonitorListener>>(relaxed = true)
+        val subscriptionManager =
+            mockk<StreamSubscriptionManager<StreamNetworkMonitorListener>>(relaxed = true)
         val scope = TestScope(StandardTestDispatcher())
         val connectivityManager = mockk<ConnectivityManager>()
 

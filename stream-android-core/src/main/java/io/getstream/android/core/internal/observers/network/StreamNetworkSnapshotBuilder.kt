@@ -20,6 +20,7 @@ import android.net.Network
 import android.net.NetworkCapabilities
 import android.net.wifi.WifiManager
 import android.os.Build
+import android.os.ext.SdkExtensions
 import android.telephony.TelephonyManager
 import io.getstream.android.core.api.model.connection.network.StreamNetworkInfo
 import io.getstream.android.core.api.model.connection.network.StreamNetworkInfo.Bandwidth
@@ -69,9 +70,11 @@ internal class StreamNetworkSnapshotBuilder(
             when {
                 networkCapabilities.flag(NetworkCapabilities.NET_CAPABILITY_NOT_METERED) == true ->
                     Metered.NOT_METERED
+
                 networkCapabilities.flag(
                     NetworkCapabilities.NET_CAPABILITY_TEMPORARILY_NOT_METERED
                 ) == true -> Metered.TEMPORARILY_NOT_METERED
+
                 else -> Metered.UNKNOWN_OR_METERED
             }
 
@@ -93,26 +96,31 @@ internal class StreamNetworkSnapshotBuilder(
             } else {
                 null
             }
-        when (networkCapabilities.flag(NetworkCapabilities.NET_CAPABILITY_NOT_SUSPENDED)) {
-            true -> false
-            else -> null
-        }
         val bandwidthConstrained =
-            when (
-                networkCapabilities.flag(
-                    NetworkCapabilities.NET_CAPABILITY_NOT_BANDWIDTH_CONSTRAINED
-                )
+            if (
+                Build.VERSION.SDK_INT >= Build.VERSION_CODES.R &&
+                    SdkExtensions.getExtensionVersion(Build.VERSION_CODES.UPSIDE_DOWN_CAKE) >= 16
             ) {
-                true -> false
-                else -> null
+                when (
+                    networkCapabilities.flag(
+                        NetworkCapabilities.NET_CAPABILITY_NOT_BANDWIDTH_CONSTRAINED
+                    )
+                ) {
+                    true -> false
+                    else -> null
+                }
+            } else {
+                null
             }
 
         val priority =
             when {
                 networkCapabilities.flag(NetworkCapabilities.NET_CAPABILITY_PRIORITIZE_LATENCY) ==
                     true -> PriorityHint.LATENCY
+
                 networkCapabilities.flag(NetworkCapabilities.NET_CAPABILITY_PRIORITIZE_BANDWIDTH) ==
                     true -> PriorityHint.BANDWIDTH
+
                 else -> PriorityHint.NONE
             }
 
