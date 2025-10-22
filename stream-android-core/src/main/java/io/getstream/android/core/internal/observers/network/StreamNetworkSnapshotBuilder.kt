@@ -30,10 +30,12 @@ import io.getstream.android.core.api.model.connection.network.StreamNetworkInfo.
 import io.getstream.android.core.api.model.connection.network.StreamNetworkInfo.Transport
 import kotlin.time.ExperimentalTime
 
+@Suppress("NewApi")
 internal class StreamNetworkSnapshotBuilder(
     private val signalProcessing: StreamNetworkSignalProcessing,
     private val wifiManager: WifiManager,
     private val telephonyManager: TelephonyManager,
+    private val extensionVersionProvider: (Int) -> Int = DEFAULT_EXTENSION_PROVIDER,
 ) {
     @OptIn(ExperimentalTime::class)
     fun build(
@@ -41,161 +43,78 @@ internal class StreamNetworkSnapshotBuilder(
         networkCapabilities: NetworkCapabilities?,
         linkProperties: LinkProperties?,
     ): Result<StreamNetworkInfo.Snapshot?> = runCatching {
+        if (!supportsSnapshots()) {
+            return@runCatching null
+        }
+
         val transports = transportsFor(networkCapabilities)
-        val internet = networkCapabilities.flag(NetworkCapabilities.NET_CAPABILITY_INTERNET)
-        val validated =
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                networkCapabilities.flag(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
-            } else {
-                null
-            }
-        val captivePortal =
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                networkCapabilities.flag(NetworkCapabilities.NET_CAPABILITY_CAPTIVE_PORTAL)
-            } else {
-                null
-            }
-        val notVpn = networkCapabilities.flag(NetworkCapabilities.NET_CAPABILITY_NOT_VPN)
-        val vpn =
-            networkCapabilities.transport(NetworkCapabilities.TRANSPORT_VPN) || (notVpn == false)
-        val trusted = networkCapabilities.flag(NetworkCapabilities.NET_CAPABILITY_TRUSTED)
-        val localOnly =
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
-                networkCapabilities.flag(NetworkCapabilities.NET_CAPABILITY_LOCAL_NETWORK)
-            } else {
-                null
-            }
-
-        val metered =
-            when {
-                networkCapabilities.flag(NetworkCapabilities.NET_CAPABILITY_NOT_METERED) == true ->
-                    Metered.NOT_METERED
-
-                networkCapabilities.flag(
-                    NetworkCapabilities.NET_CAPABILITY_TEMPORARILY_NOT_METERED
-                ) == true -> Metered.TEMPORARILY_NOT_METERED
-
-                else -> Metered.UNKNOWN_OR_METERED
-            }
-
-        val congested =
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                when (networkCapabilities.flag(NetworkCapabilities.NET_CAPABILITY_NOT_CONGESTED)) {
-                    true -> false
-                    else -> null
-                }
-            } else {
-                null
-            }
-        val suspended =
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                when (networkCapabilities.flag(NetworkCapabilities.NET_CAPABILITY_NOT_SUSPENDED)) {
-                    true -> false
-                    else -> null
-                }
-            } else {
-                null
-            }
-        val bandwidthConstrained =
-            if (
-                Build.VERSION.SDK_INT >= Build.VERSION_CODES.R &&
-                    SdkExtensions.getExtensionVersion(Build.VERSION_CODES.UPSIDE_DOWN_CAKE) >= 16
-            ) {
-                when (
-                    networkCapabilities.flag(
-                        NetworkCapabilities.NET_CAPABILITY_NOT_BANDWIDTH_CONSTRAINED
-                    )
-                ) {
-                    true -> false
-                    else -> null
-                }
-            } else {
-                null
-            }
-
-        val priority =
-            when {
-                networkCapabilities.flag(NetworkCapabilities.NET_CAPABILITY_PRIORITIZE_LATENCY) ==
-                    true -> PriorityHint.LATENCY
-
-                networkCapabilities.flag(NetworkCapabilities.NET_CAPABILITY_PRIORITIZE_BANDWIDTH) ==
-                    true -> PriorityHint.BANDWIDTH
-
-                else -> PriorityHint.NONE
-            }
-
-        val bandwidth =
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                Bandwidth(
-                    downKbps = networkCapabilities?.linkDownstreamBandwidthKbps?.takeIf { it > 0 },
-                    upKbps = networkCapabilities?.linkUpstreamBandwidthKbps?.takeIf { it > 0 },
-                )
-            } else {
-                null
-            }
-
-        val signal =
-            signalProcessing.bestEffortSignal(
-                wifiManager,
-                telephonyManager,
-                networkCapabilities,
-                transports,
-            )
-
-        val link = linkProperties?.toLink()
-
-        val notRoaming =
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                networkCapabilities.flag(NetworkCapabilities.NET_CAPABILITY_NOT_ROAMING)
-            } else {
-                null
-            }
+        val metered = networkCapabilities.resolveMetered()
 
         StreamNetworkInfo.Snapshot(
             transports = transports,
-            internet = internet,
-            validated = validated,
-            captivePortal = captivePortal,
-            vpn = vpn,
-            trusted = trusted,
-            localOnly = localOnly,
+            internet = networkCapabilities.flag(NetworkCapabilities.NET_CAPABILITY_INTERNET),
+            validated =
+                networkCapabilities.flagIfAtLeast(
+                    NetworkCapabilities.NET_CAPABILITY_VALIDATED,
+                    Build.VERSION_CODES.M,
+                ),
+            captivePortal =
+                networkCapabilities.flagIfAtLeast(
+                    NetworkCapabilities.NET_CAPABILITY_CAPTIVE_PORTAL,
+                    Build.VERSION_CODES.M,
+                ),
+            vpn = isVpn(networkCapabilities),
+            trusted = networkCapabilities.flag(NetworkCapabilities.NET_CAPABILITY_TRUSTED),
+            localOnly =
+                networkCapabilities.flagIfAtLeast(
+                    NetworkCapabilities.NET_CAPABILITY_LOCAL_NETWORK,
+                    Build.VERSION_CODES.VANILLA_ICE_CREAM,
+                ),
             metered = metered,
-            roaming = notRoaming?.not(),
-            congested = congested,
-            suspended = suspended,
-            bandwidthConstrained = bandwidthConstrained,
-            bandwidthKbps = bandwidth,
-            priority = priority,
-            signal = signal,
-            link = link,
+            roaming =
+                networkCapabilities
+                    .flagIfAtLeast(
+                        NetworkCapabilities.NET_CAPABILITY_NOT_ROAMING,
+                        Build.VERSION_CODES.P,
+                    )
+                    ?.not(),
+            congested =
+                networkCapabilities.negatedCapabilityAsFalse(
+                    NetworkCapabilities.NET_CAPABILITY_NOT_CONGESTED,
+                    Build.VERSION_CODES.P,
+                ),
+            suspended =
+                networkCapabilities.negatedCapabilityAsFalse(
+                    NetworkCapabilities.NET_CAPABILITY_NOT_SUSPENDED,
+                    Build.VERSION_CODES.P,
+                ),
+            bandwidthConstrained = bandwidthConstraintHint(networkCapabilities),
+            bandwidthKbps = bandwidthFor(networkCapabilities),
+            priority = resolvePriority(networkCapabilities),
+            signal =
+                signalProcessing.bestEffortSignal(
+                    wifiManager,
+                    telephonyManager,
+                    networkCapabilities,
+                    transports,
+                ),
+            link = linkProperties?.toLink(),
         )
     }
 
     private fun transportsFor(capabilities: NetworkCapabilities?): Set<Transport> {
-        if (capabilities == null) return emptySet()
-        val out = mutableSetOf<Transport>()
-        if (capabilities.safeHasTransport(NetworkCapabilities.TRANSPORT_WIFI) == true)
-            out += Transport.WIFI
-        if (capabilities.safeHasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) == true)
-            out += Transport.CELLULAR
-        if (capabilities.safeHasTransport(NetworkCapabilities.TRANSPORT_ETHERNET) == true)
-            out += Transport.ETHERNET
-        if (capabilities.safeHasTransport(NetworkCapabilities.TRANSPORT_BLUETOOTH) == true)
-            out += Transport.BLUETOOTH
-        if (capabilities.safeHasTransport(NetworkCapabilities.TRANSPORT_WIFI_AWARE) == true)
-            out += Transport.WIFI_AWARE
-        if (capabilities.safeHasTransport(NetworkCapabilities.TRANSPORT_LOWPAN) == true)
-            out += Transport.LOW_PAN
-        if (capabilities.safeHasTransport(NetworkCapabilities.TRANSPORT_USB) == true)
-            out += Transport.USB
-        if (capabilities.safeHasTransport(NetworkCapabilities.TRANSPORT_THREAD) == true)
-            out += Transport.THREAD
-        if (capabilities.safeHasTransport(NetworkCapabilities.TRANSPORT_SATELLITE) == true)
-            out += Transport.SATELLITE
-        if (capabilities.safeHasTransport(NetworkCapabilities.TRANSPORT_VPN) == true)
-            out += Transport.VPN
-        if (out.isEmpty()) out += Transport.UNKNOWN
-        return out
+        if (capabilities == null) {
+            return emptySet()
+        }
+        val transports =
+            KNOWN_TRANSPORTS.mapNotNull { (id, transport) ->
+                    transport.takeIf { capabilities.safeHasTransport(id) == true }
+                }
+                .toMutableSet()
+        if (transports.isEmpty()) {
+            transports += Transport.UNKNOWN
+        }
+        return transports
     }
 
     private fun LinkProperties.toLink(): Link? {
@@ -203,7 +122,11 @@ internal class StreamNetworkSnapshotBuilder(
         val dnsServers = dnsServers.mapNotNull { it.hostAddress }
         val domains = domains?.split(" ")?.filter { it.isNotBlank() } ?: emptyList()
         val mtuValue =
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) mtu.takeIf { it > 0 } else null
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                mtu.takeIf { it > 0 }
+            } else {
+                null
+            }
         val httpProxyValue = httpProxy?.let { "${it.host}:${it.port}" }
         return Link(
             interfaceName = interfaceName,
@@ -220,4 +143,83 @@ internal class StreamNetworkSnapshotBuilder(
 
     private fun NetworkCapabilities?.transport(transport: Int): Boolean =
         this?.safeHasTransport(transport) == true
+
+    private fun supportsSnapshots(): Boolean = Build.VERSION.SDK_INT >= Build.VERSION_CODES.M
+
+    private fun NetworkCapabilities?.flagIfAtLeast(capability: Int, minSdk: Int): Boolean? =
+        if (Build.VERSION.SDK_INT >= minSdk) flag(capability) else null
+
+    private fun NetworkCapabilities?.negatedCapabilityAsFalse(
+        capability: Int,
+        minSdk: Int,
+    ): Boolean? =
+        when (flagIfAtLeast(capability, minSdk)) {
+            true -> false
+            else -> null
+        }
+
+    private fun NetworkCapabilities?.resolveMetered(): Metered =
+        when {
+            flag(NetworkCapabilities.NET_CAPABILITY_NOT_METERED) == true -> Metered.NOT_METERED
+            flag(NetworkCapabilities.NET_CAPABILITY_TEMPORARILY_NOT_METERED) == true ->
+                Metered.TEMPORARILY_NOT_METERED
+
+            else -> Metered.UNKNOWN_OR_METERED
+        }
+
+    private fun isVpn(capabilities: NetworkCapabilities?): Boolean =
+        capabilities.transport(NetworkCapabilities.TRANSPORT_VPN) ||
+            capabilities.flag(NetworkCapabilities.NET_CAPABILITY_NOT_VPN) == false
+
+    private fun bandwidthConstraintHint(capabilities: NetworkCapabilities?): Boolean? =
+        if (isBandwidthConstraintSupported()) {
+            capabilities.negatedCapabilityAsFalse(
+                NetworkCapabilities.NET_CAPABILITY_NOT_BANDWIDTH_CONSTRAINED,
+                Build.VERSION_CODES.R,
+            )
+        } else {
+            null
+        }
+
+    private fun isBandwidthConstraintSupported(): Boolean =
+        Build.VERSION.SDK_INT >= Build.VERSION_CODES.R &&
+            extensionVersionProvider(Build.VERSION_CODES.UPSIDE_DOWN_CAKE) >= 16
+
+    private fun bandwidthFor(capabilities: NetworkCapabilities?): Bandwidth? {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) return null
+        val down = capabilities?.linkDownstreamBandwidthKbps?.takeIf { it > 0 }
+        val up = capabilities?.linkUpstreamBandwidthKbps?.takeIf { it > 0 }
+        return if (down != null || up != null) Bandwidth(downKbps = down, upKbps = up) else null
+    }
+
+    private fun resolvePriority(capabilities: NetworkCapabilities?): PriorityHint =
+        when {
+            capabilities.flag(NetworkCapabilities.NET_CAPABILITY_PRIORITIZE_LATENCY) == true ->
+                PriorityHint.LATENCY
+
+            capabilities.flag(NetworkCapabilities.NET_CAPABILITY_PRIORITIZE_BANDWIDTH) == true ->
+                PriorityHint.BANDWIDTH
+
+            else -> PriorityHint.NONE
+        }
+
+    private companion object {
+        private val DEFAULT_EXTENSION_PROVIDER: (Int) -> Int = { extension ->
+            SdkExtensions.getExtensionVersion(extension)
+        }
+
+        private val KNOWN_TRANSPORTS =
+            listOf(
+                NetworkCapabilities.TRANSPORT_WIFI to Transport.WIFI,
+                NetworkCapabilities.TRANSPORT_CELLULAR to Transport.CELLULAR,
+                NetworkCapabilities.TRANSPORT_ETHERNET to Transport.ETHERNET,
+                NetworkCapabilities.TRANSPORT_BLUETOOTH to Transport.BLUETOOTH,
+                NetworkCapabilities.TRANSPORT_WIFI_AWARE to Transport.WIFI_AWARE,
+                NetworkCapabilities.TRANSPORT_LOWPAN to Transport.LOW_PAN,
+                NetworkCapabilities.TRANSPORT_USB to Transport.USB,
+                NetworkCapabilities.TRANSPORT_THREAD to Transport.THREAD,
+                NetworkCapabilities.TRANSPORT_SATELLITE to Transport.SATELLITE,
+                NetworkCapabilities.TRANSPORT_VPN to Transport.VPN,
+            )
+    }
 }

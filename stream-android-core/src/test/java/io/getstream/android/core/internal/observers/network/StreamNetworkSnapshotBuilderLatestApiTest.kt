@@ -41,8 +41,8 @@ import org.robolectric.annotation.Config
 
 @OptIn(ExperimentalTime::class)
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [Build.VERSION_CODES.Q])
-internal class StreamNetworkSnapshotBuilderTest {
+@Config(sdk = [Build.VERSION_CODES.VANILLA_ICE_CREAM])
+internal class StreamNetworkSnapshotBuilderLatestApiTest {
 
     @MockK(relaxed = true) lateinit var signalProcessing: StreamNetworkSignalProcessing
     @MockK(relaxed = true) lateinit var wifiManager: WifiManager
@@ -53,7 +53,8 @@ internal class StreamNetworkSnapshotBuilderTest {
     @BeforeTest
     fun setup() {
         MockKAnnotations.init(this)
-        builder = StreamNetworkSnapshotBuilder(signalProcessing, wifiManager, telephonyManager)
+        builder =
+            StreamNetworkSnapshotBuilder(signalProcessing, wifiManager, telephonyManager) { 20 }
     }
 
     @Test
@@ -78,6 +79,8 @@ internal class StreamNetworkSnapshotBuilderTest {
         every {
             capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_LOCAL_NETWORK)
         } returns false
+        every { capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_NOT_METERED) } returns
+            false
         every {
             capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_TEMPORARILY_NOT_METERED)
         } returns true
