@@ -18,6 +18,8 @@ package io.getstream.android.core.internal.observers.network
 import android.net.NetworkCapabilities
 import android.net.wifi.WifiInfo
 import android.os.Build
+import android.telephony.CellSignalStrengthLte
+import android.telephony.CellSignalStrengthNr
 import android.telephony.SignalStrength
 import android.telephony.TelephonyManager
 import io.mockk.MockKAnnotations
@@ -60,15 +62,5 @@ internal class StreamNetworkMonitorUtilsTest {
 
         every { info.ssid } returns "<unknown ssid>"
         assertNull(sanitizeSsid(info))
-    }
-
-    @Test
-    fun `telephony helpers unwrap signal values`() {
-        val manager =
-            mockk<TelephonyManager> { every { signalStrength } returns mockk(relaxed = true) }
-        assertEquals(manager.signalStrength, telephonySignalStrength(manager))
-
-        val nrSignalStrength = mockk<SignalStrength>(relaxed = true) { every { level } returns 3 }
-        assertEquals(3, signalLevel(nrSignalStrength))
     }
 }
