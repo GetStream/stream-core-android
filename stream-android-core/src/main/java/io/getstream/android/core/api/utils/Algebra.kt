@@ -47,5 +47,14 @@ public operator fun Throwable.plus(other: Throwable): StreamAggregateException {
  *   [StreamAggregateException] if either [Result] is a failure.
  */
 @StreamInternalApi
-public operator fun <T, R> Result<T>.times(other: Result<R>): Result<Pair<T, R>> =
-    this.flatMap { first -> other.map { second -> first to second } }
+public operator fun <T, R> Result<T>.times(other: Result<R>): Result<Pair<T, R>> {
+    when {
+        this.isFailure && other.isFailure -> {
+            return Result.failure(this.exceptionOrNull()!! + other.exceptionOrNull()!!)
+        }
+
+        this.isFailure -> return Result.failure(this.exceptionOrNull()!!)
+        other.isFailure -> return Result.failure(other.exceptionOrNull()!!)
+    }
+    return Result.success(this.getOrThrow() to other.getOrThrow())
+}

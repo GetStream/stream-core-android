@@ -103,4 +103,18 @@ class AlgebraTest {
         assertTrue(combined.isFailure)
         assertSame(failure, combined.exceptionOrNull())
     }
+
+    @Test
+    fun `times propagates both results when both fail`() {
+        val failure = IllegalArgumentException("broken")
+        val failure2 = IllegalArgumentException("broken2")
+        val left = Result.failure<String>(failure)
+        val right = Result.failure<String>(failure2)
+
+        val combined = left * right
+
+        assertTrue(combined.isFailure)
+        val exception = combined.exceptionOrNull() as StreamAggregateException
+        assertEquals(listOf(failure, failure2), exception.causes)
+    }
 }
