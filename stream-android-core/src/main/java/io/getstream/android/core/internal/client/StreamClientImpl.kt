@@ -33,6 +33,7 @@ import io.getstream.android.core.api.socket.listeners.StreamClientListener
 import io.getstream.android.core.api.subscribe.StreamSubscription
 import io.getstream.android.core.api.subscribe.StreamSubscriptionManager
 import io.getstream.android.core.api.utils.flatMap
+import io.getstream.android.core.api.utils.update
 import io.getstream.android.core.internal.socket.StreamSocketSession
 import io.getstream.android.core.internal.socket.model.ConnectUserData
 import kotlinx.coroutines.CoroutineScope
@@ -205,8 +206,4 @@ internal class StreamClientImpl<T>(
             serialQueue.stop()
             singleFlight.clear(true)
         }
-
-    private fun <T> MutableStateFlow<T>.update(state: T) {
-        this.update { state }
-    }
 }
