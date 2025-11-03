@@ -1,4 +1,7 @@
 [versions]
+compileSdk = "36"
+targetSdk = "36"
+minSdk = "21"
 agp = "8.11.1"
 core = "1.7.0"
 kotlin = "2.2.0"
@@ -23,6 +26,7 @@ ksp = "2.2.0-2.0.2"
 robolectric = "4.15.1"
 detekt = "1.23.8"
 spotless = "7.2.1"
+streamConventions = "0.2.0"
 kover = "0.9.1"
 sonarqube = "6.0.1.5171"
 kotlinDokka = "1.9.20"
@@ -76,8 +80,10 @@ kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "ko
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 arturbosch-detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
 spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }
+stream-android-library = { id = "io.getstream.android.library", version.ref = "streamConventions" }
+stream-android-application = { id = "io.getstream.android.application", version.ref = "streamConventions" }
+stream-java-library = { id = "io.getstream.java.library", version.ref = "streamConventions" }
 dokka = { id = "org.jetbrains.dokka", version.ref = "kotlinDokka" }
 nexus = { id = "io.github.gradle-nexus.publish-plugin", version.ref = "nexusPlugin" }
 kover = { id = "org.jetbrains.kotlinx.kover", version.ref = "kover"}
 sonarqube = { id = "org.sonarqube", version.ref = "sonarqube"}
-

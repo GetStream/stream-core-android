@@ -1,5 +1,5 @@
 plugins {
-    id("java-library")
+    alias(libs.plugins.stream.java.library)
     alias(libs.plugins.jetbrains.kotlin.jvm)
 }
 
@@ -12,12 +12,5 @@ rootProject.extra.apply {
 apply(from = "${rootDir}/scripts/publish-module.gradle")
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_11
-    targetCompatibility = JavaVersion.VERSION_11
     withSourcesJar()
-}
-kotlin {
-    compilerOptions {
-        jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11
-    }
 }

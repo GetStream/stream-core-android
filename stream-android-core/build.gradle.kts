@@ -5,7 +5,7 @@ import io.getstream.core.Configuration
 import org.jetbrains.kotlin.gradle.dsl.abi.ExperimentalAbiValidation
 
 plugins {
-    alias(libs.plugins.android.library)
+    alias(libs.plugins.stream.android.library)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.ksp)
     alias(libs.plugins.arturbosch.detekt)
@@ -34,11 +34,8 @@ kotlin {
 
 android {
     namespace = "io.getstream.android.core"
-    compileSdk = Configuration.compileSdk
 
     defaultConfig {
-        minSdk = Configuration.minSdk
-
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles("consumer-rules.pro")
     }
@@ -51,10 +48,6 @@ android {
                 "proguard-rules.pro"
             )
         }
-    }
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
     }
 
     lint {
