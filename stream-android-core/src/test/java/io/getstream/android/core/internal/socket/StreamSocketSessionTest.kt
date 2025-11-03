@@ -102,7 +102,7 @@ class StreamSocketSessionTest {
 
         every { socket.close(any(), any()) } returns Result.success(Unit)
         every { debounce.stop() } returns Result.success(Unit)
-        every { health.stop() } just Runs
+        every { health.stop() } returns Result.success(Unit)
 
         session =
             StreamSocketSession(

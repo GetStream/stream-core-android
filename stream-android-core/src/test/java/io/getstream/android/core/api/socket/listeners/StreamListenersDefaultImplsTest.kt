@@ -19,6 +19,7 @@ package io.getstream.android.core.api.socket.listeners
 
 import io.getstream.android.core.annotations.StreamInternalApi
 import io.getstream.android.core.api.model.connection.StreamConnectionState
+import io.getstream.android.core.api.model.connection.network.StreamNetworkState
 import kotlin.test.assertEquals
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
@@ -50,6 +51,7 @@ internal class StreamListenersDefaultImplsTest {
         val stateChannel = Channel<StreamConnectionState>(capacity = 1)
         val eventChannel = Channel<Any>(capacity = 1)
         val errorChannel = Channel<Throwable>(capacity = 1)
+        val networkChannel = Channel<StreamNetworkState>(capacity = 1)
 
         val listener =
             object : StreamClientListener {
@@ -63,6 +65,10 @@ internal class StreamListenersDefaultImplsTest {
 
                 override fun onError(err: Throwable) {
                     errorChannel.trySend(err)
+                }
+
+                override fun onNetworkState(state: StreamNetworkState) {
+                    networkChannel.trySend(state)
                 }
             }
 

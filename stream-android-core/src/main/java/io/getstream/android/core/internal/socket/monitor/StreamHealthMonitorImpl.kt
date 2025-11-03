@@ -67,11 +67,11 @@ internal class StreamHealthMonitorImpl(
     }
 
     /** Starts (or restarts) the periodic health-check loop */
-    override fun start() {
+    override fun start() = runCatching {
         logger.d { "[start] Staring health monitor" }
         if (monitorJob?.isActive == true) {
             logger.d { "Health monitor already running" }
-            return
+            return@runCatching
         }
         monitorJob =
             scope.launch {
@@ -91,8 +91,9 @@ internal class StreamHealthMonitorImpl(
     }
 
     /** Stops the health-check loop */
-    override fun stop() {
+    override fun stop() = runCatching {
         logger.d { "[stop] Stopping heath monitor" }
         monitorJob?.cancel()
+        Unit
     }
 }
