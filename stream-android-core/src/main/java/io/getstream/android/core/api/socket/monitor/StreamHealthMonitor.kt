@@ -62,12 +62,21 @@ public interface StreamHealthMonitor {
     public fun acknowledgeHeartbeat()
 
     /** Starts the health monitor, beginning the heartbeat and liveness checks. */
-    public fun start()
+    public fun start(): Result<Unit>
 
     /** Stops the health monitor, halting heartbeat and liveness checks. */
-    public fun stop()
+    public fun stop(): Result<Unit>
 }
 
+/**
+ * Creates a new [StreamHealthMonitor] instance.
+ *
+ * @param logger The logger to use for logging.
+ * @param scope The coroutine scope to use for running the health monitor.
+ * @param interval The interval between heartbeats in milliseconds.
+ * @param livenessThreshold The liveness threshold in milliseconds.
+ * @return A new [StreamHealthMonitor] instance.
+ */
 @OptIn(ExperimentalTime::class)
 @StreamInternalApi
 public fun StreamHealthMonitor(

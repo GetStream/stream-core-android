@@ -25,10 +25,12 @@ import io.getstream.android.core.api.model.config.StreamHttpConfig
 import io.getstream.android.core.api.model.config.StreamSocketConfig
 import io.getstream.android.core.api.model.connection.StreamConnectedUser
 import io.getstream.android.core.api.model.connection.StreamConnectionState
+import io.getstream.android.core.api.model.connection.network.StreamNetworkState
 import io.getstream.android.core.api.model.value.StreamApiKey
 import io.getstream.android.core.api.model.value.StreamHttpClientInfoHeader
 import io.getstream.android.core.api.model.value.StreamUserId
 import io.getstream.android.core.api.model.value.StreamWsUrl
+import io.getstream.android.core.api.observers.network.StreamNetworkMonitor
 import io.getstream.android.core.api.processing.StreamBatcher
 import io.getstream.android.core.api.processing.StreamRetryProcessor
 import io.getstream.android.core.api.processing.StreamSerialProcessingQueue
@@ -106,6 +108,16 @@ public interface StreamClient {
      * - Hot & conflated: new collectors receive the latest value immediately.
      */
     public val connectionState: StateFlow<StreamConnectionState>
+
+    /**
+     * Read-only, hot state holder for the current network snapshot.
+     *
+     * **Semantics**
+     * - Emits the latest network snapshot whenever it changes.
+     * - Hot & conflated: new collectors receive the latest value immediately.
+     * - `null` if no network is available.
+     */
+    @StreamInternalApi public val networkState: StateFlow<StreamNetworkState>
 
     /**
      * Establishes a connection for the current user.
@@ -219,8 +231,10 @@ public fun StreamClient(
     // Socket
     connectionIdHolder: StreamConnectionIdHolder,
     socketFactory: StreamWebSocketFactory,
-    healthMonitor: StreamHealthMonitor,
     batcher: StreamBatcher<String>,
+    // Monitoring
+    healthMonitor: StreamHealthMonitor,
+    networkMonitor: StreamNetworkMonitor,
     // Http
     httpConfig: StreamHttpConfig? = null,
     // Serialization
@@ -277,8 +291,10 @@ public fun StreamClient(
         serialQueue = serialQueue,
         connectionIdHolder = connectionIdHolder,
         logger = clientLogger,
+        mutableNetworkState = MutableStateFlow(StreamNetworkState.Unknown),
         mutableConnectionState = MutableStateFlow(StreamConnectionState.Idle),
         subscriptionManager = clientSubscriptionManager,
+        networkMonitor = networkMonitor,
         socketSession =
             StreamSocketSession(
                 logger = logProvider.taggedLogger("SCSocketSession"),

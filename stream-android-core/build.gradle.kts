@@ -73,6 +73,9 @@ dependencies {
 
     detektPlugins(libs.detekt.formatting)
 
+    // Android
+    implementation(libs.androidx.annotation.jvm)
+
     // Network
     implementation(libs.moshi)
     implementation(libs.moshi.kotlin)

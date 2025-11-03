@@ -150,6 +150,7 @@ internal class StreamClientFactoryTest {
                 httpConfig = httpConfig,
                 serializationConfig = serializationConfig,
                 logProvider = logProvider,
+                networkMonitor = mockk(relaxed = true),
             )
 
         return client to deps
