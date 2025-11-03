@@ -1,20 +1,17 @@
+import com.vanniktech.maven.publish.JavadocJar
+import com.vanniktech.maven.publish.KotlinJvm
+
 plugins {
     id("java-library")
     alias(libs.plugins.jetbrains.kotlin.jvm)
+    alias(libs.plugins.maven.publish)
+    alias(libs.plugins.dokka)
 }
 
-rootProject.extra.apply {
-    set("PUBLISH_GROUP_ID", io.getstream.core.Configuration.artifactGroup)
-    set("PUBLISH_ARTIFACT_ID", "stream-android-core-lint")
-    set("PUBLISH_VERSION", rootProject.extra.get("rootVersionName"))
-}
-
-apply(from = "${rootDir}/scripts/publish-module.gradle")
 
 java {
     sourceCompatibility = JavaVersion.VERSION_11
     targetCompatibility = JavaVersion.VERSION_11
-    withSourcesJar()
 }
 kotlin {
     compilerOptions {
@@ -35,4 +32,18 @@ tasks.jar {
     manifest {
         attributes["Lint-Registry-v2"] = "io.getstream.android.core.lint.StreamIssueRegistry"
     }
+}
+
+mavenPublishing {
+    coordinates(
+        groupId = io.getstream.core.Configuration.artifactGroup,
+        artifactId = "stream-android-core-lint",
+        version = rootProject.version.toString()
+    )
+    configure(
+        KotlinJvm(
+            javadocJar = JavadocJar.Dokka("dokkaJavadoc"),
+            sourcesJar = true,
+        )
+    )
 }
