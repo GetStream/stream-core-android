@@ -2,22 +2,12 @@ import com.vanniktech.maven.publish.JavadocJar
 import com.vanniktech.maven.publish.KotlinJvm
 
 plugins {
-    id("java-library")
+    libs.plugins.stream.java.library
     alias(libs.plugins.jetbrains.kotlin.jvm)
     alias(libs.plugins.maven.publish)
     alias(libs.plugins.dokka)
 }
 
-
-java {
-    sourceCompatibility = JavaVersion.VERSION_11
-    targetCompatibility = JavaVersion.VERSION_11
-}
-kotlin {
-    compilerOptions {
-        jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11
-    }
-}
 
 dependencies {
     compileOnly(libs.lint.api)
