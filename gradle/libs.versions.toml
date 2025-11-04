@@ -29,8 +29,8 @@ spotless = "7.2.1"
 streamConventions = "0.2.0"
 kover = "0.9.1"
 sonarqube = "6.0.1.5171"
+mavenPublish = "0.34.0"
 kotlinDokka = "1.9.20"
-nexusPlugin = "1.3.0"
 annotationJvm = "1.9.1"
 
 [libraries]
@@ -83,7 +83,7 @@ spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }
 stream-android-library = { id = "io.getstream.android.library", version.ref = "streamConventions" }
 stream-android-application = { id = "io.getstream.android.application", version.ref = "streamConventions" }
 stream-java-library = { id = "io.getstream.java.library", version.ref = "streamConventions" }
+maven-publish = { id = "com.vanniktech.maven.publish", version.ref = "mavenPublish" }
 dokka = { id = "org.jetbrains.dokka", version.ref = "kotlinDokka" }
-nexus = { id = "io.github.gradle-nexus.publish-plugin", version.ref = "nexusPlugin" }
 kover = { id = "org.jetbrains.kotlinx.kover", version.ref = "kover"}
 sonarqube = { id = "org.sonarqube", version.ref = "sonarqube"}
