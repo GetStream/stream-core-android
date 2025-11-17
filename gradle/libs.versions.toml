@@ -25,8 +25,7 @@ retrofit = "3.0.0"
 ksp = "2.2.0-2.0.2"
 robolectric = "4.15.1"
 detekt = "1.23.8"
-spotless = "7.2.1"
-streamConventions = "0.2.0"
+streamConventions = "0.3.0"
 kover = "0.9.1"
 sonarqube = "6.0.1.5171"
 mavenPublish = "0.34.0"
@@ -79,11 +78,11 @@ android-library = { id = "com.android.library", version.ref = "agp" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 arturbosch-detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
-spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }
+stream-project = { id = "io.getstream.project", version.ref = "streamConventions" }
 stream-android-library = { id = "io.getstream.android.library", version.ref = "streamConventions" }
 stream-android-application = { id = "io.getstream.android.application", version.ref = "streamConventions" }
 stream-java-library = { id = "io.getstream.java.library", version.ref = "streamConventions" }
 maven-publish = { id = "com.vanniktech.maven.publish", version.ref = "mavenPublish" }
 dokka = { id = "org.jetbrains.dokka", version.ref = "kotlinDokka" }
-kover = { id = "org.jetbrains.kotlinx.kover", version.ref = "kover"}
-sonarqube = { id = "org.sonarqube", version.ref = "sonarqube"}
+kover = { id = "org.jetbrains.kotlinx.kover", version.ref = "kover" }
+sonarqube = { id = "org.sonarqube", version.ref = "sonarqube" }
