@@ -8,7 +8,7 @@ kotlin {
     compilerOptions {
         freeCompilerArgs.addAll(
             "-opt-in=io.getstream.android.core.annotations.StreamInternalApi",
-            "-XXLanguage:+PropertyParamAnnotationDefaultTargetMode"
+            "-XXLanguage:+PropertyParamAnnotationDefaultTargetMode",
         )
     }
 }
@@ -29,7 +29,7 @@ android {
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
+                "proguard-rules.pro",
             )
         }
     }

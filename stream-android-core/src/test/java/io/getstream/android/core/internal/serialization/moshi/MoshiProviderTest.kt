@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.getstream.android.core.internal.serialization.moshi
 
 import com.squareup.moshi.JsonDataException
@@ -84,13 +85,13 @@ class MoshiProviderTest {
         val base = m.adapter(StreamClientWsEvent::class.java)
         val json =
             """
-                    {
-                    "connection_id": "abc123",
-                    "created_at": 1234567789,
-                    "custom": {},
-                    "type": "health.check"
-                    }
-                    """
+            {
+            "connection_id": "abc123",
+            "created_at": 1234567789,
+            "custom": {},
+            "type": "health.check"
+            }
+            """
                 .trimIndent()
         // Minimal payload with the discriminator only
         val event = base.fromJson(json)

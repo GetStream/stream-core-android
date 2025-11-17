@@ -13,12 +13,12 @@ mavenPublishing {
     coordinates(
         groupId = Configuration.artifactGroup,
         artifactId = "stream-android-core-annotations",
-        version = rootProject.version.toString()
+        version = rootProject.version.toString(),
     )
     configure(
         KotlinJvm(
             javadocJar = JavadocJar.Dokka("dokkaJavadoc"),
             sourcesJar = true,
-        )
+        ),
     )
 }

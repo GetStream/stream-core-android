@@ -15,14 +15,13 @@ plugins {
     alias(libs.plugins.maven.publish)
 }
 
-
 kotlin {
     explicitApi()
     compilerOptions {
         jvmTarget.set(JvmTarget.JVM_11)
         freeCompilerArgs.addAll(
             "-opt-in=io.getstream.android.core.annotations.StreamInternalApi",
-            "-XXLanguage:+PropertyParamAnnotationDefaultTargetMode"
+            "-XXLanguage:+PropertyParamAnnotationDefaultTargetMode",
         )
     }
 }
@@ -40,7 +39,7 @@ android {
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
+                "proguard-rules.pro",
             )
         }
     }
@@ -50,7 +49,6 @@ android {
         warningsAsErrors = true
         lintConfig = rootProject.file("lint.xml")
     }
-
 }
 
 dependencies {
@@ -93,13 +91,13 @@ mavenPublishing {
     coordinates(
         groupId = Configuration.artifactGroup,
         artifactId = "stream-android-core",
-        version = rootProject.version.toString()
+        version = rootProject.version.toString(),
     )
     configure(
         AndroidSingleVariantLibrary(
             variant = "release",
             sourcesJar = true,
             publishJavadocJar = true,
-        )
+        ),
     )
 }
