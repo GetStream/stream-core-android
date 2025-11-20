@@ -17,6 +17,7 @@ package io.getstream.android.core.api.socket.monitor
 
 import io.getstream.android.core.annotations.StreamInternalApi
 import io.getstream.android.core.api.log.StreamLogger
+import io.getstream.android.core.api.observers.StreamStartableComponent
 import io.getstream.android.core.internal.socket.monitor.StreamHealthMonitorImpl
 import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.CoroutineScope
@@ -32,7 +33,7 @@ import kotlinx.coroutines.CoroutineScope
  * - Start and stop the monitor as needed.
  */
 @StreamInternalApi
-public interface StreamHealthMonitor {
+public interface StreamHealthMonitor : StreamStartableComponent {
     /**
      * Registers a callback that is invoked at every heartbeat interval.
      *
@@ -60,12 +61,6 @@ public interface StreamHealthMonitor {
      * is alive and healthy. Resets the liveness timer.
      */
     public fun acknowledgeHeartbeat()
-
-    /** Starts the health monitor, beginning the heartbeat and liveness checks. */
-    public fun start(): Result<Unit>
-
-    /** Stops the health monitor, halting heartbeat and liveness checks. */
-    public fun stop(): Result<Unit>
 }
 
 /**

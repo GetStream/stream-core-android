@@ -19,14 +19,23 @@ import android.content.Context
 import android.net.ConnectivityManager
 import android.net.wifi.WifiManager
 import android.telephony.TelephonyManager
+import androidx.lifecycle.Lifecycle
 import io.getstream.android.core.annotations.StreamInternalApi
 import io.getstream.android.core.internal.components.StreamAndroidComponentsProviderImpl
 
 /**
- * Provides access to Android system services.
+ * Facade over the Android system services required by the core SDK.
  *
- * This interface abstracts away the details of accessing Android system services, allowing the SDK
- * to work with different versions of Android and different build environments.
+ * Abstracting the access behind this interface allows Stream components to operate in tests,
+ * host-apps with custom dependency wiring, or alternative runtime environments.
+ *
+ * ### Typical usage
+ *
+ * ```kotlin
+ * val components = StreamAndroidComponentsProvider(context)
+ * val connectivity = components.connectivityManager().getOrNull()
+ * val lifecycle = components.lifecycle()
+ * ```
  */
 @StreamInternalApi
 public interface StreamAndroidComponentsProvider {
@@ -34,26 +43,62 @@ public interface StreamAndroidComponentsProvider {
     /**
      * Retrieves the [ConnectivityManager] system service.
      *
-     * @return A [Result] containing the [ConnectivityManager] if successful, or an error if the
-     *   service cannot be retrieved.
+     * ### Example
+     *
+     * ```kotlin
+     * val connectivity: ConnectivityManager =
+     *     components.connectivityManager().getOrElse { throwable ->
+     *         logger.e(throwable) { "Connectivity unavailable" }
+     *         throw throwable
+     *     }
+     * ```
+     *
+     * @return [Result.success] with the manager, or [Result.failure] when the service is missing.
      */
     public fun connectivityManager(): Result<ConnectivityManager>
 
     /**
      * Retrieves the [WifiManager] system service.
      *
-     * @return A [Result] containing the [WifiManager] if successful, or an error if the service
-     *   cannot be retrieved.
+     * ### Example
+     *
+     * ```kotlin
+     * val isWifiEnabled = components.wifiManager()
+     *     .map { wifi -> wifi.isWifiEnabled }
+     *     .getOrDefault(false)
+     * ```
+     *
+     * @return [Result.success] with the manager, or [Result.failure] when the service is missing.
      */
     public fun wifiManager(): Result<WifiManager>
 
     /**
      * Retrieves the [TelephonyManager] system service.
      *
-     * @return A [Result] containing the [TelephonyManager] if successful, or an error if the
-     *   service cannot be retrieved.
+     * ### Example
+     *
+     * ```kotlin
+     * val networkType = components.telephonyManager()
+     *     .map { telephony -> telephony.dataNetworkType }
+     *     .getOrElse { TelephonyManager.NETWORK_TYPE_UNKNOWN }
+     * ```
+     *
+     * @return [Result.success] with the manager, or [Result.failure] when the service is missing.
      */
     public fun telephonyManager(): Result<TelephonyManager>
+
+    /**
+     * Retrieves the [Lifecycle] for the application.
+     *
+     * ### Example
+     *
+     * ```kotlin
+     * components.lifecycle().addObserver(lifecycleObserver)
+     * ```
+     *
+     * @return The process-level [Lifecycle].
+     */
+    public fun lifecycle(): Lifecycle
 }
 
 /**

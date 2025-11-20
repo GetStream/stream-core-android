@@ -27,6 +27,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Button
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -39,7 +40,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import io.getstream.android.core.api.StreamClient
 import io.getstream.android.core.api.authentication.StreamTokenProvider
-import io.getstream.android.core.api.model.connection.network.StreamNetworkState
+import io.getstream.android.core.api.model.connection.StreamConnectionState
 import io.getstream.android.core.api.model.value.StreamApiKey
 import io.getstream.android.core.api.model.value.StreamHttpClientInfoHeader
 import io.getstream.android.core.api.model.value.StreamToken
@@ -47,10 +48,8 @@ import io.getstream.android.core.api.model.value.StreamUserId
 import io.getstream.android.core.api.model.value.StreamWsUrl
 import io.getstream.android.core.sample.client.createStreamClient
 import io.getstream.android.core.sample.ui.ConnectionStateCard
-import io.getstream.android.core.sample.ui.NetworkInfoCard
 import io.getstream.android.core.sample.ui.theme.StreamandroidcoreTheme
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 
 class SampleActivity : ComponentActivity() {
 
@@ -90,7 +89,7 @@ class SampleActivity : ComponentActivity() {
             )
         streamClient = streamClient2
         lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.RESUMED) { streamClient?.connect() }
+            repeatOnLifecycle(Lifecycle.State.CREATED) { streamClient?.connect() }
         }
         enableEdgeToEdge()
         setContent {
@@ -107,15 +106,40 @@ class SampleActivity : ComponentActivity() {
                     ) {
                         Greeting(name = "Android")
                         ClientInfo(streamClient = streamClient2)
+                        val state = streamClient?.connectionState?.collectAsStateWithLifecycle()
+                        val buttonState =
+                            when (state?.value) {
+                                is StreamConnectionState.Connected -> {
+                                    Triple(
+                                        "Disconnect",
+                                        true,
+                                        {
+                                            lifecycleScope.launch { streamClient?.disconnect() }
+                                            Unit
+                                        },
+                                    )
+                                }
+                                is StreamConnectionState.Connecting -> {
+                                    Triple("Connecting", false, { Unit })
+                                }
+                                else -> {
+                                    Triple(
+                                        "Connect",
+                                        true,
+                                        {
+                                            lifecycleScope.launch { streamClient?.connect() }
+                                            Unit
+                                        },
+                                    )
+                                }
+                            }
+                        Button(onClick = buttonState.third, enabled = buttonState.second) {
+                            Text(text = buttonState.first)
+                        }
                     }
                 }
             }
         }
-    }
-
-    override fun onStop() {
-        runBlocking { streamClient?.disconnect() }
-        super.onStop()
     }
 }
 
@@ -133,18 +157,8 @@ fun GreetingPreview() {
 @Composable
 fun ClientInfo(streamClient: StreamClient) {
     val state = streamClient.connectionState.collectAsStateWithLifecycle()
-    val networkSnapshot = streamClient.networkState.collectAsStateWithLifecycle()
     Log.d("SampleActivity", "Client state: ${state.value}")
-    val networkState = networkSnapshot.value
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         ConnectionStateCard(state = state.value)
-        when (networkState) {
-            is StreamNetworkState.Available -> {
-                NetworkInfoCard(snapshot = networkState.snapshot)
-            }
-            else -> {
-                NetworkInfoCard(snapshot = null)
-            }
-        }
     }
 }

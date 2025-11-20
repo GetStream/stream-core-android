@@ -49,6 +49,13 @@ public interface StreamBatcher<T> {
     /**
      * Starts the processor if it's not already running.
      *
+     * ### Example
+     *
+     * ```kotlin
+     * batcher.start()
+     *     .onFailure { cause -> logger.e(cause) { "Unable to start batcher" } }
+     * ```
+     *
      * @return `Result.success(Unit)` if the processor was started successfully; otherwise a
      *   `Result.failure(cause)` describing why the start failed.
      */
@@ -66,6 +73,14 @@ public interface StreamBatcher<T> {
      *     - **Int**: the number of items emitted in this batch (equals `batch.size`).
      *
      * Calling this method replaces any previously registered handler.
+     *
+     * ### Example
+     *
+     * ```kotlin
+     * batcher.onBatch { batch, _, _ ->
+     *     batch.forEach { event -> handle(event) }
+     * }
+     * ```
      */
     public fun onBatch(handler: suspend (List<T>, Long, Int) -> Unit)
 
@@ -80,16 +95,29 @@ public interface StreamBatcher<T> {
      * Implementations may start processing lazily on the first call.
      *
      * @param item The item to enqueue.
+     *
+     * ### Example
+     *
+     * ```kotlin
+     * batcher.enqueue(event)
+     *     .onFailure { cause -> logger.w(cause) { "Dropped event" } }
+     * ```
      */
     public suspend fun enqueue(item: T): Result<Unit>
 
     /**
      * Enqueues a single item for debounced processing.
      *
-     * This function **does not suspend** and returns `false` if the underlying buffer is full
-     * (bounded-capacity implementations). It returns a [Result]:
-     * - `true` if the item was accepted,
-     * - `false` if the processor is closed/stopped or cannot accept the item.
+     * This non-suspending variant returns `false` when the underlying buffer is full
+     * (bounded-capacity implementations).
+     *
+     * ### Example
+     *
+     * ```kotlin
+     * if (!batcher.offer(event)) {
+     *     metrics.incrementDropped()
+     * }
+     * ```
      */
     public fun offer(item: T): Boolean
 
@@ -99,6 +127,13 @@ public interface StreamBatcher<T> {
      * After calling this, no further batches will be emitted and subsequent [enqueue] or [offer]
      * calls should fail with `Result.failure`. Multiple calls to [stop] are allowed and should be
      * **idempotent**.
+     *
+     * ### Example
+     *
+     * ```kotlin
+     * batcher.stop()
+     *     .onFailure { cause -> logger.w(cause) { "Unable to stop batcher" } }
+     * ```
      *
      * @return `Result.success(Unit)` on a successful stop; `Result.failure(cause)` if stopping
      *   failed.
@@ -127,7 +162,7 @@ public fun <T> StreamBatcher(
     autoStart: Boolean = true,
     channelCapacity: Int = Channel.UNLIMITED,
 ): StreamBatcher<T> =
-    StreamBatcherImpl<T>(
+    StreamBatcherImpl(
         scope = scope,
         batchSize = batchSize,
         initialDelayMs = initialDelayMs,

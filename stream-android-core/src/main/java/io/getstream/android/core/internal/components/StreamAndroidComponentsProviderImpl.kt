@@ -21,6 +21,8 @@ import android.net.ConnectivityManager
 import android.net.wifi.WifiManager
 import android.os.Build
 import android.telephony.TelephonyManager
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.ProcessLifecycleOwner
 import io.getstream.android.core.api.components.StreamAndroidComponentsProvider
 
 internal class StreamAndroidComponentsProviderImpl(context: Context) :
@@ -52,4 +54,6 @@ internal class StreamAndroidComponentsProviderImpl(context: Context) :
             applicationContext.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
         }
     }
+
+    override fun lifecycle(): Lifecycle = ProcessLifecycleOwner.get().lifecycle
 }

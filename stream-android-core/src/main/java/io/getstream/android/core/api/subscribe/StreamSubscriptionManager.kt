@@ -38,7 +38,7 @@ import io.getstream.android.core.internal.subscribe.StreamSubscriptionManagerImp
  * @param T the listener type (often a function type, e.g. `(Event) -> Unit`)
  */
 @StreamInternalApi
-public interface StreamSubscriptionManager<T> {
+public interface StreamSubscriptionManager<T> : StreamObservable<T> {
     /**
      * Subscription behavior options.
      *
@@ -61,30 +61,6 @@ public interface StreamSubscriptionManager<T> {
             KEEP_UNTIL_CANCELLED,
         }
     }
-
-    /**
-     * Adds [listener] to the active set and returns a handle that can later be used to unregister
-     * it.
-     *
-     * The returned [StreamSubscription] is idempotent:
-     * - Calling `cancel()` multiple times is safe.
-     * - After `cancel()` completes, the listener is guaranteed to be absent from subsequent
-     *   [forEach] iterations.
-     *
-     * Retention:
-     * - When [options.retention] is [Options.Retention.AUTO_REMOVE] (default), you can omit calling
-     *   `cancel()`. Once your code drops all references to the listener, it is removed
-     *   automatically and will no longer receive events.
-     * - When [options.retention] is [Options.Retention.KEEP_UNTIL_CANCELLED], you must call
-     *   `cancel()` (or invoke [clear]) to stop events.
-     *
-     * @param listener The listener to register.
-     * @param options Retention options; defaults to automatic removal when the listener is no
-     *   longer referenced.
-     * @return `Result.success(StreamSubscription)` when the listener was added;
-     *   `Result.failure(Throwable)` if the operation cannot be completed (e.g., capacity limits).
-     */
-    public fun subscribe(listener: T, options: Options = Options()): Result<StreamSubscription>
 
     /**
      * Removes **all** listeners and releases related resources.

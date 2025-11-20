@@ -15,6 +15,7 @@
  */
 package io.getstream.android.core.api
 
+import android.annotation.SuppressLint
 import io.getstream.android.core.annotations.StreamInternalApi
 import io.getstream.android.core.api.authentication.StreamTokenManager
 import io.getstream.android.core.api.authentication.StreamTokenProvider
@@ -25,25 +26,29 @@ import io.getstream.android.core.api.model.config.StreamHttpConfig
 import io.getstream.android.core.api.model.config.StreamSocketConfig
 import io.getstream.android.core.api.model.connection.StreamConnectedUser
 import io.getstream.android.core.api.model.connection.StreamConnectionState
+import io.getstream.android.core.api.model.connection.lifecycle.StreamLifecycleState
 import io.getstream.android.core.api.model.connection.network.StreamNetworkState
 import io.getstream.android.core.api.model.value.StreamApiKey
 import io.getstream.android.core.api.model.value.StreamHttpClientInfoHeader
 import io.getstream.android.core.api.model.value.StreamUserId
 import io.getstream.android.core.api.model.value.StreamWsUrl
+import io.getstream.android.core.api.observers.lifecycle.StreamLifecycleMonitor
 import io.getstream.android.core.api.observers.network.StreamNetworkMonitor
 import io.getstream.android.core.api.processing.StreamBatcher
 import io.getstream.android.core.api.processing.StreamRetryProcessor
 import io.getstream.android.core.api.processing.StreamSerialProcessingQueue
 import io.getstream.android.core.api.processing.StreamSingleFlightProcessor
+import io.getstream.android.core.api.recovery.StreamConnectionRecoveryEvaluator
 import io.getstream.android.core.api.serialization.StreamEventSerialization
 import io.getstream.android.core.api.socket.StreamConnectionIdHolder
 import io.getstream.android.core.api.socket.StreamWebSocket
 import io.getstream.android.core.api.socket.StreamWebSocketFactory
 import io.getstream.android.core.api.socket.listeners.StreamClientListener
 import io.getstream.android.core.api.socket.monitor.StreamHealthMonitor
-import io.getstream.android.core.api.subscribe.StreamSubscription
+import io.getstream.android.core.api.subscribe.StreamObservable
 import io.getstream.android.core.api.subscribe.StreamSubscriptionManager
 import io.getstream.android.core.internal.client.StreamClientImpl
+import io.getstream.android.core.internal.observers.StreamNetworkAndLifeCycleMonitor
 import io.getstream.android.core.internal.serialization.StreamCompositeEventSerializationImpl
 import io.getstream.android.core.internal.serialization.StreamCompositeMoshiJsonSerialization
 import io.getstream.android.core.internal.serialization.StreamMoshiJsonSerializationImpl
@@ -99,7 +104,7 @@ import kotlinx.coroutines.flow.StateFlow
  * ```
  */
 @StreamInternalApi
-public interface StreamClient {
+public interface StreamClient : StreamObservable<StreamClientListener> {
     /**
      * Read-only, hot state holder for this client.
      *
@@ -108,16 +113,6 @@ public interface StreamClient {
      * - Hot & conflated: new collectors receive the latest value immediately.
      */
     public val connectionState: StateFlow<StreamConnectionState>
-
-    /**
-     * Read-only, hot state holder for the current network snapshot.
-     *
-     * **Semantics**
-     * - Emits the latest network snapshot whenever it changes.
-     * - Hot & conflated: new collectors receive the latest value immediately.
-     * - `null` if no network is available.
-     */
-    @StreamInternalApi public val networkState: StateFlow<StreamNetworkState>
 
     /**
      * Establishes a connection for the current user.
@@ -142,13 +137,6 @@ public interface StreamClient {
      * - Throws [kotlinx.coroutines.CancellationException] if the awaiting coroutine is cancelled.
      */
     public suspend fun disconnect(): Result<Unit>
-
-    /**
-     * Subscribes to client events and state
-     *
-     * @param listener The listener to subscribe.
-     */
-    public fun subscribe(listener: StreamClientListener): Result<StreamSubscription>
 }
 
 /**
@@ -196,21 +184,25 @@ public interface StreamClient {
  * @param apiKey The API key.
  * @param userId The user ID.
  * @param wsUrl The WebSocket URL.
+ * @param products Stream product codes (for feature gates / telemetry) negotiated with the socket.
  * @param clientInfoHeader The client info header.
+ * @param clientSubscriptionManager Manages socket-level listeners registered via [StreamClient].
  * @param tokenProvider The token provider.
- * @param scope The coroutine scope.
- * @param logProvider The logger provider.
- * @param clientSubscriptionManager The client subscription manager.
  * @param tokenManager The token manager.
  * @param singleFlight The single-flight processor.
  * @param serialQueue The serial processing queue.
- * @param httpConfig The HTTP configuration.
  * @param retryProcessor The retry processor.
+ * @param scope The coroutine scope powering internal work (usually `SupervisorJob + Dispatcher`).
  * @param connectionIdHolder The connection ID holder.
  * @param socketFactory The WebSocket factory.
- * @param healthMonitor The health monitor.
  * @param batcher The WebSocket event batcher.
+ * @param healthMonitor The health monitor.
+ * @param networkMonitor Tracks device connectivity and feeds connection recovery.
+ * @param httpConfig Optional HTTP client customization.
+ * @param serializationConfig Composite JSON / event serialization configuration.
+ * @param logProvider The logger provider.
  */
+@SuppressLint("ExposeAsStateFlow")
 @StreamInternalApi
 public fun StreamClient(
     // Client config
@@ -235,6 +227,8 @@ public fun StreamClient(
     // Monitoring
     healthMonitor: StreamHealthMonitor,
     networkMonitor: StreamNetworkMonitor,
+    lifecycleMonitor: StreamLifecycleMonitor,
+    connectionRecoveryEvaluator: StreamConnectionRecoveryEvaluator,
     // Http
     httpConfig: StreamHttpConfig? = null,
     // Serialization
@@ -283,6 +277,20 @@ public fun StreamClient(
         configuredInterceptors.forEach { httpBuilder.addInterceptor(it) }
     }
 
+    val networkAndLifeCycleMonitor =
+        StreamNetworkAndLifeCycleMonitor(
+            logger = logProvider.taggedLogger("SCNetworkAndLifecycleMonitor"),
+            networkMonitor = networkMonitor,
+            lifecycleMonitor = lifecycleMonitor,
+            mutableNetworkState = MutableStateFlow(StreamNetworkState.Unknown),
+            mutableLifecycleState = MutableStateFlow(StreamLifecycleState.Unknown),
+            subscriptionManager =
+                StreamSubscriptionManager(
+                    logger = logProvider.taggedLogger("SCNLMonitorSubscriptions")
+                ),
+        )
+
+    val mutableConnectionState = MutableStateFlow<StreamConnectionState>(StreamConnectionState.Idle)
     return StreamClientImpl(
         userId = userId,
         scope = clientScope,
@@ -291,10 +299,10 @@ public fun StreamClient(
         serialQueue = serialQueue,
         connectionIdHolder = connectionIdHolder,
         logger = clientLogger,
-        mutableNetworkState = MutableStateFlow(StreamNetworkState.Unknown),
-        mutableConnectionState = MutableStateFlow(StreamConnectionState.Idle),
+        mutableConnectionState = mutableConnectionState,
         subscriptionManager = clientSubscriptionManager,
-        networkMonitor = networkMonitor,
+        networkAndLifeCycleMonitor = networkAndLifeCycleMonitor,
+        connectionRecoveryEvaluator = connectionRecoveryEvaluator,
         socketSession =
             StreamSocketSession(
                 logger = logProvider.taggedLogger("SCSocketSession"),
