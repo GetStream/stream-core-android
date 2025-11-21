@@ -1,25 +1,19 @@
 @file:OptIn(ExperimentalAbiValidation::class)
 
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import com.vanniktech.maven.publish.AndroidSingleVariantLibrary
 import io.getstream.core.Configuration
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.dsl.abi.ExperimentalAbiValidation
 
 plugins {
-    alias(libs.plugins.android.library)
+    alias(libs.plugins.stream.android.library)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.ksp)
     alias(libs.plugins.arturbosch.detekt)
     alias(libs.plugins.sonarqube)
     alias(libs.plugins.kover)
+    alias(libs.plugins.maven.publish)
 }
-
-rootProject.extra.apply {
-    set("PUBLISH_GROUP_ID", Configuration.artifactGroup)
-    set("PUBLISH_ARTIFACT_ID", "stream-android-core")
-    set("PUBLISH_VERSION", rootProject.extra.get("rootVersionName"))
-}
-
-apply(from = "${rootDir}/scripts/publish-module.gradle")
 
 kotlin {
     explicitApi()
@@ -27,18 +21,15 @@ kotlin {
         jvmTarget.set(JvmTarget.JVM_11)
         freeCompilerArgs.addAll(
             "-opt-in=io.getstream.android.core.annotations.StreamInternalApi",
-            "-XXLanguage:+PropertyParamAnnotationDefaultTargetMode"
+            "-XXLanguage:+PropertyParamAnnotationDefaultTargetMode",
         )
     }
 }
 
 android {
     namespace = "io.getstream.android.core"
-    compileSdk = Configuration.compileSdk
 
     defaultConfig {
-        minSdk = Configuration.minSdk
-
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles("consumer-rules.pro")
     }
@@ -48,23 +39,15 @@ android {
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
+                "proguard-rules.pro",
             )
         }
-    }
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
     }
 
     lint {
         abortOnError = true
         warningsAsErrors = true
         lintConfig = rootProject.file("lint.xml")
-    }
-
-    publishing {
-        singleVariant("release") { }
     }
 }
 
@@ -104,4 +87,19 @@ dependencies {
     testImplementation(libs.mockk)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.mockwebserver)
+}
+
+mavenPublishing {
+    coordinates(
+        groupId = Configuration.artifactGroup,
+        artifactId = "stream-android-core",
+        version = rootProject.version.toString(),
+    )
+    configure(
+        AndroidSingleVariantLibrary(
+            variant = "release",
+            sourcesJar = true,
+            publishJavadocJar = true,
+        ),
+    )
 }

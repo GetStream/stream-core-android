@@ -1,10 +1,9 @@
-import java.net.URI
-
 include(":stream-android-core-annotations")
 
 
 pluginManagement {
     repositories {
+        mavenLocal()
         google {
             content {
                 includeGroupByRegex("com\\.android.*")

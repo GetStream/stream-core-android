@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 @file:OptIn(StreamInternalApi::class)
 
 package io.getstream.android.core.api.socket.listeners
@@ -65,6 +66,10 @@ internal class StreamListenersDefaultImplsTest {
 
                 override fun onError(err: Throwable) {
                     errorChannel.trySend(err)
+                }
+
+                override fun onNetworkState(state: StreamNetworkState) {
+                    networkChannel.trySend(state)
                 }
             }
 

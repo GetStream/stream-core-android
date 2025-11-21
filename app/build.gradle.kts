@@ -1,29 +1,23 @@
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-
 plugins {
-    alias(libs.plugins.android.application)
+    alias(libs.plugins.stream.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
 }
 
 kotlin {
     compilerOptions {
-        jvmTarget.set(JvmTarget.JVM_11)
         freeCompilerArgs.addAll(
             "-opt-in=io.getstream.android.core.annotations.StreamInternalApi",
-            "-XXLanguage:+PropertyParamAnnotationDefaultTargetMode"
+            "-XXLanguage:+PropertyParamAnnotationDefaultTargetMode",
         )
     }
 }
 
 android {
     namespace = "io.getstream.android.core"
-    compileSdk = 36
 
     defaultConfig {
         applicationId = "io.getstream.android.core.sample"
-        minSdk = 21
-        targetSdk = 36
         versionCode = 1
         versionName = "1.0"
 
@@ -35,16 +29,9 @@ android {
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
+                "proguard-rules.pro",
             )
         }
-    }
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
-    }
-    kotlinOptions {
-        jvmTarget = "11"
     }
     buildFeatures {
         compose = true

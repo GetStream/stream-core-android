@@ -1,33 +1,32 @@
-import java.io.FileNotFoundException
-import java.util.Calendar
-
-apply(plugin = "io.github.gradle-nexus.publish-plugin")
-apply(plugin = "org.jetbrains.dokka")
+import com.android.build.api.dsl.ApplicationExtension
+import com.android.build.api.dsl.LibraryExtension
+import io.getstream.core.Configuration
 
 apply(from = "${rootDir}/gradle/scripts/sonar.gradle")
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 plugins {
+    alias(libs.plugins.stream.project)
+    alias(libs.plugins.stream.android.library) apply false
+    alias(libs.plugins.stream.android.application) apply false
+    alias(libs.plugins.stream.java.library) apply false
     alias(libs.plugins.android.application) apply false
     alias(libs.plugins.kotlin.android) apply false
     alias(libs.plugins.jetbrains.kotlin.jvm) apply false
     alias(libs.plugins.android.library) apply false
     alias(libs.plugins.kotlin.compose) apply false
     alias(libs.plugins.ksp) apply false
+    alias(libs.plugins.maven.publish)
     alias(libs.plugins.dokka) apply false
-    alias(libs.plugins.nexus) apply false
     alias(libs.plugins.arturbosch.detekt) apply true
-    alias(libs.plugins.spotless) apply true
     alias(libs.plugins.sonarqube) apply true
     alias(libs.plugins.kover) apply true
 }
 
-spotless {
-    kotlin {
-        val currentYear = Calendar.getInstance().get(Calendar.YEAR).toString()
-        target("**/*.kt")
-        targetExclude("**/build/**/*.kt")
-        ktfmt().kotlinlangStyle()
-        licenseHeaderFile(file("./config/license/generated/license-$currentYear.txt"))
+streamProject {
+    repositoryName = "stream-core-android"
+
+    spotless {
+        useKtfmt = true
     }
 }
 
@@ -38,42 +37,28 @@ detekt {
     buildUponDefaultConfig = true
 }
 
-// License tasks
+private val isSnapshot = System.getenv("SNAPSHOT")?.toBoolean() == true
+version = if (isSnapshot) Configuration.snapshotVersionName else Configuration.versionName
+
 subprojects {
-    apply(from = "${rootDir}/gradle/scripts/coverage.gradle")
-    tasks.register("generateLicense") {
-        val currentYear = Calendar.getInstance().get(Calendar.YEAR).toString()
-        val licenseTemplate = file("../config/license/license.template")
-        val generatedLicense = file("../config/license/generated/license-$currentYear.txt")
-        val detektFile = file("../config/detekt/detekt.yml")
-        val projectName = project.findProperty("projectName")?.toString() ?: "stream-core-android"
-
-        doLast {
-            if (licenseTemplate.exists()) {
-                // Generate license
-                val licenseContent = licenseTemplate.readText()
-                    .replace("{currentYear}", currentYear)
-                    .replace("{project}", projectName)
-                generatedLicense.writeText(licenseContent)
-                println("License file generated: ${generatedLicense.absolutePath}")
-
-                // Update detekt.yml
-
-                if (detektFile.exists()) {
-                    val pattern = Regex("""licenseTemplateFile:\s*['"]\.\./license/generated/license-\d{4}\.txt['"]""")
-                    val replacement = """licenseTemplateFile: '../license/generated/license-$currentYear.txt'"""
-                    val detektContent = detektFile.readText().replace(pattern, replacement)
-                    detektFile.writeText(detektContent)
-
-                    println("Detekt configuration updated: ${detektFile.absolutePath}")
-                } else {
-                    throw FileNotFoundException("Detekt configuration file not found: ${detektFile.absolutePath}")
-                }
-            } else {
-                throw FileNotFoundException("Template file not found: ${licenseTemplate.absolutePath}")
+    // Configure Android projects with common SDK versions as soon as either plugin is applied
+    pluginManager.withPlugin("com.android.library") {
+        extensions.configure<LibraryExtension> {
+            defaultConfig {
+                compileSdk = libs.versions.compileSdk.get().toInt()
+                minSdk = libs.versions.minSdk.get().toInt()
+                lint.targetSdk = libs.versions.targetSdk.get().toInt()
+                testOptions.targetSdk = libs.versions.targetSdk.get().toInt()
+            }
+        }
+    }
+    pluginManager.withPlugin("com.android.application") {
+        extensions.configure<ApplicationExtension> {
+            defaultConfig {
+                compileSdk = libs.versions.compileSdk.get().toInt()
+                minSdk = libs.versions.minSdk.get().toInt()
+                targetSdk = libs.versions.targetSdk.get().toInt()
             }
         }
     }
 }
-
-apply(from = "${rootDir}/scripts/publish-root.gradle")
