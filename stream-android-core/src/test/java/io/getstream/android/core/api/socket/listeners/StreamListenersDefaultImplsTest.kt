@@ -66,10 +66,6 @@ internal class StreamListenersDefaultImplsTest {
                 override fun onError(err: Throwable) {
                     errorChannel.trySend(err)
                 }
-
-                override fun onNetworkState(state: StreamNetworkState) {
-                    networkChannel.trySend(state)
-                }
             }
 
         val state = StreamConnectionState.Connecting.Opening("user")
