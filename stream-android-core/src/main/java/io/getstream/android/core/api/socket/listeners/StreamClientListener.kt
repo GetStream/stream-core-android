@@ -48,11 +48,4 @@ public interface StreamClientListener {
      * @param err The error that occurred.
      */
     public fun onError(err: Throwable) {}
-
-    /**
-     * Called when the network connection changes.
-     *
-     * @param state The new network state.
-     */
-    public fun onNetworkState(state: StreamNetworkState) {}
 }
