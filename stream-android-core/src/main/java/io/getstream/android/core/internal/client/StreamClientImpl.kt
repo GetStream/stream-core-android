@@ -116,12 +116,6 @@ internal class StreamClientImpl<T>(
                             lifecycleState: StreamLifecycleState,
                         ) {
                             val connectionState = mutableConnectionState.value
-                            logger.v {
-                                """networkAndLifecycleMonitor#onNetworkAndLifecycleState]
-                                network=$networkState,
-                                lifecycle=$lifecycleState
-                                connectionState=$connectionState"""
-                            }
                             val recovery =
                                 connectionRecoveryEvaluator.evaluate(
                                     connectionState,
