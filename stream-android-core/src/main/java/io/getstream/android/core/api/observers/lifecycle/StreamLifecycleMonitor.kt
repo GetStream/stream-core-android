@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.getstream.android.core.api.observers.lifecycle
 
 import androidx.lifecycle.Lifecycle

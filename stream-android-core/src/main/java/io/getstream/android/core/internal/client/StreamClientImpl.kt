@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.getstream.android.core.internal.client
 
 import io.getstream.android.core.api.StreamClient
@@ -117,7 +118,7 @@ internal class StreamClientImpl<T>(
                             val connectionState = mutableConnectionState.value
                             logger.v {
                                 """networkAndLifecycleMonitor#onNetworkAndLifecycleState]
-                                network=$networkState, 
+                                network=$networkState,
                                 lifecycle=$lifecycleState
                                 connectionState=$connectionState"""
                             }

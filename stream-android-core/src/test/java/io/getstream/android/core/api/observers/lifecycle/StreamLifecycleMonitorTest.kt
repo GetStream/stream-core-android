@@ -1,5 +1,22 @@
+/*
+ * Copyright (c) 2014-2025 Stream.io Inc. All rights reserved.
+ *
+ * Licensed under the Stream License;
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    https://github.com/GetStream/stream-core-android/blob/main/LICENSE
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package io.getstream.android.core.api.observers.lifecycle
 
+import android.os.Build
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LifecycleRegistry
@@ -13,8 +30,10 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
 
 @RunWith(RobolectricTestRunner::class)
+@Config(sdk = [Build.VERSION_CODES.UPSIDE_DOWN_CAKE])
 class StreamLifecycleMonitorTest {
 
     @Test
@@ -66,11 +85,13 @@ class StreamLifecycleMonitorTest {
 
         expectations.forEach { (state, expected) ->
             val owner = TestLifecycleOwner()
-            val monitor = StreamLifecycleMonitor(TestLogger, owner.lifecycle, newSubscriptionManager())
+            val monitor =
+                StreamLifecycleMonitor(TestLogger, owner.lifecycle, newSubscriptionManager())
 
             when (state) {
                 Lifecycle.State.INITIALIZED -> Unit
-                Lifecycle.State.CREATED -> owner.registry.handleLifecycleEvent(Lifecycle.Event.ON_CREATE)
+                Lifecycle.State.CREATED ->
+                    owner.registry.handleLifecycleEvent(Lifecycle.Event.ON_CREATE)
                 Lifecycle.State.STARTED -> {
                     owner.registry.handleLifecycleEvent(Lifecycle.Event.ON_CREATE)
                     owner.registry.handleLifecycleEvent(Lifecycle.Event.ON_START)
