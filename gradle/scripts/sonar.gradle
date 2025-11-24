@@ -45,3 +45,9 @@ sonarqube {
         property "sonar.coverage.exclusions", rootProject.ext.sonar.excludeFilter
     }
 }
+
+tasks.named("sonar").configure {
+    rootProject.subprojects
+        .findAll { !rootProject.ext.sonar.ignoreModules.contains(it.name) }
+        .each { dependsOn("${it.path}:koverXmlReport") }
+}

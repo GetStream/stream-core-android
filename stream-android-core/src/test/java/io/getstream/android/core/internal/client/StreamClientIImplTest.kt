@@ -26,9 +26,9 @@ import io.getstream.android.core.api.model.connection.lifecycle.StreamLifecycleS
 import io.getstream.android.core.api.model.connection.network.StreamNetworkInfo
 import io.getstream.android.core.api.model.connection.network.StreamNetworkState
 import io.getstream.android.core.api.model.connection.recovery.Recovery
+import io.getstream.android.core.api.model.event.StreamClientWsEvent
 import io.getstream.android.core.api.model.exceptions.StreamEndpointErrorData
 import io.getstream.android.core.api.model.exceptions.StreamEndpointException
-import io.getstream.android.core.api.model.event.StreamClientWsEvent
 import io.getstream.android.core.api.model.value.StreamToken
 import io.getstream.android.core.api.model.value.StreamUserId
 import io.getstream.android.core.api.processing.StreamSerialProcessingQueue
@@ -702,8 +702,7 @@ class StreamClientIImplTest {
         justRun { tokenManager.invalidate() }
         coEvery { tokenManager.refresh() } returns Result.success(refreshedToken)
 
-        val endpointError =
-            StreamEndpointException(apiError = StreamEndpointErrorData(code = 40))
+        val endpointError = StreamEndpointException(apiError = StreamEndpointErrorData(code = 40))
         val connectedUser = mockk<StreamConnectedUser>(relaxed = true)
         val connectedState = StreamConnectionState.Connected(connectedUser, "conn-42")
         coEvery { socketSession.connect(match { it.token == token.rawValue }) } returns
