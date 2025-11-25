@@ -2,8 +2,6 @@ import com.android.build.api.dsl.ApplicationExtension
 import com.android.build.api.dsl.LibraryExtension
 import io.getstream.core.Configuration
 
-apply(from = "${rootDir}/gradle/scripts/sonar.gradle")
-// Top-level build file where you can add configuration options common to all sub-projects/modules.
 plugins {
     alias(libs.plugins.stream.project)
     alias(libs.plugins.stream.android.library) apply false
@@ -18,8 +16,6 @@ plugins {
     alias(libs.plugins.maven.publish)
     alias(libs.plugins.dokka) apply false
     alias(libs.plugins.arturbosch.detekt) apply true
-    alias(libs.plugins.sonarqube) apply true
-    alias(libs.plugins.kover) apply true
 }
 
 streamProject {
@@ -27,6 +23,10 @@ streamProject {
 
     spotless {
         useKtfmt = true
+    }
+
+    coverage {
+        includedModules = setOf("stream-android-core")
     }
 }
 

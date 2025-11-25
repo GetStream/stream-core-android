@@ -26,9 +26,7 @@ retrofit = "3.0.0"
 ksp = "2.2.0-2.0.2"
 robolectric = "4.15.1"
 detekt = "1.23.8"
-streamConventions = "0.3.0"
-kover = "0.9.1"
-sonarqube = "6.0.1.5171"
+streamConventions = "0.4.0"
 mavenPublish = "0.34.0"
 kotlinDokka = "1.9.20"
 annotationJvm = "1.9.1"
@@ -87,5 +85,3 @@ stream-android-application = { id = "io.getstream.android.application", version.
 stream-java-library = { id = "io.getstream.java.library", version.ref = "streamConventions" }
 maven-publish = { id = "com.vanniktech.maven.publish", version.ref = "mavenPublish" }
 dokka = { id = "org.jetbrains.dokka", version.ref = "kotlinDokka" }
-kover = { id = "org.jetbrains.kotlinx.kover", version.ref = "kover" }
-sonarqube = { id = "org.sonarqube", version.ref = "sonarqube" }
