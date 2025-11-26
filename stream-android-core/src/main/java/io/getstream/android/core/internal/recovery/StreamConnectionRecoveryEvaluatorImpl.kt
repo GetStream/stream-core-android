@@ -73,7 +73,8 @@ internal class StreamConnectionRecoveryEvaluatorImpl(
                 hasConnectedBefore &&
                     isDisconnected &&
                     lifecycleForeground &&
-                    (networkBecameAvailable || returningToForeground && networkAvailable)
+                    networkAvailable &&
+                    (networkWasUnavailable || lifecycleWasBackground)
 
             val connectSnapshot =
                 when (networkState) {
