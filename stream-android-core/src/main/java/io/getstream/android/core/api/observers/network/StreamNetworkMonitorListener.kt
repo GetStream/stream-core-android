@@ -19,15 +19,19 @@ package io.getstream.android.core.api.observers.network
 import io.getstream.android.core.annotations.StreamInternalApi
 import io.getstream.android.core.api.model.connection.network.StreamNetworkInfo
 
-/**
- * Listener interface for network state changes.
- *
- * Implement this interface to receive updates about network state changes.
- */
+/** Receives network availability and capability updates from [StreamNetworkMonitor]. */
 @StreamInternalApi
 public interface StreamNetworkMonitorListener {
     /**
      * Called when the network is connected.
+     *
+     * ### Example
+     *
+     * ```kotlin
+     * override suspend fun onNetworkConnected(snapshot: StreamNetworkInfo.Snapshot?) {
+     *     logger.i { "Network connected: ${snapshot?.type}" }
+     * }
+     * ```
      *
      * @param snapshot A [StreamNetworkInfo.Snapshot] describing the newly connected network.
      */
@@ -36,13 +40,30 @@ public interface StreamNetworkMonitorListener {
     /**
      * Called when the network is lost.
      *
-     * @param permanent True if the network is lost permanently (e.g., due to airplane mode).
+     * ### Example
+     *
+     * ```kotlin
+     * override suspend fun onNetworkLost(permanent: Boolean) {
+     *     retryScheduler.pause()
+     *     if (permanent) alertUser()
+     * }
+     * ```
+     *
+     * @param permanent True if the network is lost permanently (e.g., onUnavailable called).
      */
     public suspend fun onNetworkLost(permanent: Boolean = false) {}
 
     /**
      * Called when the properties of the currently connected network change while the connection
      * remains active.
+     *
+     * ### Example
+     *
+     * ```kotlin
+     * override suspend fun onNetworkPropertiesChanged(snapshot: StreamNetworkInfo.Snapshot) {
+     *     metrics.recordThroughput(snapshot.linkBandwidthDownKbps)
+     * }
+     * ```
      *
      * @param snapshot A [StreamNetworkInfo.Snapshot] containing the updated properties.
      */

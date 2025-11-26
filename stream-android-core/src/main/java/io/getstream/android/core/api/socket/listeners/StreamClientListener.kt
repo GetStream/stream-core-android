@@ -18,7 +18,7 @@ package io.getstream.android.core.api.socket.listeners
 
 import io.getstream.android.core.annotations.StreamInternalApi
 import io.getstream.android.core.api.model.connection.StreamConnectionState
-import io.getstream.android.core.api.model.connection.network.StreamNetworkState
+import io.getstream.android.core.api.model.connection.recovery.Recovery
 
 /**
  * Listener interface for Feeds socket events.
@@ -50,9 +50,9 @@ public interface StreamClientListener {
     public fun onError(err: Throwable) {}
 
     /**
-     * Called when the network connection changes.
+     * Called when a recovery decision is made.
      *
-     * @param state The new network state.
+     * @param recovery The recovery decision.
      */
-    public fun onNetworkState(state: StreamNetworkState) {}
+    public fun onRecovery(recovery: Recovery) {}
 }

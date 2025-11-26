@@ -22,25 +22,30 @@ import io.getstream.android.core.api.log.StreamLogger
 import io.getstream.android.core.api.model.StreamTypedKey.Companion.randomExecutionKey
 import io.getstream.android.core.api.model.connection.StreamConnectedUser
 import io.getstream.android.core.api.model.connection.StreamConnectionState
-import io.getstream.android.core.api.model.connection.network.StreamNetworkInfo
+import io.getstream.android.core.api.model.connection.lifecycle.StreamLifecycleState
 import io.getstream.android.core.api.model.connection.network.StreamNetworkState
+import io.getstream.android.core.api.model.connection.recovery.Recovery
+import io.getstream.android.core.api.model.value.StreamToken
 import io.getstream.android.core.api.model.value.StreamUserId
-import io.getstream.android.core.api.observers.network.StreamNetworkMonitor
-import io.getstream.android.core.api.observers.network.StreamNetworkMonitorListener
 import io.getstream.android.core.api.processing.StreamSerialProcessingQueue
 import io.getstream.android.core.api.processing.StreamSingleFlightProcessor
+import io.getstream.android.core.api.recovery.StreamConnectionRecoveryEvaluator
 import io.getstream.android.core.api.socket.StreamConnectionIdHolder
 import io.getstream.android.core.api.socket.listeners.StreamClientListener
 import io.getstream.android.core.api.subscribe.StreamSubscription
 import io.getstream.android.core.api.subscribe.StreamSubscriptionManager
 import io.getstream.android.core.api.utils.flatMap
+import io.getstream.android.core.api.utils.onTokenError
+import io.getstream.android.core.api.utils.update
+import io.getstream.android.core.internal.observers.StreamNetworkAndLifeCycleMonitor
+import io.getstream.android.core.internal.observers.StreamNetworkAndLifecycleMonitorListener
 import io.getstream.android.core.internal.socket.StreamSocketSession
 import io.getstream.android.core.internal.socket.model.ConnectUserData
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 
 internal class StreamClientImpl<T>(
     private val userId: StreamUserId,
@@ -49,11 +54,11 @@ internal class StreamClientImpl<T>(
     private val serialQueue: StreamSerialProcessingQueue,
     private val connectionIdHolder: StreamConnectionIdHolder,
     private val socketSession: StreamSocketSession<T>,
-    private var mutableNetworkState: MutableStateFlow<StreamNetworkState>,
+    private val networkAndLifeCycleMonitor: StreamNetworkAndLifeCycleMonitor,
+    private val connectionRecoveryEvaluator: StreamConnectionRecoveryEvaluator,
     private val mutableConnectionState: MutableStateFlow<StreamConnectionState>,
     private val logger: StreamLogger,
     private val subscriptionManager: StreamSubscriptionManager<StreamClientListener>,
-    private val networkMonitor: StreamNetworkMonitor,
     private val scope: CoroutineScope,
 ) : StreamClient {
     companion object {
@@ -61,16 +66,10 @@ internal class StreamClientImpl<T>(
         private val disconnectKey = randomExecutionKey<Unit>()
     }
 
-    private var handle: StreamSubscription? = null
-    private var networkMonitorHandle: StreamSubscription? = null
+    private var socketSessionHandle: StreamSubscription? = null
+    private var networkAndLifecycleMonitorHandle: StreamSubscription? = null
     override val connectionState: StateFlow<StreamConnectionState>
         get() = mutableConnectionState.asStateFlow()
-
-    override val networkState: StateFlow<StreamNetworkState>
-        get() = mutableNetworkState.asStateFlow()
-
-    override fun subscribe(listener: StreamClientListener): Result<StreamSubscription> =
-        subscriptionManager.subscribe(listener)
 
     override suspend fun connect(): Result<StreamConnectedUser> =
         singleFlight.run(connectKey) {
@@ -79,104 +78,67 @@ internal class StreamClientImpl<T>(
                 logger.w { "[connect] Already connected!" }
                 return@run currentState.connectedUser
             }
-            if (handle == null) {
-                logger.v { "[connect] Subscribing to socket events]" }
-                handle =
-                    socketSession
-                        .subscribe(
-                            object : StreamClientListener {
-                                override fun onState(state: StreamConnectionState) {
-                                    logger.v { "[client#onState]: $state" }
-                                    mutableConnectionState.update(state)
-                                    subscriptionManager.forEach { it.onState(state) }
-                                }
 
-                                override fun onEvent(event: Any) {
-                                    logger.v { "[client#onEvent]: $event" }
-                                    subscriptionManager.forEach { it.onEvent(event) }
-                                }
-                            },
-                            StreamSubscriptionManager.Options(
-                                retention =
-                                    StreamSubscriptionManager.Options.Retention.KEEP_UNTIL_CANCELLED
-                            ),
-                        )
+            val retentionOptions =
+                StreamSubscriptionManager.Options(
+                    retention = StreamSubscriptionManager.Options.Retention.KEEP_UNTIL_CANCELLED
+                )
+
+            if (socketSessionHandle == null) {
+                logger.v { "[connect] Subscribing to socket events]" }
+                val clientListener =
+                    object : StreamClientListener {
+                        override fun onState(state: StreamConnectionState) {
+                            logger.v { "[client#onState]: $state" }
+                            mutableConnectionState.update(state)
+                            subscriptionManager.forEach { it.onState(state) }
+                        }
+
+                        override fun onEvent(event: Any) {
+                            logger.v { "[client#onEvent]: $event" }
+                            subscriptionManager.forEach { it.onEvent(event) }
+                        }
+
+                        override fun onError(err: Throwable) {
+                            logger.e(err) { "[client#onError]: $err" }
+                            subscriptionManager.forEach { it.onError(err) }
+                        }
+                    }
+                socketSessionHandle =
+                    socketSession.subscribe(clientListener, retentionOptions).getOrThrow()
+            }
+
+            if (networkAndLifecycleMonitorHandle == null) {
+                logger.v { "[connect] Setup network and lifecycle monitor callback" }
+                val networkAndLifecycleMonitorListener =
+                    object : StreamNetworkAndLifecycleMonitorListener {
+                        override fun onNetworkAndLifecycleState(
+                            networkState: StreamNetworkState,
+                            lifecycleState: StreamLifecycleState,
+                        ) {
+                            scope.launch {
+                                val connectionState = mutableConnectionState.value
+                                val recovery =
+                                    connectionRecoveryEvaluator.evaluate(
+                                        connectionState,
+                                        lifecycleState,
+                                        networkState,
+                                    )
+                                recoveryEffect(recovery)
+                            }
+                        }
+                    }
+                networkAndLifecycleMonitorHandle =
+                    networkAndLifeCycleMonitor
+                        .subscribe(networkAndLifecycleMonitorListener, retentionOptions)
                         .getOrThrow()
             }
             tokenManager
                 .loadIfAbsent()
-                .flatMap { token ->
-                    socketSession.connect(
-                        ConnectUserData(
-                            userId = userId.rawValue,
-                            token = token.rawValue,
-                            name = null,
-                            image = null,
-                            invisible = false,
-                            language = null,
-                            custom = null,
-                        )
-                    )
-                }
+                .flatMap { token -> connectSocketSession(token) }
                 .fold(
                     onSuccess = { connected ->
                         logger.d { "Connected to socket: $connected" }
-                        if (networkMonitorHandle == null) {
-                            logger.v { "[connect] Starting network monitor" }
-                            networkMonitorHandle =
-                                networkMonitor
-                                    .subscribe(
-                                        object : StreamNetworkMonitorListener {
-                                            override suspend fun onNetworkConnected(
-                                                snapshot: StreamNetworkInfo.Snapshot?
-                                            ) {
-                                                logger.v {
-                                                    "[connect] Network connected: $snapshot"
-                                                }
-                                                val state = StreamNetworkState.Available(snapshot)
-                                                mutableNetworkState.update(state)
-                                                subscriptionManager.forEach {
-                                                    it.onNetworkState(state)
-                                                }
-                                            }
-
-                                            override suspend fun onNetworkLost(permanent: Boolean) {
-                                                logger.v { "[connect] Network lost" }
-                                                val state =
-                                                    if (permanent) {
-                                                        StreamNetworkState.Unavailable
-                                                    } else {
-                                                        StreamNetworkState.Disconnected
-                                                    }
-                                                mutableNetworkState.update(state)
-                                                subscriptionManager.forEach {
-                                                    it.onNetworkState(state)
-                                                }
-                                            }
-
-                                            override suspend fun onNetworkPropertiesChanged(
-                                                snapshot: StreamNetworkInfo.Snapshot
-                                            ) {
-                                                logger.v { "[connect] Network changed: $snapshot" }
-                                                mutableNetworkState.update(
-                                                    StreamNetworkState.Available(snapshot)
-                                                )
-                                                subscriptionManager.forEach {
-                                                    it.onNetworkState(
-                                                        StreamNetworkState.Available(snapshot)
-                                                    )
-                                                }
-                                            }
-                                        },
-                                        StreamSubscriptionManager.Options(
-                                            retention =
-                                                StreamSubscriptionManager.Options.Retention
-                                                    .KEEP_UNTIL_CANCELLED
-                                        ),
-                                    )
-                                    .getOrThrow()
-                        }
-                        networkMonitor.start()
                         mutableConnectionState.update(connected)
                         connectionIdHolder.setConnectionId(connected.connectionId).map {
                             connected.connectedUser
@@ -188,6 +150,9 @@ internal class StreamClientImpl<T>(
                         Result.failure(error)
                     },
                 )
+                .flatMap { connectedUser ->
+                    networkAndLifeCycleMonitor.start().map { connectedUser }
+                }
                 .getOrThrow()
         }
 
@@ -197,17 +162,79 @@ internal class StreamClientImpl<T>(
             mutableConnectionState.update(StreamConnectionState.Disconnected())
             connectionIdHolder.clear()
             socketSession.disconnect()
-            handle?.cancel()
-            networkMonitor.stop()
-            networkMonitorHandle?.cancel()
-            networkMonitorHandle = null
-            handle = null
+            socketSessionHandle?.cancel()
+            networkAndLifeCycleMonitor.stop()
+            networkAndLifecycleMonitorHandle?.cancel()
+            networkAndLifecycleMonitorHandle = null
+            socketSessionHandle = null
             tokenManager.invalidate()
             serialQueue.stop()
             singleFlight.clear(true)
         }
 
-    private fun <T> MutableStateFlow<T>.update(state: T) {
-        this.update { state }
+    override fun subscribe(
+        listener: StreamClientListener,
+        options: StreamSubscriptionManager.Options,
+    ): Result<StreamSubscription> = subscriptionManager.subscribe(listener, options)
+
+    private suspend fun connectSocketSession(
+        token: StreamToken
+    ): Result<StreamConnectionState.Connected> {
+        val data =
+            ConnectUserData(
+                userId = userId.rawValue,
+                token = token.rawValue,
+                name = null,
+                image = null,
+                invisible = false,
+                language = null,
+                custom = null,
+            )
+        return socketSession.connect(data).onTokenError { error, code ->
+            logger.e(error) { "Token error: $code" }
+            tokenManager.invalidate()
+            tokenManager.refresh().flatMap { newToken ->
+                // Retry once with new token
+                socketSession.connect(data.copy(token = newToken.rawValue))
+            }
+        }
     }
+
+    private suspend fun recoveryEffect(recovery: Result<Recovery?>) {
+        recovery.fold(
+            onSuccess = { recovery ->
+                when (recovery) {
+                    is Recovery.Connect<*> -> {
+                        logger.v { "[recovery] Connecting: $recovery" }
+                        connect().notifyFailure(subscriptionManager)
+                    }
+
+                    is Recovery.Disconnect<*> -> {
+                        logger.v { "[recovery] Disconnecting: $recovery" }
+                        socketSession.disconnect().notifyFailure(subscriptionManager)
+                    }
+
+                    is Recovery.Error -> {
+                        logger.e(recovery.error) { "[recovery] Error: ${recovery.error.message}" }
+                        subscriptionManager.forEach { it.onError(recovery.error) }
+                    }
+
+                    null -> {
+                        logger.v { "[recovery] No action" }
+                    }
+                }
+                if (recovery != null) {
+                    subscriptionManager.forEach { it.onRecovery(recovery) }
+                }
+            },
+            onFailure = { error ->
+                logger.e(error) { "[recovery] Error: ${error.message}" }
+                subscriptionManager.forEach { it.onError(error) }
+            },
+        )
+    }
+
+    private fun <V> Result<V>.notifyFailure(
+        subscriptionManager: StreamSubscriptionManager<StreamClientListener>
+    ) = onFailure { error -> subscriptionManager.forEach { it.onError(error) } }
 }

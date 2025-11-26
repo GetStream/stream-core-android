@@ -28,11 +28,13 @@ import io.getstream.android.core.api.model.value.StreamApiKey
 import io.getstream.android.core.api.model.value.StreamHttpClientInfoHeader
 import io.getstream.android.core.api.model.value.StreamUserId
 import io.getstream.android.core.api.model.value.StreamWsUrl
+import io.getstream.android.core.api.observers.lifecycle.StreamLifecycleMonitor
 import io.getstream.android.core.api.observers.network.StreamNetworkMonitor
 import io.getstream.android.core.api.processing.StreamBatcher
 import io.getstream.android.core.api.processing.StreamRetryProcessor
 import io.getstream.android.core.api.processing.StreamSerialProcessingQueue
 import io.getstream.android.core.api.processing.StreamSingleFlightProcessor
+import io.getstream.android.core.api.recovery.StreamConnectionRecoveryEvaluator
 import io.getstream.android.core.api.serialization.StreamEventSerialization
 import io.getstream.android.core.api.socket.StreamConnectionIdHolder
 import io.getstream.android.core.api.socket.StreamWebSocketFactory
@@ -109,6 +111,15 @@ fun createStreamClient(
                     logger = logProvider.taggedLogger("SCNetworkMonitorSubscriptions")
                 ),
         )
+    val lifecycleMonitor =
+        StreamLifecycleMonitor(
+            logger = logProvider.taggedLogger("SCLifecycleMonitor"),
+            subscriptionManager =
+                StreamSubscriptionManager(
+                    logger = logProvider.taggedLogger("SCLifecycleMonitorSubscriptions")
+                ),
+            lifecycle = androidComponentsProvider.lifecycle(),
+        )
 
     return StreamClient(
         scope = scope,
@@ -135,6 +146,12 @@ fun createStreamClient(
 
                     override fun deserialize(raw: String): Result<Unit> = Result.success(Unit)
                 }
+            ),
+        lifecycleMonitor = lifecycleMonitor,
+        connectionRecoveryEvaluator =
+            StreamConnectionRecoveryEvaluator(
+                logger = logProvider.taggedLogger("SCConnectionRecoveryEvaluator"),
+                singleFlightProcessor = singleFlight,
             ),
         batcher = batcher,
     )

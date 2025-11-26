@@ -31,10 +31,13 @@ import io.getstream.android.core.api.model.value.StreamApiKey
 import io.getstream.android.core.api.model.value.StreamHttpClientInfoHeader
 import io.getstream.android.core.api.model.value.StreamUserId
 import io.getstream.android.core.api.model.value.StreamWsUrl
+import io.getstream.android.core.api.observers.lifecycle.StreamLifecycleMonitor
+import io.getstream.android.core.api.observers.network.StreamNetworkMonitor
 import io.getstream.android.core.api.processing.StreamBatcher
 import io.getstream.android.core.api.processing.StreamRetryProcessor
 import io.getstream.android.core.api.processing.StreamSerialProcessingQueue
 import io.getstream.android.core.api.processing.StreamSingleFlightProcessor
+import io.getstream.android.core.api.recovery.StreamConnectionRecoveryEvaluator
 import io.getstream.android.core.api.serialization.StreamEventSerialization
 import io.getstream.android.core.api.socket.StreamConnectionIdHolder
 import io.getstream.android.core.api.socket.StreamWebSocketFactory
@@ -98,6 +101,9 @@ internal class StreamClientFactoryTest {
         val socketFactory: StreamWebSocketFactory,
         val healthMonitor: StreamHealthMonitor,
         val batcher: StreamBatcher<String>,
+        val lifecycleMonitor: StreamLifecycleMonitor,
+        val networkMonitor: StreamNetworkMonitor,
+        val connectionRecoveryEvaluator: StreamConnectionRecoveryEvaluator,
     )
 
     private fun createClient(
@@ -128,6 +134,9 @@ internal class StreamClientFactoryTest {
                 socketFactory = mockk(relaxed = true),
                 healthMonitor = mockk(relaxed = true),
                 batcher = mockk(relaxed = true),
+                lifecycleMonitor = mockk(relaxed = true),
+                networkMonitor = mockk(relaxed = true),
+                connectionRecoveryEvaluator = mockk(relaxed = true),
             )
 
         val client =
@@ -151,7 +160,9 @@ internal class StreamClientFactoryTest {
                 httpConfig = httpConfig,
                 serializationConfig = serializationConfig,
                 logProvider = logProvider,
-                networkMonitor = mockk(relaxed = true),
+                networkMonitor = deps.networkMonitor,
+                lifecycleMonitor = deps.lifecycleMonitor,
+                connectionRecoveryEvaluator = deps.connectionRecoveryEvaluator,
             )
 
         return client to deps

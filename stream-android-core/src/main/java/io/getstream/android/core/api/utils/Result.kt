@@ -17,6 +17,7 @@
 package io.getstream.android.core.api.utils
 
 import io.getstream.android.core.annotations.StreamInternalApi
+import io.getstream.android.core.api.model.exceptions.StreamEndpointException
 import kotlin.coroutines.cancellation.CancellationException
 
 /**
@@ -36,3 +37,26 @@ import kotlin.coroutines.cancellation.CancellationException
 @StreamInternalApi
 public inline fun <T, R> Result<T>.flatMap(transform: (T) -> Result<R>): Result<R> =
     fold(onSuccess = { transform(it) }, onFailure = { Result.failure(it) })
+
+/**
+ * Invokes the given [function] if this [Result] is a failure and the error is a token error.
+ *
+ * @param function A function to invoke if this [Result] is a failure and the error is a token
+ *   error.
+ * @return This [Result] if it is a success, or the result of [function] if it is a failure and the
+ *   error is a token error.
+ */
+@StreamInternalApi
+public suspend fun <T> Result<T>.onTokenError(
+    function: suspend (exception: StreamEndpointException, code: Int) -> Result<T>
+): Result<T> =
+    fold(
+        onSuccess = { this },
+        onFailure = { throwable ->
+            if (throwable is StreamEndpointException && throwable.apiError?.code?.div(10) == 4) {
+                function(throwable, throwable.apiError.code)
+            } else {
+                this
+            }
+        },
+    )

@@ -22,6 +22,15 @@ ext.sonar.ignoreModules.each {
     ext.sonar.excludeFilter << "**/${it}/**"
 }
 
+
+def coverageReports = rootProject.subprojects
+    .findAll { !rootProject.ext.sonar.ignoreModules.contains(it.name) }
+    .collect { "${it.buildDir}/reports/kover/report.xml" }
+
+if (coverageReports.isEmpty()) {
+    coverageReports << "${rootProject.buildDir}/reports/kover/report.xml"
+}
+
 sonarqube {
     properties {
         property("sonar.host.url", "https://sonarcloud.io")
@@ -32,6 +41,13 @@ sonarqube {
         property "sonar.java.coveragePlugin", "jacoco"
         property "sonar.sourceEncoding", "UTF-8"
         property "sonar.java.binaries", "${rootDir}/**/build/tmp/java-classes/debug"
+        property "sonar.coverage.jacoco.xmlReportPaths", coverageReports.join(",")
         property "sonar.coverage.exclusions", rootProject.ext.sonar.excludeFilter
     }
+}
+
+tasks.named("sonar").configure {
+    rootProject.subprojects
+        .findAll { !rootProject.ext.sonar.ignoreModules.contains(it.name) }
+        .each { dependsOn("${it.path}:koverXmlReport") }
 }

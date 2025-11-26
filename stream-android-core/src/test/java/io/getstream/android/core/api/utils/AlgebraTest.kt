@@ -118,4 +118,80 @@ class AlgebraTest {
         val exception = combined.exceptionOrNull() as StreamAggregateException
         assertEquals(listOf(failure, failure2), exception.causes)
     }
+
+    @Test
+    fun `result pair times result value propagates left failure`() {
+        val failure = IllegalStateException("pair failed")
+        val left = Result.failure<Pair<Int, String>>(failure)
+        val right = Result.success(3.0)
+
+        val combined = left * right
+
+        assertTrue(combined.isFailure)
+        assertSame(failure, combined.exceptionOrNull())
+    }
+
+    @Test
+    fun `result pair times result value propagates right failure`() {
+        val left = Result.success(1 to "two")
+        val failure = IllegalArgumentException("value failed")
+        val right = Result.failure<Double>(failure)
+
+        val combined = left * right
+
+        assertTrue(combined.isFailure)
+        assertSame(failure, combined.exceptionOrNull())
+    }
+
+    @Test
+    fun `result pair times result value aggregates failures`() {
+        val leftFailure = IllegalStateException("pair boom")
+        val rightFailure = IllegalArgumentException("value boom")
+        val left = Result.failure<Pair<Int, String>>(leftFailure)
+        val right = Result.failure<Double>(rightFailure)
+
+        val combined = left * right
+
+        assertTrue(combined.isFailure)
+        val aggregate = combined.exceptionOrNull() as StreamAggregateException
+        assertEquals(listOf(leftFailure, rightFailure), aggregate.causes)
+    }
+
+    @Test
+    fun `result value times result pair propagates left failure`() {
+        val failure = IllegalStateException("value failed")
+        val left = Result.failure<Boolean>(failure)
+        val right = Result.success(1 to "two")
+
+        val combined = left * right
+
+        assertTrue(combined.isFailure)
+        assertSame(failure, combined.exceptionOrNull())
+    }
+
+    @Test
+    fun `result value times result pair propagates right failure`() {
+        val left = Result.success(true)
+        val failure = IllegalArgumentException("pair failed")
+        val right = Result.failure<Pair<Int, String>>(failure)
+
+        val combined = left * right
+
+        assertTrue(combined.isFailure)
+        assertSame(failure, combined.exceptionOrNull())
+    }
+
+    @Test
+    fun `result value times result pair aggregates failures`() {
+        val leftFailure = IllegalStateException("value boom")
+        val rightFailure = IllegalArgumentException("pair boom")
+        val left = Result.failure<Boolean>(leftFailure)
+        val right = Result.failure<Pair<Int, String>>(rightFailure)
+
+        val combined = left * right
+
+        assertTrue(combined.isFailure)
+        val aggregate = combined.exceptionOrNull() as StreamAggregateException
+        assertEquals(listOf(leftFailure, rightFailure), aggregate.causes)
+    }
 }

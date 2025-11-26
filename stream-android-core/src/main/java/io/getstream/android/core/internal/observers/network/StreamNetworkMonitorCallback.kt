@@ -127,7 +127,7 @@ internal class StreamNetworkMonitorCallback(
         val newState = ActiveNetworkState(network, resolvedCapabilities, resolvedLink, snapshot)
         val previousState = activeState.getAndSet(newState)
 
-        val networkChanged = previousState?.network != network
+        val networkChanged = previousState?.network != network || previousState == null
         val snapshotChanged = previousState?.snapshot != snapshot
 
         when {

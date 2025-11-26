@@ -22,19 +22,24 @@ import io.getstream.android.core.api.authentication.StreamTokenManager
 import io.getstream.android.core.api.log.StreamLogger
 import io.getstream.android.core.api.model.connection.StreamConnectedUser
 import io.getstream.android.core.api.model.connection.StreamConnectionState
+import io.getstream.android.core.api.model.connection.lifecycle.StreamLifecycleState
 import io.getstream.android.core.api.model.connection.network.StreamNetworkInfo
 import io.getstream.android.core.api.model.connection.network.StreamNetworkState
+import io.getstream.android.core.api.model.connection.recovery.Recovery
 import io.getstream.android.core.api.model.event.StreamClientWsEvent
+import io.getstream.android.core.api.model.exceptions.StreamEndpointErrorData
+import io.getstream.android.core.api.model.exceptions.StreamEndpointException
 import io.getstream.android.core.api.model.value.StreamToken
 import io.getstream.android.core.api.model.value.StreamUserId
-import io.getstream.android.core.api.observers.network.StreamNetworkMonitor
-import io.getstream.android.core.api.observers.network.StreamNetworkMonitorListener
 import io.getstream.android.core.api.processing.StreamSerialProcessingQueue
 import io.getstream.android.core.api.processing.StreamSingleFlightProcessor
+import io.getstream.android.core.api.recovery.StreamConnectionRecoveryEvaluator
 import io.getstream.android.core.api.socket.StreamConnectionIdHolder
 import io.getstream.android.core.api.socket.listeners.StreamClientListener
 import io.getstream.android.core.api.subscribe.StreamSubscription
 import io.getstream.android.core.api.subscribe.StreamSubscriptionManager
+import io.getstream.android.core.internal.observers.StreamNetworkAndLifeCycleMonitor
+import io.getstream.android.core.internal.observers.StreamNetworkAndLifecycleMonitorListener
 import io.getstream.android.core.internal.socket.StreamSocketSession
 import io.mockk.*
 import kotlin.time.ExperimentalTime
@@ -75,6 +80,8 @@ class StreamClientIImplTest {
         socketSession = mockk(relaxed = true)
         logger = mockk(relaxed = true)
         subscriptionManager = mockk(relaxed = true)
+        every { socketSession.subscribe(any(), any()) } returns
+            Result.success(mockk(relaxed = true))
 
         // SingleFlight: execute the lambda and wrap into Result
         singleFlight = mockk(relaxed = true)
@@ -82,7 +89,11 @@ class StreamClientIImplTest {
         coEvery { singleFlight.run(any(), any<suspend () -> Any>()) } coAnswers
             {
                 val block = secondArg<suspend () -> Any>()
-                Result.success(block())
+                try {
+                    Result.success(block())
+                } catch (t: Throwable) {
+                    Result.failure(t)
+                }
             }
 
         // Mutable client state: expose real StateFlows that update() mutates
@@ -90,11 +101,13 @@ class StreamClientIImplTest {
         networkFlow = MutableStateFlow(StreamNetworkState.Unknown)
 
         every { connectionIdHolder.clear() } returns Result.success(Unit)
+        every { subscriptionManager.forEach(any()) } returns Result.success(Unit)
     }
 
     private fun createClient(
         scope: CoroutineScope,
-        networkMonitor: StreamNetworkMonitor = mockNetworkMonitor(),
+        networkAndLifeCycleMonitor: StreamNetworkAndLifeCycleMonitor = mockNetworkMonitor(),
+        connectionRecoveryEvaluator: StreamConnectionRecoveryEvaluator = mockk(relaxed = true),
     ) =
         StreamClientImpl(
             userId = userId,
@@ -104,26 +117,50 @@ class StreamClientIImplTest {
             connectionIdHolder = connectionIdHolder,
             socketSession = socketSession,
             logger = logger,
-            mutableNetworkState = networkFlow,
             mutableConnectionState = connFlow,
             scope = scope,
             subscriptionManager = subscriptionManager,
-            networkMonitor = networkMonitor,
+            networkAndLifeCycleMonitor = networkAndLifeCycleMonitor,
+            connectionRecoveryEvaluator = connectionRecoveryEvaluator,
         )
 
-    private fun mockNetworkMonitor(): StreamNetworkMonitor =
+    private fun mockNetworkMonitor(): StreamNetworkAndLifeCycleMonitor =
         mockk(relaxed = true) {
             every { start() } returns Result.success(Unit)
             every { stop() } returns Result.success(Unit)
-            every { subscribe(any(), any()) } returns Result.success(mockk(relaxed = true))
+            every { subscribe(any(), any()) } returns
+                Result.success(mockk<StreamSubscription>(relaxed = true))
         }
+
+    private fun capturingNetworkMonitor(
+        onListener: (StreamNetworkAndLifecycleMonitorListener) -> Unit
+    ): StreamNetworkAndLifeCycleMonitor =
+        mockk(relaxed = true) {
+            every { start() } returns Result.success(Unit)
+            every { stop() } returns Result.success(Unit)
+            every { subscribe(any(), any()) } answers
+                {
+                    onListener(firstArg())
+                    Result.success(mockk<StreamSubscription>(relaxed = true))
+                }
+        }
+
+    private fun stubSubscriptionManager(configure: (StreamClientListener) -> Unit = {}) {
+        every { subscriptionManager.forEach(any()) } answers
+            {
+                val block = firstArg<(StreamClientListener) -> Unit>()
+                val external = mockk<StreamClientListener>(relaxed = true)
+                configure(external)
+                block(external)
+                Result.success(Unit)
+            }
+    }
 
     @Test
     fun `connect short-circuits when already connected`() = runTest {
-        backgroundScope
         val connectedUser = mockk<StreamConnectedUser>(relaxed = true)
         connFlow.value = StreamConnectionState.Connected(connectedUser, "cid-123")
-        val client = createClient(backgroundScope)
+        val client = createClient(this)
 
         val res = client.connect()
 
@@ -131,7 +168,6 @@ class StreamClientIImplTest {
         assertSame(connectedUser, res.getOrThrow())
 
         // No socket session subscribe/connect or token fetch when already connected
-        verify(exactly = 0) { socketSession.subscribe(any(), any()) }
         coVerify(exactly = 0) { socketSession.connect(any()) }
         coVerify(exactly = 0) { tokenManager.loadIfAbsent() }
     }
@@ -140,7 +176,7 @@ class StreamClientIImplTest {
     fun `disconnect performs cleanup - updates state, clears ids, cancels handle, stops processors`() =
         runTest {
             val networkMonitor = mockNetworkMonitor()
-            val client = createClient(backgroundScope, networkMonitor)
+            val client = createClient(this, networkMonitor)
             // Make singleFlight actually run the provided block and return success
             coEvery { singleFlight.run(any(), any<suspend () -> Any>()) } coAnswers
                 {
@@ -153,12 +189,14 @@ class StreamClientIImplTest {
             // Pretend we already have a live subscription handle inside the client
             val fakeHandle = mockk<StreamSubscription>(relaxed = true)
             val handleField =
-                client.javaClass.getDeclaredField("handle").apply { isAccessible = true }
+                client.javaClass.getDeclaredField("socketSessionHandle").apply {
+                    isAccessible = true
+                }
             handleField.set(client, fakeHandle)
 
             val networkHandle = mockk<StreamSubscription>(relaxed = true)
             val networkHandleField =
-                client.javaClass.getDeclaredField("networkMonitorHandle").apply {
+                client.javaClass.getDeclaredField("networkAndLifecycleMonitorHandle").apply {
                     isAccessible = true
                 }
             networkHandleField.set(client, networkHandle)
@@ -190,81 +228,11 @@ class StreamClientIImplTest {
         }
 
     @Test
-    fun `network monitor updates state and notifies subscribers`() = runTest {
-        val forwardedStates = mutableListOf<StreamNetworkState>()
-        every { subscriptionManager.forEach(any()) } answers
-            {
-                val block = firstArg<(StreamClientListener) -> Unit>()
-                val external = mockk<StreamClientListener>(relaxed = true)
-                every { external.onNetworkState(any()) } answers
-                    {
-                        forwardedStates += firstArg<StreamNetworkState>()
-                    }
-                block(external)
-                Result.success(Unit)
-            }
-
-        val networkHandle = mockk<StreamSubscription>(relaxed = true)
-        var capturedListener: StreamNetworkMonitorListener? = null
-        val networkMonitor = mockk<StreamNetworkMonitor>()
-        every { networkMonitor.start() } returns Result.success(Unit)
-        every { networkMonitor.stop() } returns Result.success(Unit)
-        every { networkMonitor.subscribe(any(), any()) } answers
-            {
-                capturedListener = firstArg()
-                Result.success(networkHandle)
-            }
-
-        val client = createClient(backgroundScope, networkMonitor)
-
-        val socketHandle = mockk<StreamSubscription>(relaxed = true)
-        every { socketSession.subscribe(any<StreamClientListener>(), any()) } returns
-            Result.success(socketHandle)
-        val token = StreamToken.fromString("tok")
-        coEvery { tokenManager.loadIfAbsent() } returns Result.success(token)
-        val connectedUser = mockk<StreamConnectedUser>(relaxed = true)
-        val connectedState = StreamConnectionState.Connected(connectedUser, "conn-1")
-        coEvery { socketSession.connect(any()) } returns Result.success(connectedState)
-        every { connectionIdHolder.setConnectionId("conn-1") } returns Result.success("conn-1")
-
-        val result = client.connect()
-
-        assertTrue(result.isSuccess)
-        verify(exactly = 1) { networkMonitor.subscribe(any(), any()) }
-        verify(exactly = 1) { networkMonitor.start() }
-        val listener = capturedListener ?: error("Expected network monitor listener")
-
-        val connectedSnapshot = StreamNetworkInfo.Snapshot(transports = emptySet())
-        listener.onNetworkConnected(connectedSnapshot)
-        assertEquals(StreamNetworkState.Available(connectedSnapshot), networkFlow.value)
-
-        listener.onNetworkLost(permanent = false)
-        assertEquals(StreamNetworkState.Disconnected, networkFlow.value)
-
-        listener.onNetworkLost(permanent = true)
-        assertEquals(StreamNetworkState.Unavailable, networkFlow.value)
-
-        val updatedSnapshot =
-            connectedSnapshot.copy(priority = StreamNetworkInfo.PriorityHint.LATENCY)
-        listener.onNetworkPropertiesChanged(updatedSnapshot)
-        assertEquals(StreamNetworkState.Available(updatedSnapshot), networkFlow.value)
-
-        val expectedStates =
-            listOf(
-                StreamNetworkState.Available(connectedSnapshot),
-                StreamNetworkState.Disconnected,
-                StreamNetworkState.Unavailable,
-                StreamNetworkState.Available(updatedSnapshot),
-            )
-        assertTrue(forwardedStates.containsAll(expectedStates))
-    }
-
-    @Test
     fun `subscribe delegates to subscriptionManager`() = runTest {
         val listener = mockk<StreamClientListener>(relaxed = true)
         val sub = mockk<StreamSubscription>(relaxed = true)
         every { subscriptionManager.subscribe(listener) } returns Result.success(sub)
-        val client = createClient(backgroundScope)
+        val client = createClient(this)
 
         val res = client.subscribe(listener)
 
@@ -276,7 +244,7 @@ class StreamClientIImplTest {
     @Test
     fun `connect success - subscribes once, calls session connect, updates state and connectionId, returns user`() =
         runTest {
-            val client = createClient(backgroundScope)
+            val client = createClient(this)
             // single-flight executes block and returns its result
             coEvery { singleFlight.run(any(), any<suspend () -> StreamConnectedUser>()) } coAnswers
                 {
@@ -298,7 +266,7 @@ class StreamClientIImplTest {
             val connectedState = StreamConnectionState.Connected(connectedUser, "conn-1")
             coEvery { socketSession.connect(any()) } returns Result.success(connectedState)
 
-            every { connectionIdHolder.setConnectionId("conn-1") } returns Result.success("Unit")
+            every { connectionIdHolder.setConnectionId("conn-1") } returns Result.success("conn-1")
 
             val result = client.connect()
 
@@ -319,7 +287,7 @@ class StreamClientIImplTest {
     @Test
     fun `connect early-exit when already connected - returns existing user and does not hit session or token`() =
         runTest {
-            val client = createClient(backgroundScope)
+            val client = createClient(this)
             // Make single-flight run the block
             coEvery { singleFlight.run(any(), any<suspend () -> StreamConnectedUser>()) } coAnswers
                 {
@@ -337,7 +305,6 @@ class StreamClientIImplTest {
             assertSame(existingUser, result.getOrNull())
 
             // No new subscribe, no token load, no session connect, no connectionId set
-            verify(exactly = 0) { socketSession.subscribe(any<StreamClientListener>(), any()) }
             coVerify(exactly = 0) { tokenManager.loadIfAbsent() }
             coVerify(exactly = 0) { socketSession.connect(any()) }
             verify(exactly = 0) { connectionIdHolder.setConnectionId(any()) }
@@ -346,7 +313,7 @@ class StreamClientIImplTest {
     @Test
     fun `connect fails when token manager fails - emits Disconnected state and returns failure`() =
         runTest {
-            val client = createClient(backgroundScope)
+            val client = createClient(this)
             // single-flight executes block
             coEvery { singleFlight.run(any(), any<suspend () -> StreamConnectedUser>()) } coAnswers
                 {
@@ -382,7 +349,7 @@ class StreamClientIImplTest {
     @Test
     fun `connect fails when socket session connect fails - emits Disconnected state and returns failure`() =
         runTest {
-            val client = createClient(backgroundScope)
+            val client = createClient(this)
             // single-flight executes block
             coEvery { singleFlight.run(any(), any<suspend () -> StreamConnectedUser>()) } coAnswers
                 {
@@ -421,8 +388,189 @@ class StreamClientIImplTest {
         }
 
     @Test
+    fun `recovery connect triggers another connect attempt`() = runTest {
+        var networkListener: StreamNetworkAndLifecycleMonitorListener? = null
+        val networkMonitor = capturingNetworkMonitor { networkListener = it }
+        val recoveryEvaluator = mockk<StreamConnectionRecoveryEvaluator>()
+        val expectedRecovery = Recovery.Connect(StreamNetworkInfo.Snapshot())
+        coEvery { recoveryEvaluator.evaluate(any(), any(), any()) } returns
+            Result.success(expectedRecovery)
+        val recoveries = mutableListOf<Recovery>()
+        stubSubscriptionManager { external ->
+            every { external.onRecovery(any()) } answers { recoveries += firstArg<Recovery>() }
+        }
+
+        val error = RuntimeException("no token")
+        coEvery { tokenManager.loadIfAbsent() } returnsMany
+            listOf(Result.failure(error), Result.failure(error))
+        every { socketSession.subscribe(any<StreamClientListener>(), any()) } returns
+            Result.success(mockk(relaxed = true))
+
+        val client = createClient(this, networkMonitor, recoveryEvaluator)
+
+        client.connect().onFailure {}
+        advanceUntilIdle()
+
+        val listener = networkListener ?: error("Network listener not registered")
+        val networkState = StreamNetworkState.Available(StreamNetworkInfo.Snapshot())
+        listener.onNetworkAndLifecycleState(networkState, StreamLifecycleState.Foreground)
+        advanceUntilIdle()
+
+        coVerify(exactly = 2) { tokenManager.loadIfAbsent() }
+        coVerify(exactly = 1) { recoveryEvaluator.evaluate(any(), any(), any()) }
+        assertTrue(recoveries.contains(expectedRecovery))
+    }
+
+    @Test
+    fun `recovery disconnect closes the socket session`() = runTest {
+        var networkListener: StreamNetworkAndLifecycleMonitorListener? = null
+        val networkMonitor = capturingNetworkMonitor { networkListener = it }
+        val recoveryEvaluator = mockk<StreamConnectionRecoveryEvaluator>()
+        val expectedRecovery = Recovery.Disconnect(StreamNetworkState.Disconnected)
+        coEvery { recoveryEvaluator.evaluate(any(), any(), any()) } returns
+            Result.success(expectedRecovery)
+        val recoveries = mutableListOf<Recovery>()
+        stubSubscriptionManager { external ->
+            every { external.onRecovery(any()) } answers { recoveries += firstArg<Recovery>() }
+        }
+
+        val error = RuntimeException("no token")
+        coEvery { tokenManager.loadIfAbsent() } returns Result.failure(error)
+        every { socketSession.disconnect() } returns Result.success(Unit)
+        every { socketSession.subscribe(any<StreamClientListener>(), any()) } returns
+            Result.success(mockk(relaxed = true))
+
+        val client = createClient(this, networkMonitor, recoveryEvaluator)
+
+        client.connect().onFailure {}
+        advanceUntilIdle()
+
+        val listener = networkListener ?: error("Network listener not registered")
+        listener.onNetworkAndLifecycleState(
+            StreamNetworkState.Disconnected,
+            StreamLifecycleState.Background,
+        )
+        advanceUntilIdle()
+
+        coVerify(exactly = 1) { recoveryEvaluator.evaluate(any(), any(), any()) }
+        verify(exactly = 1) { socketSession.disconnect() }
+        assertTrue(recoveries.contains(expectedRecovery))
+    }
+
+    @Test
+    fun `recovery error notifies subscribers`() = runTest {
+        var networkListener: StreamNetworkAndLifecycleMonitorListener? = null
+        val networkMonitor = capturingNetworkMonitor { networkListener = it }
+        val recoveryEvaluator = mockk<StreamConnectionRecoveryEvaluator>()
+        val boom = RuntimeException("recovery error")
+        val expectedRecovery = Recovery.Error(boom)
+        coEvery { recoveryEvaluator.evaluate(any(), any(), any()) } returns
+            Result.success(expectedRecovery)
+
+        val reported = mutableListOf<Throwable>()
+        val recoveries = mutableListOf<Recovery>()
+        stubSubscriptionManager { external ->
+            every { external.onError(any()) } answers { reported += firstArg<Throwable>() }
+            every { external.onRecovery(any()) } answers { recoveries += firstArg<Recovery>() }
+        }
+
+        val tokenError = RuntimeException("token")
+        coEvery { tokenManager.loadIfAbsent() } returns Result.failure(tokenError)
+        every { socketSession.subscribe(any<StreamClientListener>(), any()) } returns
+            Result.success(mockk(relaxed = true))
+
+        val client = createClient(this, networkMonitor, recoveryEvaluator)
+
+        client.connect().onFailure {}
+        advanceUntilIdle()
+
+        val listener = networkListener ?: error("Network listener not registered")
+        listener.onNetworkAndLifecycleState(
+            StreamNetworkState.Disconnected,
+            StreamLifecycleState.Background,
+        )
+        advanceUntilIdle()
+
+        assertTrue(reported.contains(boom))
+        assertTrue(recoveries.contains(expectedRecovery))
+        every { subscriptionManager.forEach(any()) } returns Result.success(Unit)
+    }
+
+    @Test
+    fun `recovery null results in no action`() = runTest {
+        var networkListener: StreamNetworkAndLifecycleMonitorListener? = null
+        val networkMonitor = capturingNetworkMonitor { networkListener = it }
+        val recoveryEvaluator = mockk<StreamConnectionRecoveryEvaluator>()
+        coEvery { recoveryEvaluator.evaluate(any(), any(), any()) } returns Result.success(null)
+        val recoveries = mutableListOf<Recovery>()
+        stubSubscriptionManager { external ->
+            every { external.onRecovery(any()) } answers { recoveries += firstArg<Recovery>() }
+        }
+
+        val tokenError = RuntimeException("token")
+        coEvery { tokenManager.loadIfAbsent() } returns Result.failure(tokenError)
+        every { socketSession.subscribe(any<StreamClientListener>(), any()) } returns
+            Result.success(mockk(relaxed = true))
+
+        val client = createClient(this, networkMonitor, recoveryEvaluator)
+
+        client.connect().onFailure {}
+        advanceUntilIdle()
+
+        val listener = networkListener ?: error("Network listener not registered")
+        listener.onNetworkAndLifecycleState(
+            StreamNetworkState.Disconnected,
+            StreamLifecycleState.Background,
+        )
+        advanceUntilIdle()
+
+        coVerify(exactly = 1) { tokenManager.loadIfAbsent() }
+        verify(exactly = 0) { socketSession.disconnect() }
+        assertTrue(recoveries.isEmpty())
+    }
+
+    @Test
+    fun `recovery failure notifies subscribers`() = runTest {
+        var networkListener: StreamNetworkAndLifecycleMonitorListener? = null
+        val networkMonitor = capturingNetworkMonitor { networkListener = it }
+        val recoveryEvaluator = mockk<StreamConnectionRecoveryEvaluator>()
+        val boom = IllegalStateException("recovery failure")
+        coEvery { recoveryEvaluator.evaluate(any(), any(), any()) } returns Result.failure(boom)
+
+        val reported = mutableListOf<Throwable>()
+        every { subscriptionManager.forEach(any()) } answers
+            {
+                val block = firstArg<(StreamClientListener) -> Unit>()
+                val external = mockk<StreamClientListener>(relaxed = true)
+                every { external.onError(any()) } answers { reported += firstArg<Throwable>() }
+                block(external)
+                Result.success(Unit)
+            }
+
+        val tokenError = RuntimeException("token")
+        coEvery { tokenManager.loadIfAbsent() } returns Result.failure(tokenError)
+        every { socketSession.subscribe(any<StreamClientListener>(), any()) } returns
+            Result.success(mockk(relaxed = true))
+
+        val client = createClient(this, networkMonitor, recoveryEvaluator)
+
+        client.connect().onFailure {}
+        advanceUntilIdle()
+
+        val listener = networkListener ?: error("Network listener not registered")
+        listener.onNetworkAndLifecycleState(
+            StreamNetworkState.Disconnected,
+            StreamLifecycleState.Background,
+        )
+        advanceUntilIdle()
+
+        assertTrue(reported.contains(boom))
+        every { subscriptionManager.forEach(any()) } returns Result.success(Unit)
+    }
+
+    @Test
     fun `subscription onState updates client state and forwards to subscribers`() = runTest {
-        val client = createClient(backgroundScope)
+        val client = createClient(this)
         // Make single-flight execute the block
         coEvery { singleFlight.run(any(), any<suspend () -> StreamConnectedUser>()) } coAnswers
             {
@@ -477,7 +625,7 @@ class StreamClientIImplTest {
 
     @Test
     fun `subscription onEvent forwards to subscribers`() = runTest {
-        val client = createClient(backgroundScope)
+        val client = createClient(this)
         // Make single-flight execute the block
         coEvery { singleFlight.run(any(), any<suspend () -> StreamConnectedUser>()) } coAnswers
             {
@@ -526,5 +674,75 @@ class StreamClientIImplTest {
         // Assert it was forwarded to subscribers
         assertTrue(forwardedEvents.contains(event))
         verify(atLeast = 1) { subscriptionManager.forEach(any()) }
+    }
+
+    @Test
+    fun `subscription onError forwards to subscribers`() = runTest {
+        val client = createClient(this)
+        coEvery { singleFlight.run(any(), any<suspend () -> StreamConnectedUser>()) } coAnswers
+            {
+                val block = secondArg<suspend () -> StreamConnectedUser>()
+                try {
+                    Result.success(block.invoke())
+                } catch (t: Throwable) {
+                    Result.failure(t)
+                }
+            }
+
+        var capturedListener: StreamClientListener? = null
+        every { socketSession.subscribe(any<StreamClientListener>(), any()) } answers
+            {
+                capturedListener = firstArg()
+                Result.success(mockk(relaxed = true))
+            }
+
+        val reported = mutableListOf<Throwable>()
+        every { subscriptionManager.forEach(any()) } answers
+            {
+                val block = firstArg<(StreamClientListener) -> Unit>()
+                val external = mockk<StreamClientListener>(relaxed = true)
+                every { external.onError(any()) } answers { reported += firstArg<Throwable>() }
+                block(external)
+                Result.success(Unit)
+            }
+
+        coEvery { tokenManager.loadIfAbsent() } returns Result.failure(RuntimeException("stop"))
+
+        client.connect().onFailure {}
+        advanceUntilIdle()
+
+        val error = RuntimeException("socket failure")
+        capturedListener!!.onError(error)
+
+        assertTrue(reported.contains(error))
+        every { subscriptionManager.forEach(any()) } returns Result.success(Unit)
+    }
+
+    @Test
+    fun `connect retries when token error occurs`() = runTest {
+        val client = createClient(this)
+
+        val token = StreamToken.fromString("tok-1")
+        val refreshedToken = StreamToken.fromString("tok-2")
+        coEvery { tokenManager.loadIfAbsent() } returns Result.success(token)
+        justRun { tokenManager.invalidate() }
+        coEvery { tokenManager.refresh() } returns Result.success(refreshedToken)
+
+        val endpointError = StreamEndpointException(apiError = StreamEndpointErrorData(code = 40))
+        val connectedUser = mockk<StreamConnectedUser>(relaxed = true)
+        val connectedState = StreamConnectionState.Connected(connectedUser, "conn-42")
+        coEvery { socketSession.connect(match { it.token == token.rawValue }) } returns
+            Result.failure(endpointError)
+        coEvery { socketSession.connect(match { it.token == refreshedToken.rawValue }) } returns
+            Result.success(connectedState)
+        every { socketSession.subscribe(any<StreamClientListener>(), any()) } returns
+            Result.success(mockk(relaxed = true))
+        every { connectionIdHolder.setConnectionId("conn-42") } returns Result.success("conn-42")
+
+        client.connect().onFailure {}
+
+        verify { tokenManager.invalidate() }
+        coVerify { tokenManager.refresh() }
+        coVerify(exactly = 2) { socketSession.connect(any()) }
     }
 }

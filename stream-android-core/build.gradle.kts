@@ -65,6 +65,8 @@ dependencies {
 
     // Android
     implementation(libs.androidx.annotation.jvm)
+    implementation(libs.androidx.lifecycle.runtime)
+    implementation(libs.androidx.lifecycle.process)
 
     // Network
     implementation(libs.moshi)

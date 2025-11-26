@@ -21,7 +21,8 @@ import android.net.wifi.WifiManager
 import android.telephony.TelephonyManager
 import io.getstream.android.core.annotations.StreamInternalApi
 import io.getstream.android.core.api.log.StreamLogger
-import io.getstream.android.core.api.subscribe.StreamSubscription
+import io.getstream.android.core.api.observers.StreamStartableComponent
+import io.getstream.android.core.api.subscribe.StreamObservable
 import io.getstream.android.core.api.subscribe.StreamSubscriptionManager
 import io.getstream.android.core.internal.observers.network.StreamNetworkMonitorImpl
 import io.getstream.android.core.internal.observers.network.StreamNetworkSignalProcessing
@@ -31,23 +32,22 @@ import kotlinx.coroutines.CoroutineScope
 /**
  * Observes changes to the device's active network and provides snapshots of its capabilities.
  *
- * Implementations are expected to be life-cycle aware and safe to invoke from any thread.
+ * Implementations are expected to be lifecycle-aware and safe to invoke from any thread.
+ *
+ * ### Example
+ *
+ * ```kotlin
+ * val subscription = monitor.subscribe(listener).getOrThrow()
+ * monitor.start()
+ *
+ * // ... later ...
+ * subscription.cancel()
+ * monitor.stop()
+ * ```
  */
 @StreamInternalApi
-public interface StreamNetworkMonitor {
-
-    /** Registers [listener] to receive network updates. */
-    public fun subscribe(
-        listener: StreamNetworkMonitorListener,
-        options: StreamSubscriptionManager.Options = StreamSubscriptionManager.Options(),
-    ): Result<StreamSubscription>
-
-    /** Starts monitoring connectivity changes. Safe to call multiple times. */
-    public fun start(): Result<Unit>
-
-    /** Stops monitoring and releases platform callbacks. Safe to call multiple times. */
-    public fun stop(): Result<Unit>
-}
+public interface StreamNetworkMonitor :
+    StreamStartableComponent, StreamObservable<StreamNetworkMonitorListener>
 
 /**
  * Creates a [StreamNetworkMonitor] instance.
@@ -55,7 +55,10 @@ public interface StreamNetworkMonitor {
  * @param logger The logger to use for logging.
  * @param scope The coroutine scope to use for running the monitor.
  * @param subscriptionManager The subscription manager to use for managing listeners.
- * @param componentsProvider Provides access to Android system services used for monitoring.
+ * @param wifiManager The Wi-Fi manager to use for accessing Wi-Fi information.
+ * @param telephonyManager The telephony manager to use for accessing cellular information.
+ * @param connectivityManager The connectivity manager to use for accessing network information.
+ * @return A new [StreamNetworkMonitor] instance.
  */
 @StreamInternalApi
 public fun StreamNetworkMonitor(
