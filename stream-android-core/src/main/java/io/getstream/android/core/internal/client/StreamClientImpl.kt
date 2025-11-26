@@ -45,6 +45,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 
 internal class StreamClientImpl<T>(
     private val userId: StreamUserId,
@@ -111,18 +112,20 @@ internal class StreamClientImpl<T>(
                 logger.v { "[connect] Setup network and lifecycle monitor callback" }
                 val networkAndLifecycleMonitorListener =
                     object : StreamNetworkAndLifecycleMonitorListener {
-                        override suspend fun onNetworkAndLifecycleState(
+                        override fun onNetworkAndLifecycleState(
                             networkState: StreamNetworkState,
                             lifecycleState: StreamLifecycleState,
                         ) {
-                            val connectionState = mutableConnectionState.value
-                            val recovery =
-                                connectionRecoveryEvaluator.evaluate(
-                                    connectionState,
-                                    lifecycleState,
-                                    networkState,
-                                )
-                            recoveryEffect(recovery)
+                            scope.launch {
+                                val connectionState = mutableConnectionState.value
+                                val recovery =
+                                    connectionRecoveryEvaluator.evaluate(
+                                        connectionState,
+                                        lifecycleState,
+                                        networkState,
+                                    )
+                                recoveryEffect(recovery)
+                            }
                         }
                     }
                 networkAndLifecycleMonitorHandle =
@@ -200,6 +203,7 @@ internal class StreamClientImpl<T>(
     private suspend fun recoveryEffect(recovery: Result<Recovery?>) {
         recovery.fold(
             onSuccess = { recovery ->
+
                 when (recovery) {
                     is Recovery.Connect<*> -> {
                         logger.v { "[recovery] Connecting: $recovery" }
@@ -219,6 +223,9 @@ internal class StreamClientImpl<T>(
                     null -> {
                         logger.v { "[recovery] No action" }
                     }
+                }
+                if (recovery != null) {
+                    subscriptionManager.forEach { it.onRecovery(recovery) }
                 }
             },
             onFailure = { error ->

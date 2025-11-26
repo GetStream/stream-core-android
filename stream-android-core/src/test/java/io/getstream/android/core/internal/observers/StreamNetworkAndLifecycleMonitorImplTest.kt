@@ -63,7 +63,7 @@ class StreamNetworkAndLifecycleMonitorImplTest {
         monitor
             .subscribe(
                 object : StreamNetworkAndLifecycleMonitorListener {
-                    override suspend fun onNetworkAndLifecycleState(
+                    override fun onNetworkAndLifecycleState(
                         networkState: StreamNetworkState,
                         lifecycleState: StreamLifecycleState,
                     ) {
@@ -102,7 +102,7 @@ class StreamNetworkAndLifecycleMonitorImplTest {
         monitor
             .subscribe(
                 object : StreamNetworkAndLifecycleMonitorListener {
-                    override suspend fun onNetworkAndLifecycleState(
+                    override fun onNetworkAndLifecycleState(
                         networkState: StreamNetworkState,
                         lifecycleState: StreamLifecycleState,
                     ) {
@@ -136,7 +136,7 @@ class StreamNetworkAndLifecycleMonitorImplTest {
         monitor
             .subscribe(
                 object : StreamNetworkAndLifecycleMonitorListener {
-                    override suspend fun onNetworkAndLifecycleState(
+                    override fun onNetworkAndLifecycleState(
                         networkState: StreamNetworkState,
                         lifecycleState: StreamLifecycleState,
                     ) {

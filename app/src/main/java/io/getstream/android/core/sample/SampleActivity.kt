@@ -42,20 +42,36 @@ import androidx.lifecycle.repeatOnLifecycle
 import io.getstream.android.core.api.StreamClient
 import io.getstream.android.core.api.authentication.StreamTokenProvider
 import io.getstream.android.core.api.model.connection.StreamConnectionState
+import io.getstream.android.core.api.model.connection.recovery.Recovery
 import io.getstream.android.core.api.model.value.StreamApiKey
 import io.getstream.android.core.api.model.value.StreamHttpClientInfoHeader
 import io.getstream.android.core.api.model.value.StreamToken
 import io.getstream.android.core.api.model.value.StreamUserId
 import io.getstream.android.core.api.model.value.StreamWsUrl
+import io.getstream.android.core.api.socket.listeners.StreamClientListener
+import io.getstream.android.core.api.subscribe.StreamSubscription
+import io.getstream.android.core.api.subscribe.StreamSubscriptionManager
 import io.getstream.android.core.sample.client.createStreamClient
 import io.getstream.android.core.sample.ui.ConnectionStateCard
 import io.getstream.android.core.sample.ui.theme.StreamandroidcoreTheme
 import kotlinx.coroutines.launch
 
-class SampleActivity : ComponentActivity() {
+class SampleActivity : ComponentActivity(), StreamClientListener {
 
     val userId = StreamUserId.fromString("petar")
     var streamClient: StreamClient? = null
+
+    var handle: StreamSubscription? = null
+
+    override fun onRecovery(recovery: Recovery) {
+        super.onRecovery(recovery)
+        Log.d("SampleActivity", "Recovery: $recovery")
+    }
+
+    override fun onError(err: Throwable) {
+        super.onError(err)
+        Log.e("SampleActivity", "Error: $err")
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -92,6 +108,14 @@ class SampleActivity : ComponentActivity() {
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.CREATED) { streamClient?.connect() }
         }
+
+        if (handle == null) {
+            handle = streamClient2.subscribe(
+                this, options = StreamSubscriptionManager.Options(
+                    retention = StreamSubscriptionManager.Options.Retention.KEEP_UNTIL_CANCELLED,
+                )
+            ).getOrThrow()
+        }
         enableEdgeToEdge()
         setContent {
             StreamandroidcoreTheme {
@@ -99,7 +123,8 @@ class SampleActivity : ComponentActivity() {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     Column(
                         modifier =
-                            Modifier.fillMaxSize()
+                            Modifier
+                                .fillMaxSize()
                                 .padding(innerPadding)
                                 .verticalScroll(scrollState)
                                 .padding(16.dp),
@@ -120,9 +145,11 @@ class SampleActivity : ComponentActivity() {
                                         },
                                     )
                                 }
+
                                 is StreamConnectionState.Connecting -> {
                                     Triple("Connecting", false, { Unit })
                                 }
+
                                 else -> {
                                     Triple(
                                         "Connect",

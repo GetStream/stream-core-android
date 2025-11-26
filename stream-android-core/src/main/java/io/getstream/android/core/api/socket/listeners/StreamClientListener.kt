@@ -18,6 +18,7 @@ package io.getstream.android.core.api.socket.listeners
 
 import io.getstream.android.core.annotations.StreamInternalApi
 import io.getstream.android.core.api.model.connection.StreamConnectionState
+import io.getstream.android.core.api.model.connection.recovery.Recovery
 
 /**
  * Listener interface for Feeds socket events.
@@ -47,4 +48,11 @@ public interface StreamClientListener {
      * @param err The error that occurred.
      */
     public fun onError(err: Throwable) {}
+
+    /**
+     * Called when a recovery decision is made.
+     *
+     * @param recovery The recovery decision.
+     */
+    public fun onRecovery(recovery: Recovery) {}
 }

@@ -28,7 +28,7 @@ internal interface StreamNetworkAndLifecycleMonitorListener {
      * @param networkState The new network state.
      * @param lifecycleState The new lifecycle state.
      */
-    suspend fun onNetworkAndLifecycleState(
+    fun onNetworkAndLifecycleState(
         networkState: StreamNetworkState,
         lifecycleState: StreamLifecycleState,
     )

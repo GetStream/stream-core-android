@@ -29,7 +29,6 @@ import io.getstream.android.core.api.subscribe.StreamSubscriptionManager
 import io.getstream.android.core.api.utils.flatMap
 import io.getstream.android.core.api.utils.times
 import io.getstream.android.core.api.utils.update
-import io.getstream.android.core.internal.subscribe.utils.forEachSuspend
 import kotlinx.coroutines.flow.MutableStateFlow
 
 internal class StreamNetworkAndLifecycleMonitorImpl(
@@ -51,7 +50,7 @@ internal class StreamNetworkAndLifecycleMonitorImpl(
                 val lifecycleState = StreamLifecycleState.Foreground
                 val networkState = mutableNetworkState.value
                 mutableLifecycleState.update(lifecycleState)
-                subscriptionManager.forEachSuspend {
+                subscriptionManager.forEach {
                     it.onNetworkAndLifecycleState(networkState, lifecycleState)
                 }
             }
@@ -61,7 +60,7 @@ internal class StreamNetworkAndLifecycleMonitorImpl(
                 val lifecycleState = StreamLifecycleState.Background
                 val networkState = mutableNetworkState.value
                 mutableLifecycleState.update(lifecycleState)
-                subscriptionManager.forEachSuspend {
+                subscriptionManager.forEach {
                     it.onNetworkAndLifecycleState(networkState, lifecycleState)
                 }
             }
@@ -73,7 +72,7 @@ internal class StreamNetworkAndLifecycleMonitorImpl(
                 val state = StreamNetworkState.Available(snapshot)
                 mutableNetworkState.update(state)
                 val lifecycleState = mutableLifecycleState.value
-                subscriptionManager.forEachSuspend {
+                subscriptionManager.forEach {
                     it.onNetworkAndLifecycleState(state, lifecycleState)
                 }
             }
@@ -88,7 +87,7 @@ internal class StreamNetworkAndLifecycleMonitorImpl(
                     }
                 mutableNetworkState.update(state)
                 val lifecycleState = mutableLifecycleState.value
-                subscriptionManager.forEachSuspend {
+                subscriptionManager.forEach {
                     it.onNetworkAndLifecycleState(state, lifecycleState)
                 }
             }
