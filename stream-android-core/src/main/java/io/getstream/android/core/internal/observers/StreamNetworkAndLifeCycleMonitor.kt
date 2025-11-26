@@ -24,17 +24,16 @@ import io.getstream.android.core.api.observers.lifecycle.StreamLifecycleMonitor
 import io.getstream.android.core.api.observers.network.StreamNetworkMonitor
 import io.getstream.android.core.api.subscribe.StreamObservable
 import io.getstream.android.core.api.subscribe.StreamSubscriptionManager
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 
 /**
  * Coordinates lifecycle and network signals to make connection recovery decisions.
  *
  * ### Responsibilities
- * - Bridges callbacks from [StreamNetworkMonitor] and [StreamLifecycleMonitor] into internal state flows
- *   for network and lifecycle state.
- * - Notifies registered [StreamNetworkAndLifecycleMonitorListener]s when reconnect/teardown actions should
- *   occur.
+ * - Bridges callbacks from [StreamNetworkMonitor] and [StreamLifecycleMonitor] into internal state
+ *   flows for network and lifecycle state.
+ * - Notifies registered [StreamNetworkAndLifecycleMonitorListener]s when reconnect/teardown actions
+ *   should occur.
  * - Implements [StreamStartableComponent] so callers can hook into their own lifecycle.
  *
  * ### Usage

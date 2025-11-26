@@ -80,7 +80,8 @@ class StreamClientIImplTest {
         socketSession = mockk(relaxed = true)
         logger = mockk(relaxed = true)
         subscriptionManager = mockk(relaxed = true)
-        every { socketSession.subscribe(any(), any()) } returns Result.success(mockk(relaxed = true))
+        every { socketSession.subscribe(any(), any()) } returns
+            Result.success(mockk(relaxed = true))
 
         // SingleFlight: execute the lambda and wrap into Result
         singleFlight = mockk(relaxed = true)
@@ -144,9 +145,7 @@ class StreamClientIImplTest {
                 }
         }
 
-    private fun stubSubscriptionManager(
-        configure: (StreamClientListener) -> Unit = {}
-    ) {
+    private fun stubSubscriptionManager(configure: (StreamClientListener) -> Unit = {}) {
         every { subscriptionManager.forEach(any()) } answers
             {
                 val block = firstArg<(StreamClientListener) -> Unit>()

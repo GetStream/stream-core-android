@@ -72,9 +72,7 @@ internal class StreamNetworkAndLifecycleMonitorImpl(
                 val state = StreamNetworkState.Available(snapshot)
                 mutableNetworkState.update(state)
                 val lifecycleState = mutableLifecycleState.value
-                subscriptionManager.forEach {
-                    it.onNetworkAndLifecycleState(state, lifecycleState)
-                }
+                subscriptionManager.forEach { it.onNetworkAndLifecycleState(state, lifecycleState) }
             }
 
             override suspend fun onNetworkLost(permanent: Boolean) {
@@ -87,9 +85,7 @@ internal class StreamNetworkAndLifecycleMonitorImpl(
                     }
                 mutableNetworkState.update(state)
                 val lifecycleState = mutableLifecycleState.value
-                subscriptionManager.forEach {
-                    it.onNetworkAndLifecycleState(state, lifecycleState)
-                }
+                subscriptionManager.forEach { it.onNetworkAndLifecycleState(state, lifecycleState) }
             }
         }
 

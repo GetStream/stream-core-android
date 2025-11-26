@@ -110,11 +110,17 @@ class SampleActivity : ComponentActivity(), StreamClientListener {
         }
 
         if (handle == null) {
-            handle = streamClient2.subscribe(
-                this, options = StreamSubscriptionManager.Options(
-                    retention = StreamSubscriptionManager.Options.Retention.KEEP_UNTIL_CANCELLED,
-                )
-            ).getOrThrow()
+            handle =
+                streamClient2
+                    .subscribe(
+                        this,
+                        options =
+                            StreamSubscriptionManager.Options(
+                                retention =
+                                    StreamSubscriptionManager.Options.Retention.KEEP_UNTIL_CANCELLED
+                            ),
+                    )
+                    .getOrThrow()
         }
         enableEdgeToEdge()
         setContent {
@@ -123,8 +129,7 @@ class SampleActivity : ComponentActivity(), StreamClientListener {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     Column(
                         modifier =
-                            Modifier
-                                .fillMaxSize()
+                            Modifier.fillMaxSize()
                                 .padding(innerPadding)
                                 .verticalScroll(scrollState)
                                 .padding(16.dp),

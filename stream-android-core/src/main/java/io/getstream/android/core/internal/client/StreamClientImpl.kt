@@ -203,7 +203,6 @@ internal class StreamClientImpl<T>(
     private suspend fun recoveryEffect(recovery: Result<Recovery?>) {
         recovery.fold(
             onSuccess = { recovery ->
-
                 when (recovery) {
                     is Recovery.Connect<*> -> {
                         logger.v { "[recovery] Connecting: $recovery" }

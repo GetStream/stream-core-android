@@ -49,13 +49,14 @@ public inline fun <T, R> Result<T>.flatMap(transform: (T) -> Result<R>): Result<
 @StreamInternalApi
 public suspend fun <T> Result<T>.onTokenError(
     function: suspend (exception: StreamEndpointException, code: Int) -> Result<T>
-): Result<T> = fold(
-    onSuccess = { this },
-    onFailure = { throwable ->
-        if (throwable is StreamEndpointException && throwable.apiError?.code?.div(10) == 4) {
-            function(throwable, throwable.apiError.code)
-        } else {
-            this
-        }
-    }
-)
+): Result<T> =
+    fold(
+        onSuccess = { this },
+        onFailure = { throwable ->
+            if (throwable is StreamEndpointException && throwable.apiError?.code?.div(10) == 4) {
+                function(throwable, throwable.apiError.code)
+            } else {
+                this
+            }
+        },
+    )
