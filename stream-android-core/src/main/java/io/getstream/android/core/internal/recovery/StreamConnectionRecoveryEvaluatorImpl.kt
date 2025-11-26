@@ -94,9 +94,7 @@ internal class StreamConnectionRecoveryEvaluatorImpl(
             lastConnectionState = connectionState
             lastLifecycleState = lifecycleState
             lastNetworkState = networkState
-            if (networkState is StreamNetworkState.Available) {
-                lastNetworkSnapshot = networkState.snapshot
-            }
+            lastNetworkSnapshot = connectSnapshot
             result
         }
 }
