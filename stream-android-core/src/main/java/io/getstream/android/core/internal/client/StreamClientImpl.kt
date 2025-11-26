@@ -194,7 +194,7 @@ internal class StreamClientImpl<T>(
             logger.e(error) { "Token error: $code" }
             tokenManager.invalidate()
             tokenManager.refresh().flatMap { newToken ->
-                // One retry once with new token
+                // Retry once with new token
                 socketSession.connect(data.copy(token = newToken.rawValue))
             }
         }
