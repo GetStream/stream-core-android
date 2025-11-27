@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.getstream.android.core.lint.detectors
 
 import com.android.tools.lint.client.api.UElementHandler
@@ -116,11 +117,11 @@ class SuspendRunCatchingDetector : Detector(), Detector.UastScanner {
                 briefDescription = "Use runCatchingCancellable in suspend contexts",
                 explanation =
                     """
-                Using `kotlin.runCatching { ... }` inside a suspend \
-                function or a suspend lambda, cancellation is not propagated as expected. \
-                Prefer `runCatchingCancellable { ... }`, which rethrows `CancellationException` while \
-                still returning `Result` for other failures.
-            """
+                        Using `kotlin.runCatching { ... }` inside a suspend \
+                        function or a suspend lambda, cancellation is not propagated as expected. \
+                        Prefer `runCatchingCancellable { ... }`, which rethrows `CancellationException` while \
+                        still returning `Result` for other failures.
+                    """
                         .trimIndent(),
                 category = Category.CORRECTNESS,
                 priority = 7,

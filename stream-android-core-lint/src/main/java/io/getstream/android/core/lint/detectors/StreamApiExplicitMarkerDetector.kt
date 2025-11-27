@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.getstream.android.core.lint.detectors
 
 import com.android.tools.lint.client.api.UElementHandler
@@ -230,12 +231,12 @@ class StreamApiExplicitMarkerDetector : Detector(), Detector.UastScanner {
                 description = "Comma-separated package **glob** patterns where the rule applies.",
                 explanation =
                     """
-                Supports wildcards: '*' (any sequence) and '?' (single char).
-                Examples:
-                - 'io.getstream.android.core.api'
-                - 'io.getstream.android.core.*.api'
-                - 'io.getstream.android.*'
-            """
+                        Supports wildcards: '*' (any sequence) and '?' (single char).
+                        Examples:
+                        - 'io.getstream.android.core.api'
+                        - 'io.getstream.android.core.*.api'
+                        - 'io.getstream.android.*'
+                    """
                         .trimIndent(),
             )
 
@@ -245,8 +246,8 @@ class StreamApiExplicitMarkerDetector : Detector(), Detector.UastScanner {
                 description = "Comma-separated package **glob** patterns to exclude from the rule.",
                 explanation =
                     """
-                Same glob syntax as 'packages'. Evaluated after includes.
-            """
+                        Same glob syntax as 'packages'. Evaluated after includes.
+                    """
                         .trimIndent(),
             )
 
@@ -259,9 +260,9 @@ class StreamApiExplicitMarkerDetector : Detector(), Detector.UastScanner {
                     "StreamApiExplicitMarkerMissing",
                     "Public API must be explicitly marked",
                     """
-            To prevent accidental exposure, all top-level public declarations must be explicitly \
-            marked as @StreamPublishedApi (allowed to leak) or @StreamInternalApi (not allowed to leak).
-            """
+                    To prevent accidental exposure, all top-level public declarations must be explicitly \
+                    marked as @StreamPublishedApi (allowed to leak) or @StreamInternalApi (not allowed to leak).
+                    """
                         .trimIndent(),
                     Category.CORRECTNESS,
                     7,
