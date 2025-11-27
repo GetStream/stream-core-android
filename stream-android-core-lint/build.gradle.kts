@@ -2,7 +2,7 @@ import com.vanniktech.maven.publish.JavadocJar
 import com.vanniktech.maven.publish.KotlinJvm
 
 plugins {
-    libs.plugins.stream.java.library
+    alias(libs.plugins.stream.java.library)
     alias(libs.plugins.jetbrains.kotlin.jvm)
     alias(libs.plugins.maven.publish)
     alias(libs.plugins.dokka)
