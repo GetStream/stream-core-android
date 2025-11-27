@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.getstream.android.core.lint.detectors
 
 import com.android.tools.lint.client.api.UElementHandler
@@ -229,20 +230,20 @@ class ExposeAsStateFlowDetector : Detector(), Detector.UastScanner {
                 briefDescription = "Expose MutableStateFlow as read-only via asStateFlow()",
                 explanation =
                     """
-                Exposing a MutableStateFlow directly (even when typed as StateFlow) allows consumers to downcast
-                and mutate your internal state. Wrap the internal MutableStateFlow with asStateFlow() when you
-                expose it.
-                
-                Problematic:
-                    private val _state = MutableStateFlow(initial)
-                    val state: StateFlow<State> = _state
-                    val state: StateFlow<State> get() = _state
-                
-                Correct:
-                    private val _state = MutableStateFlow(initial)
-                    val state: StateFlow<State> = _state.asStateFlow()
-                    val state: StateFlow<State> get() = _state.asStateFlow()
-            """
+                        Exposing a MutableStateFlow directly (even when typed as StateFlow) allows consumers to downcast
+                        and mutate your internal state. Wrap the internal MutableStateFlow with asStateFlow() when you
+                        expose it.
+
+                        Problematic:
+                            private val _state = MutableStateFlow(initial)
+                            val state: StateFlow<State> = _state
+                            val state: StateFlow<State> get() = _state
+
+                        Correct:
+                            private val _state = MutableStateFlow(initial)
+                            val state: StateFlow<State> = _state.asStateFlow()
+                            val state: StateFlow<State> get() = _state.asStateFlow()
+                    """
                         .trimIndent(),
                 category = Category.CORRECTNESS,
                 priority = 7,

@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.getstream.android.core.lint.detectors
 
 import com.android.tools.lint.client.api.UElementHandler
@@ -195,9 +196,9 @@ class MustBeInternalDetector : Detector(), Detector.UastScanner {
                     "Comma-separated package **glob** patterns that represent internal packages; declarations here must not be public.",
                 explanation =
                     """
-                Supports wildcards: '*' matches any sequence (including dots), '?' matches a single char. " +
-                Examples: 'io.getstream.core.internal', 'io.getstream.*.internal', 'com.example.internal*'."
-            """
+                        Supports wildcards: '*' matches any sequence (including dots), '?' matches a single char. " +
+                        Examples: 'io.getstream.core.internal', 'io.getstream.*.internal', 'com.example.internal*'."
+                    """
                         .trimIndent(),
             )
 
@@ -208,9 +209,9 @@ class MustBeInternalDetector : Detector(), Detector.UastScanner {
                     briefDescription = "Disallow `public` in internal packages",
                     explanation =
                         """
-                Declarations located in packages marked as internal must not be `public`. \
-                Use `internal` (preferred) or `private`.
-            """
+                            Declarations located in packages marked as internal must not be `public`. \
+                            Use `internal` (preferred) or `private`.
+                        """
                             .trimIndent(),
                     category = Category.CORRECTNESS,
                     priority = 7,
