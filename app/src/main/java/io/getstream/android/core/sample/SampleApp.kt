@@ -40,8 +40,7 @@ class SampleApp : Application() {
         StreamToken.fromString(
             "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoicGV0YXIifQ.mZFi4iSblaIoyo9JDdcxIkGkwI-tuApeSBawxpz42rs"
         )
-    private val coroutinesScope =
-        CoroutineScope(SupervisorJob() + Dispatchers.IO + Dispatchers.Main + Dispatchers.Default)
+    private val coroutinesScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     companion object {
         lateinit var instance: SampleApp
