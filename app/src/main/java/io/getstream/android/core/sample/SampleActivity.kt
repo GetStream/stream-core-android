@@ -16,7 +16,6 @@
 
 package io.getstream.android.core.sample
 
-import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
@@ -40,16 +39,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import io.getstream.android.core.api.StreamClient
-import io.getstream.android.core.api.authentication.StreamTokenProvider
-import io.getstream.android.core.api.model.config.StreamClientSerializationConfig
 import io.getstream.android.core.api.model.connection.StreamConnectionState
 import io.getstream.android.core.api.model.connection.recovery.Recovery
-import io.getstream.android.core.api.model.value.StreamApiKey
-import io.getstream.android.core.api.model.value.StreamHttpClientInfoHeader
-import io.getstream.android.core.api.model.value.StreamToken
-import io.getstream.android.core.api.model.value.StreamUserId
-import io.getstream.android.core.api.model.value.StreamWsUrl
-import io.getstream.android.core.api.serialization.StreamEventSerialization
 import io.getstream.android.core.api.socket.listeners.StreamClientListener
 import io.getstream.android.core.api.subscribe.StreamSubscription
 import io.getstream.android.core.api.subscribe.StreamSubscriptionManager
@@ -101,8 +92,7 @@ class SampleActivity : ComponentActivity(), StreamClientListener {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     Column(
                         modifier =
-                            Modifier
-                                .fillMaxSize()
+                            Modifier.fillMaxSize()
                                 .padding(innerPadding)
                                 .verticalScroll(scrollState)
                                 .padding(16.dp),
@@ -153,7 +143,6 @@ class SampleActivity : ComponentActivity(), StreamClientListener {
         handle?.cancel()
     }
 }
-
 
 @Composable
 fun Greeting(name: String, modifier: Modifier = Modifier) {
