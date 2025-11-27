@@ -46,7 +46,6 @@ import io.getstream.android.core.api.subscribe.StreamSubscription
 import io.getstream.android.core.api.subscribe.StreamSubscriptionManager
 import io.getstream.android.core.sample.ui.ConnectionStateCard
 import io.getstream.android.core.sample.ui.theme.StreamandroidcoreTheme
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class SampleActivity : ComponentActivity(), StreamClientListener {
@@ -67,10 +66,7 @@ class SampleActivity : ComponentActivity(), StreamClientListener {
         super.onCreate(savedInstanceState)
         val streamClient = SampleApp.instance.streamClient
         lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.CREATED) {
-                delay(5000)
-                streamClient.connect()
-            }
+            repeatOnLifecycle(Lifecycle.State.CREATED) { streamClient.connect() }
         }
         if (handle == null) {
             handle =
