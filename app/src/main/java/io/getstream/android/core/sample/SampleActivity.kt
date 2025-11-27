@@ -41,6 +41,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import io.getstream.android.core.api.StreamClient
 import io.getstream.android.core.api.authentication.StreamTokenProvider
+import io.getstream.android.core.api.model.config.StreamClientSerializationConfig
 import io.getstream.android.core.api.model.connection.StreamConnectionState
 import io.getstream.android.core.api.model.connection.recovery.Recovery
 import io.getstream.android.core.api.model.value.StreamApiKey
@@ -48,18 +49,16 @@ import io.getstream.android.core.api.model.value.StreamHttpClientInfoHeader
 import io.getstream.android.core.api.model.value.StreamToken
 import io.getstream.android.core.api.model.value.StreamUserId
 import io.getstream.android.core.api.model.value.StreamWsUrl
+import io.getstream.android.core.api.serialization.StreamEventSerialization
 import io.getstream.android.core.api.socket.listeners.StreamClientListener
 import io.getstream.android.core.api.subscribe.StreamSubscription
 import io.getstream.android.core.api.subscribe.StreamSubscriptionManager
-import io.getstream.android.core.sample.client.createStreamClient
 import io.getstream.android.core.sample.ui.ConnectionStateCard
 import io.getstream.android.core.sample.ui.theme.StreamandroidcoreTheme
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class SampleActivity : ComponentActivity(), StreamClientListener {
-
-    val userId = StreamUserId.fromString("petar")
-    var streamClient: StreamClient? = null
 
     var handle: StreamSubscription? = null
 
@@ -75,43 +74,16 @@ class SampleActivity : ComponentActivity(), StreamClientListener {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val streamClient2 =
-            createStreamClient(
-                context = this.applicationContext,
-                scope = lifecycleScope,
-                apiKey = StreamApiKey.fromString("pd67s34fzpgw"),
-                userId = userId,
-                wsUrl =
-                    StreamWsUrl.fromString(
-                        "wss://chat-edge-frankfurt-ce1.stream-io-api.com/api/v2/connect"
-                    ),
-                clientInfoHeader =
-                    StreamHttpClientInfoHeader.create(
-                        product = "android-core",
-                        productVersion = "1.0.0",
-                        os = "Android",
-                        apiLevel = Build.VERSION.SDK_INT,
-                        deviceModel = "Pixel 7 Pro",
-                        app = "Stream Android Core Sample",
-                        appVersion = "1.0.0",
-                    ),
-                tokenProvider =
-                    object : StreamTokenProvider {
-                        override suspend fun loadToken(userId: StreamUserId): StreamToken {
-                            return StreamToken.fromString(
-                                "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoicGV0YXIifQ.mZFi4iSblaIoyo9JDdcxIkGkwI-tuApeSBawxpz42rs"
-                            )
-                        }
-                    },
-            )
-        streamClient = streamClient2
+        val streamClient = SampleApp.instance.streamClient
         lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.CREATED) { streamClient?.connect() }
+            repeatOnLifecycle(Lifecycle.State.CREATED) {
+                delay(5000)
+                streamClient.connect()
+            }
         }
-
         if (handle == null) {
             handle =
-                streamClient2
+                streamClient
                     .subscribe(
                         this,
                         options =
@@ -129,15 +101,16 @@ class SampleActivity : ComponentActivity(), StreamClientListener {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     Column(
                         modifier =
-                            Modifier.fillMaxSize()
+                            Modifier
+                                .fillMaxSize()
                                 .padding(innerPadding)
                                 .verticalScroll(scrollState)
                                 .padding(16.dp),
                         verticalArrangement = Arrangement.spacedBy(16.dp),
                     ) {
                         Greeting(name = "Android")
-                        ClientInfo(streamClient = streamClient2)
-                        val state = streamClient?.connectionState?.collectAsStateWithLifecycle()
+                        ClientInfo(streamClient = streamClient)
+                        val state = streamClient.connectionState?.collectAsStateWithLifecycle()
                         val buttonState =
                             when (state?.value) {
                                 is StreamConnectionState.Connected -> {
@@ -145,7 +118,7 @@ class SampleActivity : ComponentActivity(), StreamClientListener {
                                         "Disconnect",
                                         true,
                                         {
-                                            lifecycleScope.launch { streamClient?.disconnect() }
+                                            lifecycleScope.launch { streamClient.disconnect() }
                                             Unit
                                         },
                                     )
@@ -174,7 +147,13 @@ class SampleActivity : ComponentActivity(), StreamClientListener {
             }
         }
     }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        handle?.cancel()
+    }
 }
+
 
 @Composable
 fun Greeting(name: String, modifier: Modifier = Modifier) {
