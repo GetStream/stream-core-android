@@ -8,7 +8,6 @@ plugins {
     alias(libs.plugins.dokka)
 }
 
-
 dependencies {
     compileOnly(libs.lint.api)
     compileOnly(libs.lint.checks)
@@ -28,12 +27,12 @@ mavenPublishing {
     coordinates(
         groupId = io.getstream.core.Configuration.artifactGroup,
         artifactId = "stream-android-core-lint",
-        version = rootProject.version.toString()
+        version = rootProject.version.toString(),
     )
     configure(
         KotlinJvm(
             javadocJar = JavadocJar.Dokka("dokkaJavadoc"),
             sourcesJar = true,
-        )
+        ),
     )
 }

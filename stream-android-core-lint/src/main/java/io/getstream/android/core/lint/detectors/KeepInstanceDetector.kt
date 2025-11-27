@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.getstream.android.core.lint.detectors
 
 import com.android.tools.lint.client.api.UElementHandler
@@ -373,13 +374,13 @@ class KeepInstanceDetector : Detector(), Detector.UastScanner {
                     "Comma-separated FQNs of stateful types that must not be used as temporaries",
                 explanation =
                     """
-                Any constructor/factory call whose expression type is the same as, or a subtype of, one of these
-                fully-qualified names will be treated as a stateful instance that needs to be kept (stored or returned),
-                not created and immediately used or discarded.
+                        Any constructor/factory call whose expression type is the same as, or a subtype of, one of these
+                        fully-qualified names will be treated as a stateful instance that needs to be kept (stored or returned),
+                        not created and immediately used or discarded.
 
-                Example:
-                com.example.SomeType, io.getstream.video.android.core.StreamClient
-            """
+                        Example:
+                        com.example.SomeType, io.getstream.video.android.core.StreamClient
+                    """
                         .trimIndent(),
             )
 
@@ -391,32 +392,32 @@ class KeepInstanceDetector : Detector(), Detector.UastScanner {
                         "Don’t use stateful instances as temporaries or discard them",
                     explanation =
                         """
-                Types that expose observable or long-lived state (for example, via StateFlow) must be kept.
-                Creating an instance inline and immediately chaining a call, or creating it as a standalone
-                expression and discarding the value, can stop updates from being delivered and may leak resources.
+                            Types that expose observable or long-lived state (for example, via StateFlow) must be kept.
+                            Creating an instance inline and immediately chaining a call, or creating it as a standalone
+                            expression and discarding the value, can stop updates from being delivered and may leak resources.
 
-                Flags:
-                • SomeType(...).state.collect { ... }     // calling members on a temporary instance
-                • SomeType(...)                            // created and discarded
+                            Flags:
+                            • SomeType(...).state.collect { ... }     // calling members on a temporary instance
+                            • SomeType(...)                            // created and discarded
 
-                How to fix:
-                • Store the instance in a variable and use it, or
-                • Return the instance from the current function.
+                            How to fix:
+                            • Store the instance in a variable and use it, or
+                            • Return the instance from the current function.
 
-                Correct:
-                    val client = StreamClient(config)
-                    client.connectionState.collect { /* ... */ }
+                            Correct:
+                                val client = StreamClient(config)
+                                client.connectionState.collect { /* ... */ }
 
-                Problematic:
-                    StreamClient(config).connectionState.collect { /* ... */ }
+                            Problematic:
+                                StreamClient(config).connectionState.collect { /* ... */ }
 
-                Configuration:
-                You can configure which types are considered stateful via lint.xml:
-                    <issue id="NotKeepingInstance">
-                      <option name="keepInstanceOf"
-                              value="com.example.SomeType, io.getstream.video.android.core.StreamClient"/>
-                    </issue>
-            """
+                            Configuration:
+                            You can configure which types are considered stateful via lint.xml:
+                                <issue id="NotKeepingInstance">
+                                  <option name="keepInstanceOf"
+                                          value="com.example.SomeType, io.getstream.video.android.core.StreamClient"/>
+                                </issue>
+                        """
                             .trimIndent(),
                     category = Category.CORRECTNESS,
                     priority = 7,
