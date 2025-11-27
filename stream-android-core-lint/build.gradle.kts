@@ -2,12 +2,11 @@ import com.vanniktech.maven.publish.JavadocJar
 import com.vanniktech.maven.publish.KotlinJvm
 
 plugins {
-    libs.plugins.stream.java.library
+    alias(libs.plugins.stream.java.library)
     alias(libs.plugins.jetbrains.kotlin.jvm)
     alias(libs.plugins.maven.publish)
     alias(libs.plugins.dokka)
 }
-
 
 dependencies {
     compileOnly(libs.lint.api)
@@ -28,12 +27,12 @@ mavenPublishing {
     coordinates(
         groupId = io.getstream.core.Configuration.artifactGroup,
         artifactId = "stream-android-core-lint",
-        version = rootProject.version.toString()
+        version = rootProject.version.toString(),
     )
     configure(
         KotlinJvm(
             javadocJar = JavadocJar.Dokka("dokkaJavadoc"),
             sourcesJar = true,
-        )
+        ),
     )
 }
