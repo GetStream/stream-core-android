@@ -17,9 +17,11 @@
 package io.getstream.android.core.api
 
 import android.annotation.SuppressLint
+import android.content.Context
 import io.getstream.android.core.annotations.StreamInternalApi
 import io.getstream.android.core.api.authentication.StreamTokenManager
 import io.getstream.android.core.api.authentication.StreamTokenProvider
+import io.getstream.android.core.api.components.StreamAndroidComponentsProvider
 import io.getstream.android.core.api.http.StreamOkHttpInterceptors
 import io.getstream.android.core.api.log.StreamLoggerProvider
 import io.getstream.android.core.api.model.config.StreamClientSerializationConfig
@@ -206,36 +208,85 @@ public interface StreamClient : StreamObservable<StreamClientListener> {
 @SuppressLint("ExposeAsStateFlow")
 @StreamInternalApi
 public fun StreamClient(
+
+    // Android
+    scope: CoroutineScope,
+    context: Context,
+
     // Client config
     apiKey: StreamApiKey,
     userId: StreamUserId,
     wsUrl: StreamWsUrl,
     products: List<String>,
     clientInfoHeader: StreamHttpClientInfoHeader,
-    clientSubscriptionManager: StreamSubscriptionManager<StreamClientListener>,
-    // Token
     tokenProvider: StreamTokenProvider,
-    tokenManager: StreamTokenManager,
-    // Processing
-    singleFlight: StreamSingleFlightProcessor,
-    serialQueue: StreamSerialProcessingQueue,
-    retryProcessor: StreamRetryProcessor,
-    scope: CoroutineScope,
-    // Socket
-    connectionIdHolder: StreamConnectionIdHolder,
-    socketFactory: StreamWebSocketFactory,
-    batcher: StreamBatcher<String>,
-    // Monitoring
-    healthMonitor: StreamHealthMonitor,
-    networkMonitor: StreamNetworkMonitor,
-    lifecycleMonitor: StreamLifecycleMonitor,
-    connectionRecoveryEvaluator: StreamConnectionRecoveryEvaluator,
-    // Http
-    httpConfig: StreamHttpConfig? = null,
-    // Serialization
     serializationConfig: StreamClientSerializationConfig,
+    httpConfig: StreamHttpConfig? = null,
+
+    // Component provider
+    androidComponentsProvider: StreamAndroidComponentsProvider =
+        StreamAndroidComponentsProvider(context.applicationContext),
+
     // Logging
     logProvider: StreamLoggerProvider = StreamLoggerProvider.defaultAndroidLogger(),
+
+    // Subscriptions
+    clientSubscriptionManager: StreamSubscriptionManager<StreamClientListener> =
+        StreamSubscriptionManager(
+            logger = logProvider.taggedLogger("SCClientSubscriptions"),
+            maxStrongSubscriptions = 250,
+            maxWeakSubscriptions = 250,
+        ),
+
+    // Processing
+    singleFlight: StreamSingleFlightProcessor = StreamSingleFlightProcessor(scope),
+    serialQueue: StreamSerialProcessingQueue =
+        StreamSerialProcessingQueue(
+            logger = logProvider.taggedLogger("SCSerialProcessing"),
+            scope = scope,
+        ),
+    retryProcessor: StreamRetryProcessor =
+        StreamRetryProcessor(logger = logProvider.taggedLogger("SCRetryProcessor")),
+
+    // Token
+    tokenManager: StreamTokenManager = StreamTokenManager(userId, tokenProvider, singleFlight),
+
+    // Socket
+    connectionIdHolder: StreamConnectionIdHolder = StreamConnectionIdHolder(),
+    socketFactory: StreamWebSocketFactory =
+        StreamWebSocketFactory(logger = logProvider.taggedLogger("SCWebSocketFactory")),
+    batcher: StreamBatcher<String> =
+        StreamBatcher(scope = scope, batchSize = 10, initialDelayMs = 100L, maxDelayMs = 1_000L),
+
+    // Monitoring
+    healthMonitor: StreamHealthMonitor =
+        StreamHealthMonitor(logger = logProvider.taggedLogger("SCHealthMonitor"), scope = scope),
+    networkMonitor: StreamNetworkMonitor =
+        StreamNetworkMonitor(
+            logger = logProvider.taggedLogger("SCNetworkMonitor"),
+            scope = scope,
+            connectivityManager = androidComponentsProvider.connectivityManager().getOrThrow(),
+            wifiManager = androidComponentsProvider.wifiManager().getOrThrow(),
+            telephonyManager = androidComponentsProvider.telephonyManager().getOrThrow(),
+            subscriptionManager =
+                StreamSubscriptionManager(
+                    logger = logProvider.taggedLogger("SCNetworkMonitorSubscriptions")
+                ),
+        ),
+    lifecycleMonitor: StreamLifecycleMonitor =
+        StreamLifecycleMonitor(
+            logger = logProvider.taggedLogger("SCLifecycleMonitor"),
+            subscriptionManager =
+                StreamSubscriptionManager(
+                    logger = logProvider.taggedLogger("SCLifecycleMonitorSubscriptions")
+                ),
+            lifecycle = androidComponentsProvider.lifecycle(),
+        ),
+    connectionRecoveryEvaluator: StreamConnectionRecoveryEvaluator =
+        StreamConnectionRecoveryEvaluator(
+            logger = logProvider.taggedLogger("SCConnectionRecoveryEvaluator"),
+            singleFlightProcessor = singleFlight,
+        ),
 ): StreamClient {
     val clientLogger = logProvider.taggedLogger(tag = "SCClient")
     val parent = scope.coroutineContext[Job]

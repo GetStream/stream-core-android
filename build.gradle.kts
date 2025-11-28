@@ -27,9 +27,6 @@ streamProject {
 
     coverage {
         includedModules = setOf("stream-android-core")
-        sonarCoverageExclusions = setOf(
-            "**/lint/**",
-        )
     }
 }
 
