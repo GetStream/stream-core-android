@@ -16,6 +16,8 @@
 
 package io.getstream.android.core.api.filter
 
+import io.getstream.android.core.api.model.location.BoundingBox
+import io.getstream.android.core.api.model.location.LocationCoordinate
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import org.junit.Test
@@ -296,6 +298,37 @@ class FilterMatchingTest {
         assertTrue(filter matches activeItemWithLowRating)
     }
 
+    @Test
+    fun `equal filter should match when LocationCoordinate is within BoundingBox`() {
+        val northeast = LocationCoordinate(latitude = 41.91, longitude = 12.51)
+        val southwest = LocationCoordinate(latitude = 41.87, longitude = 12.47)
+        val boundingBox = BoundingBox(northeast = northeast, southwest = southwest)
+        val filter = TestFilterField.withinBounds.equal(boundingBox)
+
+        val itemWithLocationInside =
+            TestData(location = LocationCoordinate(latitude = 41.89, longitude = 12.49))
+        val itemWithLocationOutside =
+            TestData(location = LocationCoordinate(latitude = 41.95, longitude = 12.49))
+
+        assertTrue(filter matches itemWithLocationInside)
+        assertFalse(filter matches itemWithLocationOutside)
+    }
+
+    @Test
+    fun `equal filter should work with bounding box map format from API`() {
+        val mapBounds =
+            mapOf("ne_lat" to 41.91, "ne_lng" to 12.51, "sw_lat" to 41.87, "sw_lng" to 12.47)
+        val filter = TestFilterField.withinBounds.equal(mapBounds)
+
+        val itemWithLocationInside =
+            TestData(location = LocationCoordinate(latitude = 41.89, longitude = 12.49))
+        val itemWithLocationOutside =
+            TestData(location = LocationCoordinate(latitude = 41.95, longitude = 12.49))
+
+        assertTrue(filter matches itemWithLocationInside)
+        assertFalse(filter matches itemWithLocationOutside)
+    }
+
     private data class TestData(
         val id: String = "default-id",
         val name: String = "Default Name",
@@ -304,6 +337,7 @@ class FilterMatchingTest {
         val tags: List<String> = emptyList(),
         val metadata: Map<String, Any>? = null,
         val isActive: Boolean = false,
+        val location: LocationCoordinate? = null,
     )
 
     private data class TestFilterField<T>(
@@ -318,6 +352,7 @@ class FilterMatchingTest {
             val tags = TestFilterField("tags", TestData::tags)
             val metadata = TestFilterField("metadata", TestData::metadata)
             val isActive = TestFilterField("isActive", TestData::isActive)
+            val withinBounds = TestFilterField("within_bounds", TestData::location)
         }
     }
 }
