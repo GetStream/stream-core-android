@@ -65,8 +65,6 @@ internal class StreamClientImpl<T>(
     companion object {
         private val connectKey = randomExecutionKey<StreamConnectedUser>()
         private val disconnectKey = randomExecutionKey<Unit>()
-
-        private val recoveryKey = randomExecutionKey<Recovery?>()
     }
 
     private var socketSessionHandle: StreamSubscription? = null
@@ -93,7 +91,6 @@ internal class StreamClientImpl<T>(
                     object : StreamClientListener {
                         override fun onState(state: StreamConnectionState) {
                             logger.v { "[client#onState]: $state" }
-                            println("State: $state")
                             mutableConnectionState.update(state)
                             subscriptionManager.forEach { it.onState(state) }
                         }
@@ -128,9 +125,6 @@ internal class StreamClientImpl<T>(
                                         lifecycleState,
                                         networkState,
                                     )
-                                println("Connection State: $connectionState")
-                                println("Lifecycle State: $lifecycleState")
-                                println("Recovery: $recovery")
                                 recoveryEffect(recovery)
                             }
                         }
