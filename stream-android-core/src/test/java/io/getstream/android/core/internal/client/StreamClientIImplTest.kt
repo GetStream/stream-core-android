@@ -32,20 +32,20 @@ import io.getstream.android.core.api.model.exceptions.StreamEndpointErrorData
 import io.getstream.android.core.api.model.exceptions.StreamEndpointException
 import io.getstream.android.core.api.model.value.StreamToken
 import io.getstream.android.core.api.model.value.StreamUserId
-import io.getstream.android.core.api.processing.StreamSerialProcessingQueue
-import io.getstream.android.core.api.processing.StreamSingleFlightProcessor
-import io.getstream.android.core.api.recovery.StreamConnectionRecoveryEvaluator
-import io.getstream.android.core.api.subscribe.StreamSubscriptionManager.Options
-import io.getstream.android.core.api.socket.StreamConnectionIdHolder
-import io.getstream.android.core.api.socket.listeners.StreamClientListener
-import io.getstream.android.core.api.subscribe.StreamSubscription
-import io.getstream.android.core.api.subscribe.StreamSubscriptionManager
-import io.getstream.android.core.internal.observers.StreamNetworkAndLifeCycleMonitor
-import io.getstream.android.core.internal.observers.StreamNetworkAndLifecycleMonitorListener
 import io.getstream.android.core.api.observers.lifecycle.StreamLifecycleListener
 import io.getstream.android.core.api.observers.lifecycle.StreamLifecycleMonitor
 import io.getstream.android.core.api.observers.network.StreamNetworkMonitor
 import io.getstream.android.core.api.observers.network.StreamNetworkMonitorListener
+import io.getstream.android.core.api.processing.StreamSerialProcessingQueue
+import io.getstream.android.core.api.processing.StreamSingleFlightProcessor
+import io.getstream.android.core.api.recovery.StreamConnectionRecoveryEvaluator
+import io.getstream.android.core.api.socket.StreamConnectionIdHolder
+import io.getstream.android.core.api.socket.listeners.StreamClientListener
+import io.getstream.android.core.api.subscribe.StreamSubscription
+import io.getstream.android.core.api.subscribe.StreamSubscriptionManager
+import io.getstream.android.core.api.subscribe.StreamSubscriptionManager.Options
+import io.getstream.android.core.internal.observers.StreamNetworkAndLifeCycleMonitor
+import io.getstream.android.core.internal.observers.StreamNetworkAndLifecycleMonitorListener
 import io.getstream.android.core.internal.recovery.StreamConnectionRecoveryEvaluatorImpl
 import io.getstream.android.core.internal.socket.StreamSocketSession
 import io.getstream.android.core.testing.TestLogger
@@ -58,6 +58,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.*
@@ -173,10 +174,11 @@ class StreamClientIImplTest {
 
         override fun start(): Result<Unit> = Result.success(Unit).also { started = true }
 
-        override fun stop(): Result<Unit> = Result.success(Unit).also {
-            started = false
-            listeners.clear()
-        }
+        override fun stop(): Result<Unit> =
+            Result.success(Unit).also {
+                started = false
+                listeners.clear()
+            }
 
         override fun subscribe(
             listener: StreamLifecycleListener,
@@ -211,10 +213,11 @@ class StreamClientIImplTest {
 
         override fun start(): Result<Unit> = Result.success(Unit).also { started = true }
 
-        override fun stop(): Result<Unit> = Result.success(Unit).also {
-            started = false
-            listener = null
-        }
+        override fun stop(): Result<Unit> =
+            Result.success(Unit).also {
+                started = false
+                listener = null
+            }
 
         override fun subscribe(
             listener: StreamNetworkMonitorListener,
@@ -245,7 +248,9 @@ class StreamClientIImplTest {
 
     private class ImmediateSingleFlightProcessor : StreamSingleFlightProcessor {
         override suspend fun <T> run(key: StreamTypedKey<T>, block: suspend () -> T): Result<T> =
-            runCatching { block() }
+            runCatching {
+                block()
+            }
 
         override fun <T> has(key: StreamTypedKey<T>): Boolean = false
 
@@ -565,13 +570,14 @@ class StreamClientIImplTest {
         val expectedRecovery = Recovery.Disconnect("background")
         coEvery { recoveryEvaluator.evaluate(any(), any(), any()) } returns
             Result.success(expectedRecovery)
-        every { socketSession.disconnect() } returns Result.success(Unit)
-        every { socketSession.subscribe(any<StreamClientListener>(), any()) } returns
+        coEvery { socketSession.disconnect() } returns Result.success(Unit)
+        coEvery { socketSession.subscribe(any<StreamClientListener>(), any()) } returns
             Result.success(mockk(relaxed = true))
-        coEvery { tokenManager.loadIfAbsent() } returns Result.success(StreamToken.fromString("tok"))
+        coEvery { tokenManager.loadIfAbsent() } returns
+            Result.success(StreamToken.fromString("tok"))
         coEvery { socketSession.connect(any()) } coAnswers
             {
-                suspendCancellableCoroutine<Result<StreamConnectionState.Connected>> { }
+                suspendCancellableCoroutine<Result<StreamConnectionState.Connected>> {}
             }
 
         val client = createClient(this, networkMonitor, recoveryEvaluator)
@@ -613,7 +619,8 @@ class StreamClientIImplTest {
         val firstConnectDeferred = CompletableDeferred<Result<StreamConnectionState.Connected>>()
         val connectedUser = mockk<StreamConnectedUser>(relaxed = true)
         val connectedState = StreamConnectionState.Connected(connectedUser, "conn-2")
-        coEvery { tokenManager.loadIfAbsent() } returns Result.success(StreamToken.fromString("tok"))
+        coEvery { tokenManager.loadIfAbsent() } returns
+            Result.success(StreamToken.fromString("tok"))
         every { socketSession.subscribe(any<StreamClientListener>(), any()) } returns
             Result.success(mockk(relaxed = true))
         every { socketSession.disconnect() } returns Result.success(Unit)
@@ -642,6 +649,55 @@ class StreamClientIImplTest {
         connectJob.cancel()
         firstConnectDeferred.cancel()
     }
+
+    @Test
+    fun `background disconnect followed by foreground reconnect succeeds unless client disconnects`() =
+        runTest {
+            val lifecycleMonitor = TestLifecycleMonitor()
+            val networkMonitor = TestNetworkMonitor()
+            val downstreamSubscriptionManager =
+                StreamSubscriptionManager<StreamNetworkAndLifecycleMonitorListener>(TestLogger)
+            val monitor =
+                StreamNetworkAndLifeCycleMonitor(
+                    logger = TestLogger,
+                    lifecycleMonitor = lifecycleMonitor,
+                    networkMonitor = networkMonitor,
+                    mutableNetworkState = MutableStateFlow(StreamNetworkState.Unknown),
+                    mutableLifecycleState = MutableStateFlow(StreamLifecycleState.Unknown),
+                    subscriptionManager = downstreamSubscriptionManager,
+                )
+            val recoveryEvaluator =
+                StreamConnectionRecoveryEvaluatorImpl(TestLogger, ImmediateSingleFlightProcessor())
+
+            val connectedUser = mockk<StreamConnectedUser>(relaxed = true)
+            val connectedState = StreamConnectionState.Connected(connectedUser, "conn-42")
+            coEvery { tokenManager.loadIfAbsent() } returns
+                Result.success(StreamToken.fromString("tok"))
+            every { socketSession.subscribe(any<StreamClientListener>(), any()) } returns
+                Result.success(mockk(relaxed = true))
+            every { socketSession.disconnect() } returns Result.success(Unit)
+            coEvery { socketSession.connect(any()) } returnsMany
+                listOf(Result.success(connectedState), Result.success(connectedState))
+            every { connectionIdHolder.setConnectionId("conn-42") } returns
+                Result.success("conn-42")
+
+            val client = createClient(this, monitor, recoveryEvaluator)
+
+            client.connect().onFailure {}
+            advanceUntilIdle()
+
+            lifecycleMonitor.emitBackground()
+            advanceUntilIdle()
+            verify(exactly = 1) { socketSession.disconnect() }
+            assertEquals(StreamConnectionState.Disconnected(), connFlow.value)
+
+            lifecycleMonitor.emitForeground()
+            networkMonitor.emitConnected(StreamNetworkInfo.Snapshot())
+            advanceTimeBy(1000)
+            advanceUntilIdle()
+
+            coVerify(exactly = 2) { socketSession.connect(any()) }
+        }
 
     @Test
     fun `recovery error notifies subscribers`() = runTest {

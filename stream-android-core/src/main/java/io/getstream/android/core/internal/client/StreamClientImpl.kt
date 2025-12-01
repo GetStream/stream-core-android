@@ -36,6 +36,7 @@ import io.getstream.android.core.api.subscribe.StreamSubscription
 import io.getstream.android.core.api.subscribe.StreamSubscriptionManager
 import io.getstream.android.core.api.utils.flatMap
 import io.getstream.android.core.api.utils.onTokenError
+import io.getstream.android.core.api.utils.runCatchingCancellable
 import io.getstream.android.core.api.utils.update
 import io.getstream.android.core.internal.observers.StreamNetworkAndLifeCycleMonitor
 import io.getstream.android.core.internal.observers.StreamNetworkAndLifecycleMonitorListener
@@ -64,6 +65,8 @@ internal class StreamClientImpl<T>(
     companion object {
         private val connectKey = randomExecutionKey<StreamConnectedUser>()
         private val disconnectKey = randomExecutionKey<Unit>()
+
+        private val recoveryKey = randomExecutionKey<Recovery?>()
     }
 
     private var socketSessionHandle: StreamSubscription? = null
@@ -90,6 +93,7 @@ internal class StreamClientImpl<T>(
                     object : StreamClientListener {
                         override fun onState(state: StreamConnectionState) {
                             logger.v { "[client#onState]: $state" }
+                            println("State: $state")
                             mutableConnectionState.update(state)
                             subscriptionManager.forEach { it.onState(state) }
                         }
@@ -124,6 +128,9 @@ internal class StreamClientImpl<T>(
                                         lifecycleState,
                                         networkState,
                                     )
+                                println("Connection State: $connectionState")
+                                println("Lifecycle State: $lifecycleState")
+                                println("Recovery: $recovery")
                                 recoveryEffect(recovery)
                             }
                         }
@@ -133,8 +140,10 @@ internal class StreamClientImpl<T>(
                         .subscribe(networkAndLifecycleMonitorListener, retentionOptions)
                         .getOrThrow()
             }
-            tokenManager
-                .loadIfAbsent()
+            // Network and Lifecycle manager must start first
+            networkAndLifeCycleMonitor
+                .start()
+                .flatMap { tokenManager.loadIfAbsent() }
                 .flatMap { token -> connectSocketSession(token) }
                 .fold(
                     onSuccess = { connected ->
@@ -150,9 +159,6 @@ internal class StreamClientImpl<T>(
                         Result.failure(error)
                     },
                 )
-                .flatMap { connectedUser ->
-                    networkAndLifeCycleMonitor.start().map { connectedUser }
-                }
                 .getOrThrow()
         }
 
@@ -211,7 +217,13 @@ internal class StreamClientImpl<T>(
 
                     is Recovery.Disconnect<*> -> {
                         logger.v { "[recovery] Disconnecting: $recovery" }
-                        socketSession.disconnect().notifyFailure(subscriptionManager)
+                        mutableConnectionState.update(StreamConnectionState.Disconnected())
+                        runCatchingCancellable {
+                                singleFlight.cancel(connectKey).getOrThrow()
+                                connectionIdHolder.clear().getOrThrow()
+                                socketSession.disconnect().getOrThrow()
+                            }
+                            .notifyFailure(subscriptionManager)
                     }
 
                     is Recovery.Error -> {
