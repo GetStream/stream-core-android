@@ -16,7 +16,15 @@
 
 package io.getstream.android.core.internal.filter
 
+import io.getstream.android.core.api.model.location.BoundingBox
+import io.getstream.android.core.api.model.location.CircularRegion
+import io.getstream.android.core.api.model.location.LocationCoordinate
+import io.getstream.android.core.api.model.location.contains
+import io.getstream.android.core.api.model.location.kilometers
+
 internal object FilterOperations {
+    infix fun Any.equal(that: Any) = this == that || isNear(that) || isWithinBoundsOf(that)
+
     infix fun Any.greater(that: Any) = anyCompare(this, that)?.let { it > 0 } == true
 
     infix fun Any.greaterOrEqual(that: Any) = anyCompare(this, that)?.let { it >= 0 } == true
@@ -47,7 +55,8 @@ internal object FilterOperations {
             else -> false
         }
 
-    infix fun Any.contains(that: Any): Boolean =
+    // Not called "contains" to avoid overloading `Any.contains`, which is too broad
+    infix fun Any.doesContain(that: Any): Boolean =
         when {
             that `in` this -> true
 
@@ -57,7 +66,7 @@ internal object FilterOperations {
                     val thisValue = this[thatKey]
 
                     thisValue == thatValue ||
-                        thisValue != null && thatValue != null && thisValue contains thatValue
+                        thisValue != null && thatValue != null && thisValue doesContain thatValue
                 }
             }
 
@@ -96,5 +105,52 @@ internal object FilterOperations {
         }
 
         return true
+    }
+
+    private fun Any.isNear(that: Any): Boolean {
+        if (this !is LocationCoordinate) return false
+
+        return when (that) {
+            is CircularRegion -> this in that
+            is Map<*, *> -> {
+                // Handle map format as expected by the API:
+                // { "lat": 41.8904, "lng": 12.4922, "distance": 5.0 }
+                val lat = (that["lat"] as? Number)?.toDouble() ?: return false
+                val lng = (that["lng"] as? Number)?.toDouble() ?: return false
+                val distanceKm = (that["distance"] as? Number)?.toDouble() ?: return false
+
+                this in
+                    CircularRegion(
+                        center = LocationCoordinate(lat, lng),
+                        radius = distanceKm.kilometers,
+                    )
+            }
+
+            else -> false
+        }
+    }
+
+    private fun Any.isWithinBoundsOf(that: Any): Boolean {
+        if (this !is LocationCoordinate) return false
+
+        return when (that) {
+            is BoundingBox -> this in that
+            is Map<*, *> -> {
+                // Handle map format as expected by the API:
+                // { "ne_lat": 41.9200, "ne_lng": 12.5200, "sw_lat": 41.8800, "sw_lng": 12.4700 }
+                val neLat = (that["ne_lat"] as? Number)?.toDouble() ?: return false
+                val neLng = (that["ne_lng"] as? Number)?.toDouble() ?: return false
+                val swLat = (that["sw_lat"] as? Number)?.toDouble() ?: return false
+                val swLng = (that["sw_lng"] as? Number)?.toDouble() ?: return false
+
+                this in
+                    BoundingBox(
+                        northeast = LocationCoordinate(neLat, neLng),
+                        southwest = LocationCoordinate(swLat, swLng),
+                    )
+            }
+
+            else -> false
+        }
     }
 }

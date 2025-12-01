@@ -141,6 +141,7 @@ internal class StreamClientFactoryTest {
 
         val client =
             StreamClient(
+                context = mockk(relaxed = true),
                 apiKey = deps.apiKey,
                 userId = deps.userId,
                 wsUrl = deps.wsUrl,
