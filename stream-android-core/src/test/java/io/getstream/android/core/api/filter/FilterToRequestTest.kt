@@ -16,6 +16,10 @@
 
 package io.getstream.android.core.api.filter
 
+import io.getstream.android.core.api.model.location.BoundingBox
+import io.getstream.android.core.api.model.location.CircularRegion
+import io.getstream.android.core.api.model.location.LocationCoordinate
+import io.getstream.android.core.api.model.location.kilometers
 import junit.framework.TestCase
 import kotlin.test.fail
 import org.junit.Test
@@ -45,6 +49,8 @@ internal class FilterToRequestTest(
         private val textField = TestField("text")
         private val filterTagsField = TestField("filter_tags")
         private val searchDataField = TestField("search_data")
+        private val nearField = TestField("near")
+        private val withinBoundsField = TestField("within_bounds")
 
         @JvmStatic
         @Parameterized.Parameters(name = "{2}")
@@ -54,6 +60,43 @@ internal class FilterToRequestTest(
                     idField.equal("activity-123"),
                     mapOf("id" to mapOf("\$eq" to "activity-123")),
                     "Field equals value",
+                ),
+                arrayOf(
+                    nearField.equal(
+                        CircularRegion(
+                            center = LocationCoordinate(latitude = 41.8900, longitude = 12.4900),
+                            radius = 5.kilometers,
+                        )
+                    ),
+                    mapOf(
+                        "near" to
+                            mapOf(
+                                "\$eq" to
+                                    mapOf("lat" to 41.8900, "lng" to 12.4900, "distance" to 5.0)
+                            )
+                    ),
+                    "Location equal to circular region",
+                ),
+                arrayOf(
+                    withinBoundsField.equal(
+                        BoundingBox(
+                            northeast = LocationCoordinate(latitude = 41.91, longitude = 12.51),
+                            southwest = LocationCoordinate(latitude = 41.87, longitude = 12.47),
+                        )
+                    ),
+                    mapOf(
+                        "within_bounds" to
+                            mapOf(
+                                "\$eq" to
+                                    mapOf(
+                                        "ne_lat" to 41.91,
+                                        "ne_lng" to 12.51,
+                                        "sw_lat" to 41.87,
+                                        "sw_lng" to 12.47,
+                                    )
+                            )
+                    ),
+                    "Location equal to bounding box",
                 ),
                 arrayOf(
                     createdAtField.greater(1234567890),

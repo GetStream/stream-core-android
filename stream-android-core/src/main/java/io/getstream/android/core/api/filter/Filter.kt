@@ -18,6 +18,9 @@ package io.getstream.android.core.api.filter
 
 import io.getstream.android.core.annotations.StreamInternalApi
 import io.getstream.android.core.annotations.StreamPublishedApi
+import io.getstream.android.core.api.model.location.BoundingBox
+import io.getstream.android.core.api.model.location.CircularRegion
+import io.getstream.android.core.api.model.location.toRequestMap
 import io.getstream.android.core.internal.filter.BinaryOperator
 import io.getstream.android.core.internal.filter.CollectionOperator
 import io.getstream.android.core.internal.filter.FilterOperations
@@ -45,9 +48,18 @@ internal data class CollectionOperationFilter<M, F : FilterField<M>>(
 @StreamInternalApi
 public fun Filter<*, *>.toRequest(): Map<String, Any> =
     when (this) {
-        is BinaryOperationFilter<*, *> -> mapOf(field.remote to mapOf(operator.remote to value))
+        is BinaryOperationFilter<*, *> ->
+            mapOf(field.remote to mapOf(operator.remote to value.toRequestValue()))
+
         is CollectionOperationFilter<*, *> ->
             mapOf(operator.remote to filters.map(Filter<*, *>::toRequest))
+    }
+
+private fun Any.toRequestValue() =
+    when (this) {
+        is CircularRegion -> toRequestMap()
+        is BoundingBox -> toRequestMap()
+        else -> this
     }
 
 /** Checks if this filter matches the given item. */
@@ -61,7 +73,7 @@ public infix fun <M, F : FilterField<M>> Filter<M, F>.matches(item: M): Boolean 
 
             with(FilterOperations) {
                 when (operator) {
-                    BinaryOperator.EQUAL -> notNull && fieldValue == filterValue
+                    BinaryOperator.EQUAL -> notNull && fieldValue equal filterValue
                     BinaryOperator.GREATER -> notNull && fieldValue greater filterValue
                     BinaryOperator.LESS -> notNull && fieldValue less filterValue
                     BinaryOperator.GREATER_OR_EQUAL ->
@@ -71,7 +83,7 @@ public infix fun <M, F : FilterField<M>> Filter<M, F>.matches(item: M): Boolean 
                     BinaryOperator.QUERY -> notNull && search(filterValue, where = fieldValue)
                     BinaryOperator.AUTOCOMPLETE -> notNull && fieldValue autocompletes filterValue
                     BinaryOperator.EXISTS -> fieldValue exists filterValue
-                    BinaryOperator.CONTAINS -> notNull && fieldValue contains filterValue
+                    BinaryOperator.CONTAINS -> notNull && fieldValue doesContain filterValue
                     BinaryOperator.PATH_EXISTS -> notNull && fieldValue containsPath filterValue
                 }
             }
