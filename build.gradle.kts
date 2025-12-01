@@ -1,5 +1,6 @@
 import com.android.build.api.dsl.ApplicationExtension
 import com.android.build.api.dsl.LibraryExtension
+import com.vanniktech.maven.publish.MavenPublishBaseExtension
 import io.getstream.core.Configuration
 
 plugins {
@@ -58,6 +59,77 @@ subprojects {
                 compileSdk = libs.versions.compileSdk.get().toInt()
                 minSdk = libs.versions.minSdk.get().toInt()
                 targetSdk = libs.versions.targetSdk.get().toInt()
+            }
+        }
+    }
+}
+
+subprojects {
+    plugins.withId("com.vanniktech.maven.publish") {
+        extensions.configure<MavenPublishBaseExtension> {
+            publishToMavenCentral(automaticRelease = true)
+
+            pom {
+                name.set("Stream Android Core")
+                description.set("Stream Core official Android SDK")
+                url.set("https://github.com/getstream/stream-core-android")
+
+                licenses {
+                    license {
+                        name.set("Stream License")
+                        url.set("https://github.com/GetStream/stream-core-android/blob/main/LICENSE")
+                    }
+                }
+
+                developers {
+                    developer {
+                        id = "aleksandar-apostolov"
+                        name = "Aleksandar Apostolov"
+                        email = "aleksandar.apostolov@getstream.io"
+                    }
+                    developer {
+                        id = "VelikovPetar"
+                        name = "Petar Velikov"
+                        email = "petar.velikov@getstream.io"
+                    }
+                    developer {
+                        id = "andremion"
+                        name = "André Mion"
+                        email = "andre.rego@getstream.io"
+                    }
+                    developer {
+                        id = "rahul-lohra"
+                        name = "Rahul Kumar Lohra"
+                        email = "rahul.lohra@getstream.io"
+                    }
+                    developer {
+                        id = "gpunto"
+                        name = "Gianmarco David"
+                        email = "gianmarco.david@getstream.io"
+                    }
+                }
+
+                scm {
+                    connection.set("scm:git:github.com/getstream/stream-core-android.git")
+                    developerConnection.set("scm:git:ssh://github.com/getstream/stream-core-android.git")
+                    url.set("https://github.com/getstream/stream-core-android/tree/main")
+                }
+            }
+        }
+    }
+}
+
+tasks.register("printAllArtifacts") {
+    group = "publishing"
+    description = "Prints all artifacts that will be published"
+
+    doLast {
+        subprojects.forEach { subproject ->
+            subproject.plugins.withId("com.vanniktech.maven.publish") {
+                subproject.extensions.findByType(PublishingExtension::class.java)
+                    ?.publications
+                    ?.filterIsInstance<MavenPublication>()
+                    ?.forEach { println("${it.groupId}:${it.artifactId}:${it.version}") }
             }
         }
     }
