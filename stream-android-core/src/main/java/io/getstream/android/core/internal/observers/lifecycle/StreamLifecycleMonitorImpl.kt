@@ -25,6 +25,7 @@ import io.getstream.android.core.api.observers.lifecycle.StreamLifecycleListener
 import io.getstream.android.core.api.observers.lifecycle.StreamLifecycleMonitor
 import io.getstream.android.core.api.subscribe.StreamSubscription
 import io.getstream.android.core.api.subscribe.StreamSubscriptionManager
+import io.getstream.android.core.api.utils.runOnMainLooper
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 
@@ -45,14 +46,14 @@ internal class StreamLifecycleMonitorImpl(
         if (!started.compareAndSet(false, true)) {
             return@runCatching
         }
-        lifecycle.addObserver(this)
+        runOnMainLooper { lifecycle.addObserver(this) }.getOrThrow()
     }
 
     override fun stop(): Result<Unit> = runCatching {
         if (!started.compareAndSet(true, false)) {
             return@runCatching
         }
-        lifecycle.removeObserver(this)
+        runOnMainLooper { lifecycle.removeObserver(this) }.getOrThrow()
     }
 
     override fun onResume(owner: LifecycleOwner) {

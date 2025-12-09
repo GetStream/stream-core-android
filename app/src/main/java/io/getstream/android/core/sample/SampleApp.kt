@@ -19,6 +19,7 @@ package io.getstream.android.core.sample
 import android.annotation.SuppressLint
 import android.app.Application
 import android.os.Build
+import android.os.StrictMode
 import io.getstream.android.core.api.StreamClient
 import io.getstream.android.core.api.authentication.StreamTokenProvider
 import io.getstream.android.core.api.model.config.StreamClientSerializationConfig
@@ -49,6 +50,10 @@ class SampleApp : Application() {
     @SuppressLint("NotKeepingInstance")
     override fun onCreate() {
         super.onCreate()
+        StrictMode.setThreadPolicy(
+            StrictMode.ThreadPolicy.Builder().detectAll().penaltyLog().build()
+        )
+        StrictMode.setVmPolicy(StrictMode.VmPolicy.Builder().detectAll().penaltyLog().build())
         instance = this
         streamClient =
             StreamClient(
