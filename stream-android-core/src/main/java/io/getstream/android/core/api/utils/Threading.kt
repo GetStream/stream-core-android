@@ -40,8 +40,8 @@ import java.util.concurrent.TimeUnit
  *
  * ### Exception Handling
  * - Exceptions thrown by [block] are captured and returned as `Result.failure`
- * - [CancellationException][kotlin.coroutines.cancellation.CancellationException] is rethrown
- *   to preserve coroutine cancellation semantics
+ * - [CancellationException][kotlin.coroutines.cancellation.CancellationException] is rethrown to
+ *   preserve coroutine cancellation semantics
  * - If the main looper is not initialized, throws [IllegalStateException]
  *
  * ### Use Cases
@@ -51,6 +51,7 @@ import java.util.concurrent.TimeUnit
  * - Synchronizing with main thread state before proceeding
  *
  * ### Example Usage
+ *
  * ```kotlin
  * // From a background thread, safely add a lifecycle observer
  * runOnMainLooper {
@@ -76,7 +77,6 @@ import java.util.concurrent.TimeUnit
  * @return [Result.success] with the return value of [block], or [Result.failure] if an exception
  *   was thrown
  * @throws IllegalStateException if the main looper is not initialized or if execution times out
- *
  * @see runOn for executing on a custom [Looper]
  */
 @StreamInternalApi
@@ -101,13 +101,13 @@ public inline fun <T> runOnMainLooper(crossinline block: () -> T): Result<T> =
  *
  * ### Timeout
  * If the target looper does not execute [block] within **5 seconds**, this function throws
- * [IllegalStateException]. This prevents indefinite blocking if the target thread is stuck
- * or the looper is not running.
+ * [IllegalStateException]. This prevents indefinite blocking if the target thread is stuck or the
+ * looper is not running.
  *
  * ### Exception Handling
  * - Exceptions thrown by [block] are captured and returned as `Result.failure`
- * - [CancellationException][kotlin.coroutines.cancellation.CancellationException] is rethrown
- *   to preserve coroutine cancellation semantics
+ * - [CancellationException][kotlin.coroutines.cancellation.CancellationException] is rethrown to
+ *   preserve coroutine cancellation semantics
  *
  * ### Use Cases
  * - Executing code on a custom [HandlerThread][android.os.HandlerThread]'s looper
@@ -115,6 +115,7 @@ public inline fun <T> runOnMainLooper(crossinline block: () -> T): Result<T> =
  * - Testing thread-specific behavior with custom test loopers
  *
  * ### Example Usage
+ *
  * ```kotlin
  * // Execute on a custom background thread
  * val handlerThread = HandlerThread("worker").apply { start() }
@@ -152,7 +153,6 @@ public inline fun <T> runOnMainLooper(crossinline block: () -> T): Result<T> =
  * @return [Result.success] with the return value of [block], or [Result.failure] if an exception
  *   was thrown
  * @throws IllegalStateException if execution times out after 5 seconds
- *
  * @see runOnMainLooper for a convenience function that always uses the main looper
  */
 @StreamInternalApi

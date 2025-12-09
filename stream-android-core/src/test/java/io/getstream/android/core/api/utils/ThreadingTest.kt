@@ -17,7 +17,6 @@
 package io.getstream.android.core.api.utils
 
 import android.os.Build
-import android.os.Handler
 import android.os.HandlerThread
 import android.os.Looper
 import java.util.concurrent.CountDownLatch
@@ -128,9 +127,7 @@ class ThreadingTest {
     fun `runOnMainLooper executes block exactly once on success`() {
         val callCount = AtomicInteger(0)
 
-        val result = runOnMainLooper {
-            callCount.incrementAndGet()
-        }
+        val result = runOnMainLooper { callCount.incrementAndGet() }
 
         assertTrue(result.isSuccess)
         assertEquals(1, callCount.get())
@@ -141,10 +138,11 @@ class ThreadingTest {
         val callCount = AtomicInteger(0)
         val exception = RuntimeException("error")
 
-        val result = runOnMainLooper<Unit> {
-            callCount.incrementAndGet()
-            throw exception
-        }
+        val result =
+            runOnMainLooper<Unit> {
+                callCount.incrementAndGet()
+                throw exception
+            }
 
         assertTrue(result.isFailure)
         assertSame(exception, result.exceptionOrNull())
@@ -161,9 +159,7 @@ class ThreadingTest {
         repeat(5) { index ->
             thread(start = true, name = "ThreadingTest-worker-$index") {
                 val result = runOnMainLooper { index }
-                synchronized(results) {
-                    results.add(result.getOrThrow())
-                }
+                synchronized(results) { results.add(result.getOrThrow()) }
                 completed.countDown()
             }
         }
@@ -215,10 +211,11 @@ class ThreadingTest {
         val mainLooper = Looper.getMainLooper()
         val executionThread = AtomicReference<Thread?>()
 
-        val result = runOn(mainLooper) {
-            executionThread.set(Thread.currentThread())
-            Looper.myLooper()
-        }
+        val result =
+            runOn(mainLooper) {
+                executionThread.set(Thread.currentThread())
+                Looper.myLooper()
+            }
 
         assertTrue(result.isSuccess)
         assertEquals(mainLooper, result.getOrNull())
@@ -233,10 +230,11 @@ class ThreadingTest {
         val completed = CountDownLatch(1)
 
         thread(start = true, name = "ThreadingTest-worker") {
-            val result = runOn(mainLooper) {
-                executionThread.set(Thread.currentThread())
-                "success"
-            }
+            val result =
+                runOn(mainLooper) {
+                    executionThread.set(Thread.currentThread())
+                    "success"
+                }
 
             assertTrue(result.isSuccess)
             assertEquals("success", result.getOrNull())
@@ -260,10 +258,11 @@ class ThreadingTest {
             val completed = CountDownLatch(1)
 
             thread(start = true, name = "ThreadingTest-caller") {
-                val result = runOn(customLooper) {
-                    executionThread.set(Thread.currentThread())
-                    Looper.myLooper()
-                }
+                val result =
+                    runOn(customLooper) {
+                        executionThread.set(Thread.currentThread())
+                        Looper.myLooper()
+                    }
 
                 assertTrue(result.isSuccess)
                 assertEquals(customLooper, result.getOrNull())
@@ -285,9 +284,7 @@ class ThreadingTest {
         val completed = CountDownLatch(1)
 
         thread(start = true, name = "ThreadingTest-worker") {
-            val result = runOn(mainLooper) {
-                throw exception
-            }
+            val result = runOn(mainLooper) { throw exception }
 
             assertTrue(result.isFailure)
             assertSame(exception, result.exceptionOrNull())
@@ -305,9 +302,7 @@ class ThreadingTest {
         val mainLooper = Looper.getMainLooper()
 
         assertFailsWith<CancellationException> {
-            runOn(mainLooper) {
-                throw CancellationException("cancelled")
-            }
+            runOn(mainLooper) { throw CancellationException("cancelled") }
         }
     }
 
@@ -316,10 +311,11 @@ class ThreadingTest {
         val mainLooper = Looper.getMainLooper()
         val callCount = AtomicInteger(0)
 
-        val result = runOn(mainLooper) {
-            callCount.incrementAndGet()
-            "done"
-        }
+        val result =
+            runOn(mainLooper) {
+                callCount.incrementAndGet()
+                "done"
+            }
 
         assertTrue(result.isSuccess)
         assertEquals("done", result.getOrNull())
@@ -352,10 +348,11 @@ class ThreadingTest {
             val mainThread = Thread.currentThread()
             val executionThread = AtomicReference<Thread?>()
 
-            val result = runOn(backgroundLooper) {
-                executionThread.set(Thread.currentThread())
-                "from-background"
-            }
+            val result =
+                runOn(backgroundLooper) {
+                    executionThread.set(Thread.currentThread())
+                    "from-background"
+                }
 
             assertTrue(result.isSuccess)
             assertEquals("from-background", result.getOrNull())
@@ -375,12 +372,11 @@ class ThreadingTest {
             val looper1 = thread1.looper
             val looper2 = thread2.looper
 
-            val result1 = runOn(looper1) {
-                val result2 = runOn(looper2) {
-                    Looper.myLooper()
+            val result1 =
+                runOn(looper1) {
+                    val result2 = runOn(looper2) { Looper.myLooper() }
+                    result2.getOrThrow() to Looper.myLooper()
                 }
-                result2.getOrThrow() to Looper.myLooper()
-            }
 
             assertTrue(result1.isSuccess)
             val (innerLooper, outerLooper) = result1.getOrThrow()
@@ -417,11 +413,8 @@ class ThreadingTest {
             val resultRef = AtomicReference<Result<Unit>?>()
 
             thread(start = true, name = "ThreadingTest-nested-worker") {
-                val result = runOn(customLooper) {
-                    runOn(mainLooper) {
-                        throw exception
-                    }.getOrThrow()
-                }
+                val result =
+                    runOn(customLooper) { runOn(mainLooper) { throw exception }.getOrThrow() }
                 resultRef.set(result)
                 completed.countDown()
             }
@@ -449,11 +442,10 @@ class ThreadingTest {
         handlerThread.join(1000)
 
         // This should timeout because the looper is no longer processing messages
-        val exception = assertFailsWith<IllegalStateException> {
-            runOn(stoppedLooper) {
-                "should-not-execute"
-            }.getOrThrow()
-        }
+        val exception =
+            assertFailsWith<IllegalStateException> {
+                runOn(stoppedLooper) { "should-not-execute" }.getOrThrow()
+            }
 
         assertTrue(exception.message?.contains("Timed out") == true)
     }
@@ -469,9 +461,7 @@ class ThreadingTest {
             repeat(10) { index ->
                 thread(start = true, name = "ThreadingTest-worker-$index") {
                     val result = runOn(customLooper) { index }
-                    synchronized(results) {
-                        results.add(result.getOrThrow())
-                    }
+                    synchronized(results) { results.add(result.getOrThrow()) }
                     completed.countDown()
                 }
             }
@@ -489,9 +479,7 @@ class ThreadingTest {
         val mainLooper = Looper.getMainLooper()
         val exception = IllegalStateException("custom error")
 
-        val result = runOn(mainLooper) {
-            throw exception
-        }
+        val result = runOn(mainLooper) { throw exception }
 
         assertTrue(result.isFailure)
         val caught = result.exceptionOrNull()
@@ -514,12 +502,11 @@ class ThreadingTest {
             val resultRef = AtomicReference<Pair<Thread, Thread>?>()
 
             thread(start = true, name = "ThreadingTest-integration-worker") {
-                val result = runOn(customLooper) {
-                    val mainResult = runOnMainLooper {
-                        Thread.currentThread()
+                val result =
+                    runOn(customLooper) {
+                        val mainResult = runOnMainLooper { Thread.currentThread() }
+                        mainResult.getOrThrow() to Thread.currentThread()
                     }
-                    mainResult.getOrThrow() to Thread.currentThread()
-                }
                 resultRef.set(result.getOrThrow())
                 completed.countDown()
             }
@@ -548,9 +535,7 @@ class ThreadingTest {
         repeat(count) { index ->
             thread(start = true, name = "ThreadingTest-stress-$index") {
                 val result = runOnMainLooper { index }
-                synchronized(results) {
-                    results.add(result.getOrThrow())
-                }
+                synchronized(results) { results.add(result.getOrThrow()) }
                 completed.countDown()
             }
         }
