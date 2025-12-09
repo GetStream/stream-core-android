@@ -138,7 +138,7 @@ internal class StreamClientImpl<T>(
             }
             // Network and Lifecycle manager must start first
             networkAndLifeCycleMonitor
-                .let { withContext(Dispatchers.Main) { it.start() } }
+                .start()
                 .flatMap { tokenManager.loadIfAbsent() }
                 .flatMap { token -> connectSocketSession(token) }
                 .fold(
