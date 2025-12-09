@@ -18,6 +18,8 @@
 
 package io.getstream.android.core.api
 
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleObserver
 import io.getstream.android.core.annotations.StreamInternalApi
 import io.getstream.android.core.api.authentication.StreamTokenManager
 import io.getstream.android.core.api.authentication.StreamTokenProvider
@@ -29,6 +31,7 @@ import io.getstream.android.core.api.model.config.StreamSocketConfig
 import io.getstream.android.core.api.model.connection.StreamConnectionState
 import io.getstream.android.core.api.model.value.StreamApiKey
 import io.getstream.android.core.api.model.value.StreamHttpClientInfoHeader
+import io.getstream.android.core.api.model.value.StreamToken
 import io.getstream.android.core.api.model.value.StreamUserId
 import io.getstream.android.core.api.model.value.StreamWsUrl
 import io.getstream.android.core.api.observers.lifecycle.StreamLifecycleMonitor
@@ -53,6 +56,7 @@ import io.getstream.android.core.internal.http.interceptor.StreamEndpointErrorIn
 import io.getstream.android.core.internal.serialization.StreamCompositeEventSerializationImpl
 import io.getstream.android.core.internal.socket.StreamSocketSession
 import io.getstream.android.core.internal.socket.StreamWebSocketImpl
+import io.getstream.android.core.internal.subscribe.StreamSubscriptionManagerImpl
 import io.getstream.android.core.testutil.assertFieldEquals
 import io.getstream.android.core.testutil.readPrivateField
 import io.mockk.mockk
@@ -287,5 +291,66 @@ internal class StreamClientFactoryTest {
 
         // Then
         assertEquals(listOf(customInterceptor), builder.interceptors())
+    }
+
+    @Test
+    fun `StreamClient factory default subscription manager listener limits`() {
+        val context = mockk<android.content.Context>(relaxed = true)
+        val fakeAndroidComponents =
+            object : io.getstream.android.core.api.components.StreamAndroidComponentsProvider {
+                override fun connectivityManager(): Result<android.net.ConnectivityManager> =
+                    Result.success(mockk(relaxed = true))
+
+                override fun wifiManager(): Result<android.net.wifi.WifiManager> =
+                    Result.success(mockk(relaxed = true))
+
+                override fun telephonyManager(): Result<android.telephony.TelephonyManager> =
+                    Result.success(mockk(relaxed = true))
+
+                override fun lifecycle(): Lifecycle =
+                    object : Lifecycle() {
+                        override fun addObserver(observer: LifecycleObserver) {}
+
+                        override fun removeObserver(observer: LifecycleObserver) {}
+
+                        override val currentState: Lifecycle.State
+                            get() = Lifecycle.State.CREATED
+                    }
+            }
+        val tokenProvider =
+            object : StreamTokenProvider {
+                override suspend fun loadToken(userId: StreamUserId): StreamToken =
+                    StreamToken.fromString("token")
+            }
+
+        val client =
+            StreamClient(
+                scope = testScope,
+                context = context,
+                apiKey = StreamApiKey.fromString("key123"),
+                userId = StreamUserId.fromString("user-123"),
+                wsUrl = StreamWsUrl.fromString("wss://test.stream/video"),
+                products = listOf("feeds"),
+                clientInfoHeader =
+                    StreamHttpClientInfoHeader.create(
+                        product = "android",
+                        productVersion = "1.0",
+                        os = "android",
+                        apiLevel = 33,
+                        deviceModel = "Pixel",
+                        app = "test-app",
+                        appVersion = "1.0.0",
+                    ),
+                tokenProvider = tokenProvider,
+                serializationConfig = serializationConfig,
+                androidComponentsProvider = fakeAndroidComponents,
+                logProvider = logProvider,
+            )
+
+        val manager =
+            (client as StreamClientImpl<*>).readPrivateField("subscriptionManager")
+                as StreamSubscriptionManagerImpl<*>
+        manager.assertFieldEquals("maxStrongSubscriptions", 250)
+        manager.assertFieldEquals("maxWeakSubscriptions", 250)
     }
 }
