@@ -16,8 +16,6 @@
 
 package io.getstream.android.core.internal.observers.lifecycle
 
-import android.os.Handler
-import android.os.Looper
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
@@ -27,8 +25,7 @@ import io.getstream.android.core.api.observers.lifecycle.StreamLifecycleListener
 import io.getstream.android.core.api.observers.lifecycle.StreamLifecycleMonitor
 import io.getstream.android.core.api.subscribe.StreamSubscription
 import io.getstream.android.core.api.subscribe.StreamSubscriptionManager
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.TimeUnit
+import io.getstream.android.core.api.utils.runOnMainLooper
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 
@@ -49,14 +46,14 @@ internal class StreamLifecycleMonitorImpl(
         if (!started.compareAndSet(false, true)) {
             return@runCatching
         }
-        runOnMainThread { lifecycle.addObserver(this) }
+        runOnMainLooper { lifecycle.addObserver(this) }.getOrThrow()
     }
 
     override fun stop(): Result<Unit> = runCatching {
         if (!started.compareAndSet(true, false)) {
             return@runCatching
         }
-        runOnMainThread { lifecycle.removeObserver(this) }
+        runOnMainLooper { lifecycle.removeObserver(this) }.getOrThrow()
     }
 
     override fun onResume(owner: LifecycleOwner) {
@@ -91,30 +88,4 @@ internal class StreamLifecycleMonitorImpl(
             Lifecycle.State.STARTED -> StreamLifecycleState.Background
             Lifecycle.State.RESUMED -> StreamLifecycleState.Foreground
         }
-
-    private fun runOnMainThread(block: () -> Unit) {
-        val mainLooper =
-            Looper.getMainLooper() ?: throw IllegalStateException("Main looper is not initialized")
-        if (Looper.myLooper() == mainLooper) {
-            block()
-            return
-        }
-
-        val latch = CountDownLatch(1)
-        var error: Throwable? = null
-        Handler(mainLooper).post {
-            try {
-                block()
-            } catch (t: Throwable) {
-                error = t
-            } finally {
-                latch.countDown()
-            }
-        }
-
-        if (!latch.await(5, TimeUnit.SECONDS)) {
-            throw IllegalStateException("Timed out waiting to post to main thread")
-        }
-        error?.let { throw it }
-    }
 }
