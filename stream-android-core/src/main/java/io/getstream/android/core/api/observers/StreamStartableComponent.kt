@@ -16,7 +16,6 @@
 
 package io.getstream.android.core.api.observers
 
-import androidx.annotation.MainThread
 import io.getstream.android.core.annotations.StreamInternalApi
 
 /**

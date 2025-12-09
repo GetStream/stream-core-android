@@ -36,8 +36,8 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
-import org.robolectric.annotation.Config
 import org.robolectric.Shadows
+import org.robolectric.annotation.Config
 
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [Build.VERSION_CODES.UPSIDE_DOWN_CAKE])
@@ -201,8 +201,11 @@ class StreamLifecycleMonitorTest {
                 shadowLooper.idle()
             }
 
-            assertEquals(mainLooper.thread, owner.addObserverThread.get(),
-                "addObserver should be called on main thread in iteration $iteration")
+            assertEquals(
+                mainLooper.thread,
+                owner.addObserverThread.get(),
+                "addObserver should be called on main thread in iteration $iteration",
+            )
 
             val stopCompleted = CountDownLatch(1)
             thread(start = true, name = "StreamLifecycleMonitorTest-stop-$iteration") {
@@ -215,8 +218,11 @@ class StreamLifecycleMonitorTest {
                 shadowLooper.idle()
             }
 
-            assertEquals(mainLooper.thread, owner.removeObserverThread.get(),
-                "removeObserver should be called on main thread in iteration $iteration")
+            assertEquals(
+                mainLooper.thread,
+                owner.removeObserverThread.get(),
+                "removeObserver should be called on main thread in iteration $iteration",
+            )
         }
     }
 
@@ -250,6 +256,5 @@ class StreamLifecycleMonitorTest {
                 override val currentState: State
                     get() = registry.currentState
             }
-
     }
 }

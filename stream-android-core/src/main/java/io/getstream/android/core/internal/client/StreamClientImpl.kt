@@ -43,12 +43,10 @@ import io.getstream.android.core.internal.observers.StreamNetworkAndLifecycleMon
 import io.getstream.android.core.internal.socket.StreamSocketSession
 import io.getstream.android.core.internal.socket.model.ConnectUserData
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 internal class StreamClientImpl<T>(
     private val userId: StreamUserId,
