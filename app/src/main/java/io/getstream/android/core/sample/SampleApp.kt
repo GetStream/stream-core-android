@@ -22,6 +22,7 @@ import android.os.Build
 import android.os.StrictMode
 import io.getstream.android.core.api.StreamClient
 import io.getstream.android.core.api.authentication.StreamTokenProvider
+import io.getstream.android.core.api.model.StreamUser
 import io.getstream.android.core.api.model.config.StreamClientSerializationConfig
 import io.getstream.android.core.api.model.value.StreamApiKey
 import io.getstream.android.core.api.model.value.StreamHttpClientInfoHeader
@@ -36,7 +37,7 @@ import kotlinx.coroutines.SupervisorJob
 class SampleApp : Application() {
 
     lateinit var streamClient: StreamClient
-    private val userId = StreamUserId.fromString("sample-user")
+    private val user = StreamUser(StreamUserId.fromString("sample-user"))
     private val token =
         StreamToken.fromString(
             "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoicGV0YXIifQ.mZFi4iSblaIoyo9JDdcxIkGkwI-tuApeSBawxpz42rs"
@@ -60,7 +61,7 @@ class SampleApp : Application() {
                 context = this.applicationContext,
                 scope = coroutinesScope,
                 apiKey = StreamApiKey.fromString("pd67s34fzpgw"),
-                userId = userId,
+                user = user,
                 products = listOf("feeds", "chat", "video"),
                 wsUrl =
                     StreamWsUrl.fromString(

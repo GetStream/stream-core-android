@@ -24,6 +24,7 @@ import io.getstream.android.core.api.authentication.StreamTokenProvider
 import io.getstream.android.core.api.components.StreamAndroidComponentsProvider
 import io.getstream.android.core.api.http.StreamOkHttpInterceptors
 import io.getstream.android.core.api.log.StreamLoggerProvider
+import io.getstream.android.core.api.model.StreamUser
 import io.getstream.android.core.api.model.config.StreamClientSerializationConfig
 import io.getstream.android.core.api.model.config.StreamHttpConfig
 import io.getstream.android.core.api.model.config.StreamSocketConfig
@@ -33,7 +34,6 @@ import io.getstream.android.core.api.model.connection.lifecycle.StreamLifecycleS
 import io.getstream.android.core.api.model.connection.network.StreamNetworkState
 import io.getstream.android.core.api.model.value.StreamApiKey
 import io.getstream.android.core.api.model.value.StreamHttpClientInfoHeader
-import io.getstream.android.core.api.model.value.StreamUserId
 import io.getstream.android.core.api.model.value.StreamWsUrl
 import io.getstream.android.core.api.observers.lifecycle.StreamLifecycleMonitor
 import io.getstream.android.core.api.observers.network.StreamNetworkMonitor
@@ -145,9 +145,9 @@ public interface StreamClient : StreamObservable<StreamClientListener> {
 /**
  * ### Overview
  *
- * Creates a [StreamClient] with the given [apiKey], [userId], [tokenProvider] and [scope]. The
- * client is created in a disconnected state. You must call `connect()` to establish a connection.
- * The client is automatically disconnected when the [scope] is cancelled.
+ * Creates a [StreamClient] with the given [apiKey], [user], [tokenProvider] and [scope]. The client
+ * is created in a disconnected state. You must call `connect()` to establish a connection. The
+ * client is automatically disconnected when the [scope] is cancelled.
  *
  * **Important**: The client instance **must be kept alive for the duration of the connection**. Do
  * not create a new client for every operation.
@@ -185,7 +185,7 @@ public interface StreamClient : StreamObservable<StreamClientListener> {
  * ```
  *
  * @param apiKey The API key.
- * @param userId The user ID.
+ * @param user The user ID.
  * @param wsUrl The WebSocket URL.
  * @param products Stream product codes (for feature gates / telemetry) negotiated with the socket.
  * @param clientInfoHeader The client info header.
@@ -215,7 +215,7 @@ public fun StreamClient(
 
     // Client config
     apiKey: StreamApiKey,
-    userId: StreamUserId,
+    user: StreamUser,
     wsUrl: StreamWsUrl,
     products: List<String>,
     clientInfoHeader: StreamHttpClientInfoHeader,
@@ -249,7 +249,7 @@ public fun StreamClient(
         StreamRetryProcessor(logger = logProvider.taggedLogger("SCRetryProcessor")),
 
     // Token
-    tokenManager: StreamTokenManager = StreamTokenManager(userId, tokenProvider, singleFlight),
+    tokenManager: StreamTokenManager = StreamTokenManager(user.id, tokenProvider, singleFlight),
 
     // Socket
     connectionIdHolder: StreamConnectionIdHolder = StreamConnectionIdHolder(),
@@ -344,7 +344,7 @@ public fun StreamClient(
 
     val mutableConnectionState = MutableStateFlow<StreamConnectionState>(StreamConnectionState.Idle)
     return StreamClientImpl(
-        userId = userId,
+        user = user,
         scope = clientScope,
         tokenManager = tokenManager,
         singleFlight = singleFlight,
