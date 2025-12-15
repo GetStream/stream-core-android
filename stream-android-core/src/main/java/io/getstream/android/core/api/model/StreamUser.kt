@@ -16,7 +16,7 @@
 
 package io.getstream.android.core.api.model
 
-import io.getstream.android.core.annotations.StreamPublishedApi
+import io.getstream.android.core.annotations.StreamInternalApi
 import io.getstream.android.core.api.model.value.StreamUserId
 
 /**
@@ -28,7 +28,7 @@ import io.getstream.android.core.api.model.value.StreamUserId
  * @property customData Custom data associated with the user, represented as a map (default empty
  *   map).
  */
-@StreamPublishedApi
+@StreamInternalApi
 public data class StreamUser(
     public val id: StreamUserId,
     public val name: String? = null,
