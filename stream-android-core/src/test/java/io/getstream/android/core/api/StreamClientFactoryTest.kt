@@ -25,6 +25,7 @@ import io.getstream.android.core.api.authentication.StreamTokenManager
 import io.getstream.android.core.api.authentication.StreamTokenProvider
 import io.getstream.android.core.api.log.StreamLogger
 import io.getstream.android.core.api.log.StreamLoggerProvider
+import io.getstream.android.core.api.model.StreamUser
 import io.getstream.android.core.api.model.config.StreamClientSerializationConfig
 import io.getstream.android.core.api.model.config.StreamHttpConfig
 import io.getstream.android.core.api.model.config.StreamSocketConfig
@@ -92,7 +93,7 @@ internal class StreamClientFactoryTest {
 
     private data class Dependencies(
         val apiKey: StreamApiKey,
-        val userId: StreamUserId,
+        val user: StreamUser,
         val wsUrl: StreamWsUrl,
         val clientInfo: StreamHttpClientInfoHeader,
         val clientSubscriptionManager: StreamSubscriptionManager<StreamClientListener>,
@@ -116,7 +117,7 @@ internal class StreamClientFactoryTest {
         val deps =
             Dependencies(
                 apiKey = StreamApiKey.fromString("key123"),
-                userId = StreamUserId.fromString("user-123"),
+                user = StreamUser(id = StreamUserId.fromString("user-123")),
                 wsUrl = StreamWsUrl.fromString("wss://test.stream/video"),
                 clientInfo =
                     StreamHttpClientInfoHeader.create(
@@ -147,7 +148,7 @@ internal class StreamClientFactoryTest {
             StreamClient(
                 context = mockk(relaxed = true),
                 apiKey = deps.apiKey,
-                userId = deps.userId,
+                user = deps.user,
                 wsUrl = deps.wsUrl,
                 products = listOf("feeds"),
                 clientInfoHeader = deps.clientInfo,
@@ -185,7 +186,7 @@ internal class StreamClientFactoryTest {
         assertTrue(client.connectionState.value is StreamConnectionState.Idle)
 
         // Verify client level wiring
-        client.assertFieldEquals("userId", deps.userId.rawValue)
+        client.assertFieldEquals("user", deps.user)
         client.assertFieldEquals("tokenManager", deps.tokenManager)
         client.assertFieldEquals("singleFlight", deps.singleFlight)
         client.assertFieldEquals("serialQueue", deps.serialQueue)
@@ -323,12 +324,19 @@ internal class StreamClientFactoryTest {
                     StreamToken.fromString("token")
             }
 
+        val user =
+            StreamUser(
+                id = StreamUserId.fromString("user-123"),
+                name = "name",
+                imageURL = "image",
+                customData = mapOf("custom" to "data"),
+            )
         val client =
             StreamClient(
                 scope = testScope,
                 context = context,
                 apiKey = StreamApiKey.fromString("key123"),
-                userId = StreamUserId.fromString("user-123"),
+                user = user,
                 wsUrl = StreamWsUrl.fromString("wss://test.stream/video"),
                 products = listOf("feeds"),
                 clientInfoHeader =

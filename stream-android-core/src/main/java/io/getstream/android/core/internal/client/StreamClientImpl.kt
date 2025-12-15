@@ -20,13 +20,13 @@ import io.getstream.android.core.api.StreamClient
 import io.getstream.android.core.api.authentication.StreamTokenManager
 import io.getstream.android.core.api.log.StreamLogger
 import io.getstream.android.core.api.model.StreamTypedKey.Companion.randomExecutionKey
+import io.getstream.android.core.api.model.StreamUser
 import io.getstream.android.core.api.model.connection.StreamConnectedUser
 import io.getstream.android.core.api.model.connection.StreamConnectionState
 import io.getstream.android.core.api.model.connection.lifecycle.StreamLifecycleState
 import io.getstream.android.core.api.model.connection.network.StreamNetworkState
 import io.getstream.android.core.api.model.connection.recovery.Recovery
 import io.getstream.android.core.api.model.value.StreamToken
-import io.getstream.android.core.api.model.value.StreamUserId
 import io.getstream.android.core.api.processing.StreamSerialProcessingQueue
 import io.getstream.android.core.api.processing.StreamSingleFlightProcessor
 import io.getstream.android.core.api.recovery.StreamConnectionRecoveryEvaluator
@@ -49,7 +49,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 internal class StreamClientImpl<T>(
-    private val userId: StreamUserId,
+    private val user: StreamUser,
     private val tokenManager: StreamTokenManager,
     private val singleFlight: StreamSingleFlightProcessor,
     private val serialQueue: StreamSerialProcessingQueue,
@@ -182,13 +182,13 @@ internal class StreamClientImpl<T>(
     ): Result<StreamConnectionState.Connected> {
         val data =
             ConnectUserData(
-                userId = userId.rawValue,
+                userId = user.id.rawValue,
                 token = token.rawValue,
-                name = null,
-                image = null,
+                name = user.name,
+                image = user.imageURL,
                 invisible = false,
                 language = null,
-                custom = null,
+                custom = user.customData,
             )
         return socketSession.connect(data).onTokenError { error, code ->
             logger.e(error) { "Token error: $code" }

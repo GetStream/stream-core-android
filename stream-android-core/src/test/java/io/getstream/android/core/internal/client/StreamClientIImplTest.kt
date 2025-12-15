@@ -21,6 +21,7 @@ package io.getstream.android.core.internal.client
 import io.getstream.android.core.api.authentication.StreamTokenManager
 import io.getstream.android.core.api.log.StreamLogger
 import io.getstream.android.core.api.model.StreamTypedKey
+import io.getstream.android.core.api.model.StreamUser
 import io.getstream.android.core.api.model.connection.StreamConnectedUser
 import io.getstream.android.core.api.model.connection.StreamConnectionState
 import io.getstream.android.core.api.model.connection.lifecycle.StreamLifecycleState
@@ -48,8 +49,18 @@ import io.getstream.android.core.internal.observers.StreamNetworkAndLifeCycleMon
 import io.getstream.android.core.internal.observers.StreamNetworkAndLifecycleMonitorListener
 import io.getstream.android.core.internal.recovery.StreamConnectionRecoveryEvaluatorImpl
 import io.getstream.android.core.internal.socket.StreamSocketSession
+import io.getstream.android.core.internal.socket.model.ConnectUserData
 import io.getstream.android.core.testing.TestLogger
-import io.mockk.*
+import io.mockk.Awaits
+import io.mockk.MockKAnnotations
+import io.mockk.coEvery
+import io.mockk.coJustRun
+import io.mockk.coVerify
+import io.mockk.every
+import io.mockk.just
+import io.mockk.justRun
+import io.mockk.mockk
+import io.mockk.verify
 import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
@@ -61,14 +72,23 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertSame
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
 @OptIn(ExperimentalTime::class)
 class StreamClientIImplTest {
 
-    private var userId: StreamUserId = StreamUserId.fromString("u1")
+    private var user: StreamUser =
+        StreamUser(
+            id = StreamUserId.fromString("u1"),
+            name = "name",
+            imageURL = "image",
+            customData = mapOf("custom" to "data"),
+        )
     private lateinit var tokenManager: StreamTokenManager
     private lateinit var singleFlight: StreamSingleFlightProcessor
     private lateinit var serialQueue: StreamSerialProcessingQueue
@@ -122,7 +142,7 @@ class StreamClientIImplTest {
         connectionRecoveryEvaluator: StreamConnectionRecoveryEvaluator = mockk(relaxed = true),
     ) =
         StreamClientImpl(
-            userId = userId,
+            user = user,
             tokenManager = tokenManager,
             singleFlight = singleFlight,
             serialQueue = serialQueue,
@@ -372,6 +392,14 @@ class StreamClientIImplTest {
             coEvery { socketSession.connect(any()) } returns Result.success(connectedState)
 
             every { connectionIdHolder.setConnectionId("conn-1") } returns Result.success("conn-1")
+            val expectedConnectUserData =
+                ConnectUserData(
+                    userId = user.id.rawValue,
+                    token = token.rawValue,
+                    name = user.name,
+                    image = user.imageURL,
+                    custom = user.customData,
+                )
 
             val result = client.connect()
 
@@ -385,7 +413,7 @@ class StreamClientIImplTest {
             // interactions
             verify(exactly = 1) { socketSession.subscribe(any<StreamClientListener>(), any()) }
             coVerify(exactly = 1) { tokenManager.loadIfAbsent() }
-            coVerify(exactly = 1) { socketSession.connect(match { it.token == "tok" }) }
+            coVerify(exactly = 1) { socketSession.connect(expectedConnectUserData) }
             verify(exactly = 1) { connectionIdHolder.setConnectionId("conn-1") }
         }
 
@@ -629,7 +657,7 @@ class StreamClientIImplTest {
             {
                 if (firstCall) {
                     firstCall = false
-                    connFlow.update { StreamConnectionState.Connecting.Opening(userId.rawValue) }
+                    connFlow.update { StreamConnectionState.Connecting.Opening(user.id.rawValue) }
                     firstConnectDeferred.await()
                 } else {
                     Result.success(connectedState)
