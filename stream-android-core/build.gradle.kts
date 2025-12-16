@@ -1,7 +1,5 @@
 @file:OptIn(ExperimentalAbiValidation::class)
 
-import com.vanniktech.maven.publish.AndroidSingleVariantLibrary
-import io.getstream.core.Configuration
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.dsl.abi.ExperimentalAbiValidation
 
@@ -10,7 +8,6 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.ksp)
     alias(libs.plugins.arturbosch.detekt)
-    alias(libs.plugins.maven.publish)
 }
 
 kotlin {
@@ -85,19 +82,4 @@ dependencies {
     testImplementation(libs.mockk)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.mockwebserver)
-}
-
-mavenPublishing {
-    coordinates(
-        groupId = Configuration.artifactGroup,
-        artifactId = "stream-android-core",
-        version = rootProject.version.toString(),
-    )
-    configure(
-        AndroidSingleVariantLibrary(
-            variant = "release",
-            sourcesJar = true,
-            publishJavadocJar = true,
-        ),
-    )
 }
