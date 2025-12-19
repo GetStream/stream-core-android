@@ -17,23 +17,30 @@
 package io.getstream.android.core.internal.processing
 
 import io.getstream.android.core.api.log.StreamLogger
-import io.getstream.android.core.api.model.StreamRetryPolicy
+import io.getstream.android.core.api.model.retry.StreamRetryPolicy
+import io.getstream.android.core.api.model.retry.StreamRetryAttemptInfo
 import io.getstream.android.core.api.processing.StreamRetryProcessor
 import io.getstream.android.core.api.utils.runCatchingCancellable
 import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.delay
 
 internal class StreamRetryProcessorImpl(private val logger: StreamLogger) : StreamRetryProcessor {
-    override suspend fun <T> retry(policy: StreamRetryPolicy, block: suspend () -> T): Result<T> =
+    override suspend fun <T> retry(policy: StreamRetryPolicy, block: suspend (attempt: StreamRetryAttemptInfo) -> T): Result<T> =
         runCatchingCancellable {
             var delayMs = policy.initialDelayMillis
             var attempt = 1
+            var previousError: Throwable? = null
             while (attempt <= policy.maxRetries) {
                 if (delayMs > 0) {
                     delay(delayMs)
                 }
                 try {
-                    return@runCatchingCancellable block()
+                    return@runCatchingCancellable block(StreamRetryAttemptInfo(
+                        attempt,
+                        delayMs,
+                        previousError,
+                        policy
+                    ))
                 } catch (c: CancellationException) {
                     throw c
                 } catch (t: Throwable) {
@@ -41,6 +48,7 @@ internal class StreamRetryProcessorImpl(private val logger: StreamLogger) : Stre
                     val checkGiveUp = attempt >= policy.minRetries
                     val shouldGiveUp = checkGiveUp && policy.giveUpFunction(attempt, t)
                     val isLastAttempt = attempt == policy.maxRetries
+                    previousError = t
                     if (shouldGiveUp || isLastAttempt) {
                         logger.v { "Retry attempt $attempt failed: ${t.message}. Giving up." }
                         throw t
