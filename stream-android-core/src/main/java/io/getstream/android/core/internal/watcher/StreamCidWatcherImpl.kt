@@ -1,3 +1,19 @@
+/*
+ * Copyright (c) 2014-2025 Stream.io Inc. All rights reserved.
+ *
+ * Licensed under the Stream License;
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    https://github.com/GetStream/stream-core-android/blob/main/LICENSE
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package io.getstream.android.core.internal.watcher
 
 import io.getstream.android.core.annotations.StreamInternalApi
@@ -7,8 +23,8 @@ import io.getstream.android.core.api.model.connection.StreamConnectionState
 import io.getstream.android.core.api.socket.listeners.StreamClientListener
 import io.getstream.android.core.api.subscribe.StreamSubscription
 import io.getstream.android.core.api.subscribe.StreamSubscriptionManager
-import io.getstream.android.core.api.watcher.StreamCidWatcher
 import io.getstream.android.core.api.watcher.StreamCidRewatchListener
+import io.getstream.android.core.api.watcher.StreamCidWatcher
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 import kotlinx.coroutines.CoroutineScope
@@ -18,8 +34,8 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 
 /**
- * Implementation of [StreamCidWatcher] that uses [StreamSubscriptionManager] to monitor
- * connection state changes and trigger rewatch callbacks.
+ * Implementation of [StreamCidWatcher] that uses [StreamSubscriptionManager] to monitor connection
+ * state changes and trigger rewatch callbacks.
  *
  * This implementation subscribes to connection state changes via [StreamClientListener] and
  * maintains an internal [CoroutineScope] for invoking rewatch callbacks asynchronously.
@@ -36,7 +52,7 @@ internal class StreamCidWatcherImpl(
     private val watched: ConcurrentMap<StreamCid, Unit> = ConcurrentHashMap(),
     private val rewatchSubscriptions: StreamSubscriptionManager<StreamCidRewatchListener>,
     private val clientSubscriptions: StreamSubscriptionManager<StreamClientListener>,
-    private val logger: StreamLogger
+    private val logger: StreamLogger,
 ) : StreamCidWatcher {
 
     private var subscription: StreamSubscription? = null
@@ -56,22 +72,18 @@ internal class StreamCidWatcherImpl(
                         }
 
                         if (cids.isNotEmpty()) {
-                            rewatchSubscriptions.forEach {
-                                it.onRewatch(cids)
-                            }.onFailure { error ->
-                                logger.e(error) {
-                                    "[onState] Rewatch callback failed for ${cids.size} CIDs. Error: ${error.message}"
+                            rewatchSubscriptions
+                                .forEach { it.onRewatch(cids) }
+                                .onFailure { error ->
+                                    logger.e(error) {
+                                        "[onState] Rewatch callback failed for ${cids.size} CIDs. Error: ${error.message}"
+                                    }
+                                    clientSubscriptions.forEach { it.onError(error) }
                                 }
-                                clientSubscriptions.forEach {
-                                    it.onError(error)
-                                }
-                            }
                         }
                     }
                 } else {
-                    logger.v {
-                        "[onState] State: $state, CIDS count: ${watched.size}"
-                    }
+                    logger.v { "[onState] State: $state, CIDS count: ${watched.size}" }
                 }
             }
         }
@@ -86,10 +98,10 @@ internal class StreamCidWatcherImpl(
                 .subscribe(
                     listener,
                     StreamSubscriptionManager.Options(
-                        retention =
-                            StreamSubscriptionManager.Options.Retention.KEEP_UNTIL_CANCELLED
+                        retention = StreamSubscriptionManager.Options.Retention.KEEP_UNTIL_CANCELLED
                     ),
-                ).getOrThrow()
+                )
+                .getOrThrow()
     }
 
     override fun stop(): Result<Unit> = runCatching {
@@ -112,7 +124,6 @@ internal class StreamCidWatcherImpl(
 
     override fun subscribe(
         listener: StreamCidRewatchListener,
-        options: StreamSubscriptionManager.Options
+        options: StreamSubscriptionManager.Options,
     ): Result<StreamSubscription> = rewatchSubscriptions.subscribe(listener, options)
 }
-

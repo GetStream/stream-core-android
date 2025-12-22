@@ -1,3 +1,19 @@
+/*
+ * Copyright (c) 2014-2025 Stream.io Inc. All rights reserved.
+ *
+ * Licensed under the Stream License;
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    https://github.com/GetStream/stream-core-android/blob/main/LICENSE
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package io.getstream.android.core.api.watcher
 
 import io.getstream.android.core.annotations.StreamInternalApi
@@ -8,25 +24,23 @@ import io.getstream.android.core.api.model.StreamCid
  * state change.
  *
  * This functional interface is used with [StreamCidWatcher] to receive notifications when the
- * WebSocket connection state changes (especially during reconnections), allowing the product SDK
- * to re-establish server-side watches for all actively monitored resources.
+ * WebSocket connection state changes (especially during reconnections), allowing the product SDK to
+ * re-establish server-side watches for all actively monitored resources.
  *
  * ## When This Is Called
  *
- * The callback is triggered on every [StreamConnectionState.Connected] event when the watched
- * CID registry is non-empty. This ensures that all active subscriptions are restored after:
+ * The callback is triggered on every [StreamConnectionState.Connected] event when the watched CID
+ * registry is non-empty. This ensures that all active subscriptions are restored after:
  * - Initial connection establishment
  * - Network reconnection after temporary disconnection
  * - WebSocket recovery after connection loss
  *
  * ## Threading
- *
  * - The callback is invoked asynchronously on an internal coroutine scope
  * - Implementations should be thread-safe as concurrent invocations are possible
  * - Long-running operations should be dispatched to an appropriate dispatcher
  *
  * ## Error Handling
- *
  * - Exceptions thrown by this callback are caught and logged by the watcher
  * - Errors are also surfaced via [StreamClientListener.onError] for user-level handling
  * - A failing callback will not prevent other listeners from being notified
@@ -59,15 +73,14 @@ public fun interface StreamCidRewatchListener {
     /**
      * Called when watched resources need to be re-subscribed.
      *
-     * This method is invoked with the complete list of [StreamCid]s currently in the watch
-     * registry whenever the connection state changes to [StreamConnectionState.Connected] and
-     * the registry is non-empty.
+     * This method is invoked with the complete list of [StreamCid]s currently in the watch registry
+     * whenever the connection state changes to [StreamConnectionState.Connected] and the registry
+     * is non-empty.
      *
      * Implementations should iterate over the provided list and re-establish server-side watches
      * for each CID to maintain active subscriptions across reconnection cycles.
      *
      * ## Contract
-     *
      * - The list is never empty when this method is called
      * - The list represents a snapshot of the watch registry at the time of invocation
      * - Modifications to the list do not affect the internal registry
@@ -75,8 +88,8 @@ public fun interface StreamCidRewatchListener {
      *
      * ## Error Handling
      *
-     * Exceptions thrown by this method are caught, logged, and surfaced via error callbacks.
-     * The failure of one listener does not prevent other listeners from being notified.
+     * Exceptions thrown by this method are caught, logged, and surfaced via error callbacks. The
+     * failure of one listener does not prevent other listeners from being notified.
      *
      * @param list A non-empty list of [StreamCid]s that require re-watching
      */

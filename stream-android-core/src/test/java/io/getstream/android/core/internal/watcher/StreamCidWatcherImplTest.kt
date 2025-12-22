@@ -20,8 +20,8 @@ package io.getstream.android.core.internal.watcher
 
 import io.getstream.android.core.api.log.StreamLogger
 import io.getstream.android.core.api.model.StreamCid
-import io.getstream.android.core.api.model.connection.StreamConnectionState
 import io.getstream.android.core.api.model.connection.StreamConnectedUser
+import io.getstream.android.core.api.model.connection.StreamConnectionState
 import io.getstream.android.core.api.socket.listeners.StreamClientListener
 import io.getstream.android.core.api.subscribe.StreamSubscription
 import io.getstream.android.core.api.subscribe.StreamSubscriptionManager
@@ -162,9 +162,8 @@ class StreamCidWatcherImplTest {
     @Test
     fun `start subscribes to client state changes`() {
         val mockSubscription = mockk<StreamSubscription>()
-        every {
-            clientSubscriptions.subscribe(any(), any())
-        } returns Result.success(mockSubscription)
+        every { clientSubscriptions.subscribe(any(), any()) } returns
+            Result.success(mockSubscription)
 
         val result = watcher.start()
 
@@ -173,8 +172,7 @@ class StreamCidWatcherImplTest {
             clientSubscriptions.subscribe(
                 any(),
                 StreamSubscriptionManager.Options(
-                    retention =
-                        StreamSubscriptionManager.Options.Retention.KEEP_UNTIL_CANCELLED,
+                    retention = StreamSubscriptionManager.Options.Retention.KEEP_UNTIL_CANCELLED
                 ),
             )
         }
@@ -183,9 +181,8 @@ class StreamCidWatcherImplTest {
     @Test
     fun `start when already started is idempotent`() {
         val mockSubscription = mockk<StreamSubscription>()
-        every {
-            clientSubscriptions.subscribe(any(), any())
-        } returns Result.success(mockSubscription)
+        every { clientSubscriptions.subscribe(any(), any()) } returns
+            Result.success(mockSubscription)
 
         watcher.start()
         watcher.start() // Second call
@@ -208,9 +205,8 @@ class StreamCidWatcherImplTest {
     @Test
     fun `stop cancels subscription and scope`() {
         val mockSubscription = mockk<StreamSubscription>(relaxed = true)
-        every {
-            clientSubscriptions.subscribe(any(), any())
-        } returns Result.success(mockSubscription)
+        every { clientSubscriptions.subscribe(any(), any()) } returns
+            Result.success(mockSubscription)
 
         watcher.start()
         val result = watcher.stop()
@@ -230,9 +226,8 @@ class StreamCidWatcherImplTest {
     fun `multiple start and stop cycles`() {
         val mockSubscription1 = mockk<StreamSubscription>(relaxed = true)
         val mockSubscription2 = mockk<StreamSubscription>(relaxed = true)
-        every {
-            clientSubscriptions.subscribe(any(), any())
-        } returnsMany listOf(Result.success(mockSubscription1), Result.success(mockSubscription2))
+        every { clientSubscriptions.subscribe(any(), any()) } returnsMany
+            listOf(Result.success(mockSubscription1), Result.success(mockSubscription2))
 
         // Cycle 1
         watcher.start()
@@ -252,321 +247,312 @@ class StreamCidWatcherImplTest {
     // ========================================
 
     @Test
-    fun `Connected state triggers rewatch with watched CIDs`() =
-        runTest {
-            val dispatcher = StandardTestDispatcher(testScheduler)
-            val scope = TestScope(dispatcher)
+    fun `Connected state triggers rewatch with watched CIDs`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val scope = TestScope(dispatcher)
 
-            // Setup: Capture the listener
-            val clientListenerSlot = slot<StreamClientListener>()
-            val mockSubscription = mockk<StreamSubscription>(relaxed = true)
-            every {
-                clientSubscriptions.subscribe(capture(clientListenerSlot), any())
-            } returns Result.success(mockSubscription)
+        // Setup: Capture the listener
+        val clientListenerSlot = slot<StreamClientListener>()
+        val mockSubscription = mockk<StreamSubscription>(relaxed = true)
+        every { clientSubscriptions.subscribe(capture(clientListenerSlot), any()) } returns
+            Result.success(mockSubscription)
 
-            // Setup: Mock rewatch subscriptions
-            val rewatchListeners = mutableListOf<StreamCidRewatchListener>()
-            every { rewatchSubscriptions.forEach(any<(StreamCidRewatchListener) -> Unit>()) } answers {
+        // Setup: Mock rewatch subscriptions
+        val rewatchListeners = mutableListOf<StreamCidRewatchListener>()
+        every { rewatchSubscriptions.forEach(any<(StreamCidRewatchListener) -> Unit>()) } answers
+            {
                 val block = firstArg<(StreamCidRewatchListener) -> Unit>()
                 rewatchListeners.forEach { block(it) }
                 Result.success(Unit)
             }
 
-            // Setup: Add CIDs
-            val cid1 = StreamCid.parse("messaging:general")
-            val cid2 = StreamCid.parse("livestream:sports")
-            watcher.watch(cid1)
-            watcher.watch(cid2)
+        // Setup: Add CIDs
+        val cid1 = StreamCid.parse("messaging:general")
+        val cid2 = StreamCid.parse("livestream:sports")
+        watcher.watch(cid1)
+        watcher.watch(cid2)
 
-            // Setup: Register rewatch listener
-            val receivedCids = mutableListOf<List<StreamCid>>()
-            val rewatchListener = StreamCidRewatchListener { cids -> receivedCids.add(cids) }
-            rewatchListeners.add(rewatchListener)
+        // Setup: Register rewatch listener
+        val receivedCids = mutableListOf<List<StreamCid>>()
+        val rewatchListener = StreamCidRewatchListener { cids -> receivedCids.add(cids) }
+        rewatchListeners.add(rewatchListener)
 
-            // Start watcher
-            watcher.start()
+        // Start watcher
+        watcher.start()
 
-            // Trigger Connected state
-            val connectedState =
-                StreamConnectionState.Connected(
-                    connectedUser = mockk<StreamConnectedUser>(relaxed = true),
-                    connectionId = "conn-123",
-                )
+        // Trigger Connected state
+        val connectedState =
+            StreamConnectionState.Connected(
+                connectedUser = mockk<StreamConnectedUser>(relaxed = true),
+                connectionId = "conn-123",
+            )
 
-            this.launch { clientListenerSlot.captured.onState(connectedState) }
+        this.launch { clientListenerSlot.captured.onState(connectedState) }
 
-            advanceUntilIdle()
+        advanceUntilIdle()
 
-            // Wait for the real coroutine on Dispatchers.Default to complete
-            runBlocking { delay(100) }
+        // Wait for the real coroutine on Dispatchers.Default to complete
+        runBlocking { delay(100) }
 
-            // Verify rewatch was called with correct CIDs
-            assertEquals(1, receivedCids.size)
-            assertEquals(2, receivedCids[0].size)
-            assertTrue(receivedCids[0].contains(cid1))
-            assertTrue(receivedCids[0].contains(cid2))
-        }
+        // Verify rewatch was called with correct CIDs
+        assertEquals(1, receivedCids.size)
+        assertEquals(2, receivedCids[0].size)
+        assertTrue(receivedCids[0].contains(cid1))
+        assertTrue(receivedCids[0].contains(cid2))
+    }
 
     @Test
-    fun `Disconnected state does not trigger rewatch`() =
-        runTest {
-            val dispatcher = StandardTestDispatcher(testScheduler)
-            val scope = TestScope(dispatcher)
+    fun `Disconnected state does not trigger rewatch`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val scope = TestScope(dispatcher)
 
-            val clientListenerSlot = slot<StreamClientListener>()
-            val mockSubscription = mockk<StreamSubscription>(relaxed = true)
-            every {
-                clientSubscriptions.subscribe(capture(clientListenerSlot), any())
-            } returns Result.success(mockSubscription)
+        val clientListenerSlot = slot<StreamClientListener>()
+        val mockSubscription = mockk<StreamSubscription>(relaxed = true)
+        every { clientSubscriptions.subscribe(capture(clientListenerSlot), any()) } returns
+            Result.success(mockSubscription)
 
-            val rewatchListeners = mutableListOf<StreamCidRewatchListener>()
-            every { rewatchSubscriptions.forEach(any<(StreamCidRewatchListener) -> Unit>()) } answers {
+        val rewatchListeners = mutableListOf<StreamCidRewatchListener>()
+        every { rewatchSubscriptions.forEach(any<(StreamCidRewatchListener) -> Unit>()) } answers
+            {
                 val block = firstArg<(StreamCidRewatchListener) -> Unit>()
                 rewatchListeners.forEach { block(it) }
                 Result.success(Unit)
             }
 
-            watcher.watch(StreamCid.parse("messaging:general"))
+        watcher.watch(StreamCid.parse("messaging:general"))
 
-            val receivedCids = mutableListOf<List<StreamCid>>()
-            rewatchListeners.add(StreamCidRewatchListener { cids -> receivedCids.add(cids) })
+        val receivedCids = mutableListOf<List<StreamCid>>()
+        rewatchListeners.add(StreamCidRewatchListener { cids -> receivedCids.add(cids) })
 
-            watcher.start()
+        watcher.start()
 
-            this.launch {
-                clientListenerSlot.captured.onState(StreamConnectionState.Disconnected(null))
-            }
-
-            advanceUntilIdle()
-
-            // Verify rewatch was NOT called
-            assertEquals(0, receivedCids.size)
+        this.launch {
+            clientListenerSlot.captured.onState(StreamConnectionState.Disconnected(null))
         }
+
+        advanceUntilIdle()
+
+        // Verify rewatch was NOT called
+        assertEquals(0, receivedCids.size)
+    }
 
     @Test
-    fun `Idle state does not trigger rewatch`() =
-        runTest {
-            val dispatcher = StandardTestDispatcher(testScheduler)
-            val scope = TestScope(dispatcher)
+    fun `Idle state does not trigger rewatch`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val scope = TestScope(dispatcher)
 
-            val clientListenerSlot = slot<StreamClientListener>()
-            val mockSubscription = mockk<StreamSubscription>(relaxed = true)
-            every {
-                clientSubscriptions.subscribe(capture(clientListenerSlot), any())
-            } returns Result.success(mockSubscription)
+        val clientListenerSlot = slot<StreamClientListener>()
+        val mockSubscription = mockk<StreamSubscription>(relaxed = true)
+        every { clientSubscriptions.subscribe(capture(clientListenerSlot), any()) } returns
+            Result.success(mockSubscription)
 
-            val rewatchListeners = mutableListOf<StreamCidRewatchListener>()
-            every { rewatchSubscriptions.forEach(any<(StreamCidRewatchListener) -> Unit>()) } answers {
+        val rewatchListeners = mutableListOf<StreamCidRewatchListener>()
+        every { rewatchSubscriptions.forEach(any<(StreamCidRewatchListener) -> Unit>()) } answers
+            {
                 val block = firstArg<(StreamCidRewatchListener) -> Unit>()
                 rewatchListeners.forEach { block(it) }
                 Result.success(Unit)
             }
 
-            watcher.watch(StreamCid.parse("messaging:general"))
+        watcher.watch(StreamCid.parse("messaging:general"))
 
-            val receivedCids = mutableListOf<List<StreamCid>>()
-            rewatchListeners.add(StreamCidRewatchListener { cids -> receivedCids.add(cids) })
+        val receivedCids = mutableListOf<List<StreamCid>>()
+        rewatchListeners.add(StreamCidRewatchListener { cids -> receivedCids.add(cids) })
 
-            watcher.start()
+        watcher.start()
 
-            this.launch {
-                clientListenerSlot.captured.onState(StreamConnectionState.Idle)
-            }
+        this.launch { clientListenerSlot.captured.onState(StreamConnectionState.Idle) }
 
-            advanceUntilIdle()
+        advanceUntilIdle()
 
-            assertEquals(0, receivedCids.size)
-        }
+        assertEquals(0, receivedCids.size)
+    }
 
     @Test
-    fun `Connecting state does not trigger rewatch`() =
-        runTest {
-            val dispatcher = StandardTestDispatcher(testScheduler)
-            val scope = TestScope(dispatcher)
+    fun `Connecting state does not trigger rewatch`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val scope = TestScope(dispatcher)
 
-            val clientListenerSlot = slot<StreamClientListener>()
-            val mockSubscription = mockk<StreamSubscription>(relaxed = true)
-            every {
-                clientSubscriptions.subscribe(capture(clientListenerSlot), any())
-            } returns Result.success(mockSubscription)
+        val clientListenerSlot = slot<StreamClientListener>()
+        val mockSubscription = mockk<StreamSubscription>(relaxed = true)
+        every { clientSubscriptions.subscribe(capture(clientListenerSlot), any()) } returns
+            Result.success(mockSubscription)
 
-            val rewatchListeners = mutableListOf<StreamCidRewatchListener>()
-            every { rewatchSubscriptions.forEach(any<(StreamCidRewatchListener) -> Unit>()) } answers {
+        val rewatchListeners = mutableListOf<StreamCidRewatchListener>()
+        every { rewatchSubscriptions.forEach(any<(StreamCidRewatchListener) -> Unit>()) } answers
+            {
                 val block = firstArg<(StreamCidRewatchListener) -> Unit>()
                 rewatchListeners.forEach { block(it) }
                 Result.success(Unit)
             }
 
-            watcher.watch(StreamCid.parse("messaging:general"))
+        watcher.watch(StreamCid.parse("messaging:general"))
 
-            val receivedCids = mutableListOf<List<StreamCid>>()
-            rewatchListeners.add(StreamCidRewatchListener { cids -> receivedCids.add(cids) })
+        val receivedCids = mutableListOf<List<StreamCid>>()
+        rewatchListeners.add(StreamCidRewatchListener { cids -> receivedCids.add(cids) })
 
-            watcher.start()
+        watcher.start()
 
-            this.launch {
-                clientListenerSlot.captured.onState(
-                    StreamConnectionState.Connecting.Opening("user-123"),
-                )
-            }
-
-            advanceUntilIdle()
-
-            assertEquals(0, receivedCids.size)
+        this.launch {
+            clientListenerSlot.captured.onState(
+                StreamConnectionState.Connecting.Opening("user-123")
+            )
         }
+
+        advanceUntilIdle()
+
+        assertEquals(0, receivedCids.size)
+    }
 
     @Test
-    fun `Connected state with empty CID list does not trigger rewatch`() =
-        runTest {
-            val dispatcher = StandardTestDispatcher(testScheduler)
-            val scope = TestScope(dispatcher)
+    fun `Connected state with empty CID list does not trigger rewatch`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val scope = TestScope(dispatcher)
 
-            val clientListenerSlot = slot<StreamClientListener>()
-            val mockSubscription = mockk<StreamSubscription>(relaxed = true)
-            every {
-                clientSubscriptions.subscribe(capture(clientListenerSlot), any())
-            } returns Result.success(mockSubscription)
+        val clientListenerSlot = slot<StreamClientListener>()
+        val mockSubscription = mockk<StreamSubscription>(relaxed = true)
+        every { clientSubscriptions.subscribe(capture(clientListenerSlot), any()) } returns
+            Result.success(mockSubscription)
 
-            val rewatchListeners = mutableListOf<StreamCidRewatchListener>()
-            every { rewatchSubscriptions.forEach(any<(StreamCidRewatchListener) -> Unit>()) } answers {
+        val rewatchListeners = mutableListOf<StreamCidRewatchListener>()
+        every { rewatchSubscriptions.forEach(any<(StreamCidRewatchListener) -> Unit>()) } answers
+            {
                 val block = firstArg<(StreamCidRewatchListener) -> Unit>()
                 rewatchListeners.forEach { block(it) }
                 Result.success(Unit)
             }
 
-            val receivedCids = mutableListOf<List<StreamCid>>()
-            rewatchListeners.add(StreamCidRewatchListener { cids -> receivedCids.add(cids) })
+        val receivedCids = mutableListOf<List<StreamCid>>()
+        rewatchListeners.add(StreamCidRewatchListener { cids -> receivedCids.add(cids) })
 
-            watcher.start()
+        watcher.start()
 
-            // No CIDs watched
-            val connectedState =
-                StreamConnectionState.Connected(
-                    connectedUser = mockk<StreamConnectedUser>(relaxed = true),
-                    connectionId = "conn-123",
-                )
+        // No CIDs watched
+        val connectedState =
+            StreamConnectionState.Connected(
+                connectedUser = mockk<StreamConnectedUser>(relaxed = true),
+                connectionId = "conn-123",
+            )
 
-            this.launch { clientListenerSlot.captured.onState(connectedState) }
+        this.launch { clientListenerSlot.captured.onState(connectedState) }
 
-            advanceUntilIdle()
+        advanceUntilIdle()
 
-            assertEquals(0, receivedCids.size)
-        }
+        assertEquals(0, receivedCids.size)
+    }
 
     // ========================================
     // Multiple Listeners
     // ========================================
 
     @Test
-    fun `multiple rewatch listeners all receive callbacks`() =
-        runTest {
-            val dispatcher = StandardTestDispatcher(testScheduler)
-            val scope = TestScope(dispatcher)
+    fun `multiple rewatch listeners all receive callbacks`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val scope = TestScope(dispatcher)
 
-            val clientListenerSlot = slot<StreamClientListener>()
-            val mockSubscription = mockk<StreamSubscription>(relaxed = true)
-            every {
-                clientSubscriptions.subscribe(capture(clientListenerSlot), any())
-            } returns Result.success(mockSubscription)
+        val clientListenerSlot = slot<StreamClientListener>()
+        val mockSubscription = mockk<StreamSubscription>(relaxed = true)
+        every { clientSubscriptions.subscribe(capture(clientListenerSlot), any()) } returns
+            Result.success(mockSubscription)
 
-            val rewatchListeners = mutableListOf<StreamCidRewatchListener>()
-            every { rewatchSubscriptions.forEach(any<(StreamCidRewatchListener) -> Unit>()) } answers {
+        val rewatchListeners = mutableListOf<StreamCidRewatchListener>()
+        every { rewatchSubscriptions.forEach(any<(StreamCidRewatchListener) -> Unit>()) } answers
+            {
                 val block = firstArg<(StreamCidRewatchListener) -> Unit>()
                 rewatchListeners.forEach { block(it) }
                 Result.success(Unit)
             }
 
-            val cid = StreamCid.parse("messaging:general")
-            watcher.watch(cid)
+        val cid = StreamCid.parse("messaging:general")
+        watcher.watch(cid)
 
-            val receivedCids1 = mutableListOf<List<StreamCid>>()
-            val receivedCids2 = mutableListOf<List<StreamCid>>()
-            val receivedCids3 = mutableListOf<List<StreamCid>>()
+        val receivedCids1 = mutableListOf<List<StreamCid>>()
+        val receivedCids2 = mutableListOf<List<StreamCid>>()
+        val receivedCids3 = mutableListOf<List<StreamCid>>()
 
-            rewatchListeners.add(StreamCidRewatchListener { cids -> receivedCids1.add(cids) })
-            rewatchListeners.add(StreamCidRewatchListener { cids -> receivedCids2.add(cids) })
-            rewatchListeners.add(StreamCidRewatchListener { cids -> receivedCids3.add(cids) })
+        rewatchListeners.add(StreamCidRewatchListener { cids -> receivedCids1.add(cids) })
+        rewatchListeners.add(StreamCidRewatchListener { cids -> receivedCids2.add(cids) })
+        rewatchListeners.add(StreamCidRewatchListener { cids -> receivedCids3.add(cids) })
 
-            watcher.start()
+        watcher.start()
 
-            val connectedState =
-                StreamConnectionState.Connected(
-                    connectedUser = mockk<StreamConnectedUser>(relaxed = true),
-                    connectionId = "conn-123",
-                )
+        val connectedState =
+            StreamConnectionState.Connected(
+                connectedUser = mockk<StreamConnectedUser>(relaxed = true),
+                connectionId = "conn-123",
+            )
 
-            this.launch { clientListenerSlot.captured.onState(connectedState) }
+        this.launch { clientListenerSlot.captured.onState(connectedState) }
 
-            advanceUntilIdle()
+        advanceUntilIdle()
 
-            // Wait for the real coroutine on Dispatchers.Default to complete
-            runBlocking { delay(100) }
+        // Wait for the real coroutine on Dispatchers.Default to complete
+        runBlocking { delay(100) }
 
-            // All listeners should have received the callback
-            assertEquals(1, receivedCids1.size)
-            assertEquals(1, receivedCids2.size)
-            assertEquals(1, receivedCids3.size)
-            assertEquals(listOf(cid), receivedCids1[0])
-            assertEquals(listOf(cid), receivedCids2[0])
-            assertEquals(listOf(cid), receivedCids3[0])
-        }
+        // All listeners should have received the callback
+        assertEquals(1, receivedCids1.size)
+        assertEquals(1, receivedCids2.size)
+        assertEquals(1, receivedCids3.size)
+        assertEquals(listOf(cid), receivedCids1[0])
+        assertEquals(listOf(cid), receivedCids2[0])
+        assertEquals(listOf(cid), receivedCids3[0])
+    }
 
     // ========================================
     // Error Handling
     // ========================================
 
     @Test
-    fun `rewatch listener exception is caught and logged`() =
-        runTest {
-            val dispatcher = StandardTestDispatcher(testScheduler)
-            val scope = TestScope(dispatcher)
+    fun `rewatch listener exception is caught and logged`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val scope = TestScope(dispatcher)
 
-            val clientListenerSlot = slot<StreamClientListener>()
-            val mockSubscription = mockk<StreamSubscription>(relaxed = true)
-            every {
-                clientSubscriptions.subscribe(capture(clientListenerSlot), any())
-            } returns Result.success(mockSubscription)
+        val clientListenerSlot = slot<StreamClientListener>()
+        val mockSubscription = mockk<StreamSubscription>(relaxed = true)
+        every { clientSubscriptions.subscribe(capture(clientListenerSlot), any()) } returns
+            Result.success(mockSubscription)
 
-            val error = RuntimeException("Rewatch failed")
-            every { rewatchSubscriptions.forEach(any<(StreamCidRewatchListener) -> Unit>()) } returns
-                Result.failure(error)
+        val error = RuntimeException("Rewatch failed")
+        every { rewatchSubscriptions.forEach(any<(StreamCidRewatchListener) -> Unit>()) } returns
+            Result.failure(error)
 
-            val clientListeners = mutableListOf<StreamClientListener>()
-            every { clientSubscriptions.forEach(any<(StreamClientListener) -> Unit>()) } answers {
+        val clientListeners = mutableListOf<StreamClientListener>()
+        every { clientSubscriptions.forEach(any<(StreamClientListener) -> Unit>()) } answers
+            {
                 val block = firstArg<(StreamClientListener) -> Unit>()
                 clientListeners.forEach { block(it) }
                 Result.success(Unit)
             }
 
-            val receivedErrors = mutableListOf<Throwable>()
-            clientListeners.add(
-                object : StreamClientListener {
-                    override fun onError(err: Throwable) {
-                        receivedErrors.add(err)
-                    }
-                },
+        val receivedErrors = mutableListOf<Throwable>()
+        clientListeners.add(
+            object : StreamClientListener {
+                override fun onError(err: Throwable) {
+                    receivedErrors.add(err)
+                }
+            }
+        )
+
+        watcher.watch(StreamCid.parse("messaging:general"))
+        watcher.start()
+
+        val connectedState =
+            StreamConnectionState.Connected(
+                connectedUser = mockk<StreamConnectedUser>(relaxed = true),
+                connectionId = "conn-123",
             )
 
-            watcher.watch(StreamCid.parse("messaging:general"))
-            watcher.start()
+        this.launch { clientListenerSlot.captured.onState(connectedState) }
 
-            val connectedState =
-                StreamConnectionState.Connected(
-                    connectedUser = mockk<StreamConnectedUser>(relaxed = true),
-                    connectionId = "conn-123",
-                )
+        advanceUntilIdle()
 
-            this.launch { clientListenerSlot.captured.onState(connectedState) }
+        // Verify error was logged
+        verify { logger.e(error, any<() -> String>()) }
 
-            advanceUntilIdle()
-
-            // Verify error was logged
-            verify { logger.e(error, any<() -> String>()) }
-
-            // Verify error was propagated to client listeners
-            assertEquals(1, receivedErrors.size)
-            assertEquals(error, receivedErrors[0])
-        }
+        // Verify error was propagated to client listeners
+        assertEquals(1, receivedErrors.size)
+        assertEquals(error, receivedErrors[0])
+    }
 
     // ========================================
     // Subscription Delegation
@@ -577,7 +563,7 @@ class StreamCidWatcherImplTest {
         val listener = StreamCidRewatchListener {}
         val options =
             StreamSubscriptionManager.Options(
-                retention = StreamSubscriptionManager.Options.Retention.KEEP_UNTIL_CANCELLED,
+                retention = StreamSubscriptionManager.Options.Retention.KEEP_UNTIL_CANCELLED
             )
         val mockSubscription = mockk<StreamSubscription>()
 
@@ -596,7 +582,7 @@ class StreamCidWatcherImplTest {
         val listener = StreamCidRewatchListener {}
         val options =
             StreamSubscriptionManager.Options(
-                retention = StreamSubscriptionManager.Options.Retention.KEEP_UNTIL_CANCELLED,
+                retention = StreamSubscriptionManager.Options.Retention.KEEP_UNTIL_CANCELLED
             )
         val error = RuntimeException("Subscribe failed")
 
@@ -613,79 +599,68 @@ class StreamCidWatcherImplTest {
     // ========================================
 
     @Test
-    fun `concurrent watch and stopWatching operations are thread-safe`() =
-        runTest {
-            val cids =
-                (1..100).map { StreamCid.parse("messaging:channel-$it") }
+    fun `concurrent watch and stopWatching operations are thread-safe`() = runTest {
+        val cids = (1..100).map { StreamCid.parse("messaging:channel-$it") }
 
-            // Concurrently add and remove CIDs
-            val jobs =
-                cids.map { cid ->
-                    this.launch {
-                        watcher.watch(cid)
-                        watcher.stopWatching(cid)
-                    }
+        // Concurrently add and remove CIDs
+        val jobs =
+            cids.map { cid ->
+                this.launch {
+                    watcher.watch(cid)
+                    watcher.stopWatching(cid)
                 }
+            }
 
-            jobs.forEach { it.join() }
+        jobs.forEach { it.join() }
 
-            // All operations should have completed without crashes
-            assertEquals(0, watched.size)
-        }
+        // All operations should have completed without crashes
+        assertEquals(0, watched.size)
+    }
 
     @Test
-    fun `multiple concurrent state changes are handled correctly`() =
-        runTest {
-            val dispatcher = StandardTestDispatcher(testScheduler)
-            val scope = TestScope(dispatcher)
+    fun `multiple concurrent state changes are handled correctly`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val scope = TestScope(dispatcher)
 
-            val clientListenerSlot = slot<StreamClientListener>()
-            val mockSubscription = mockk<StreamSubscription>(relaxed = true)
-            every {
-                clientSubscriptions.subscribe(capture(clientListenerSlot), any())
-            } returns Result.success(mockSubscription)
+        val clientListenerSlot = slot<StreamClientListener>()
+        val mockSubscription = mockk<StreamSubscription>(relaxed = true)
+        every { clientSubscriptions.subscribe(capture(clientListenerSlot), any()) } returns
+            Result.success(mockSubscription)
 
-            val rewatchListeners = mutableListOf<StreamCidRewatchListener>()
-            every { rewatchSubscriptions.forEach(any<(StreamCidRewatchListener) -> Unit>()) } answers {
+        val rewatchListeners = mutableListOf<StreamCidRewatchListener>()
+        every { rewatchSubscriptions.forEach(any<(StreamCidRewatchListener) -> Unit>()) } answers
+            {
                 val block = firstArg<(StreamCidRewatchListener) -> Unit>()
                 rewatchListeners.forEach { block(it) }
                 Result.success(Unit)
             }
 
-            val cid = StreamCid.parse("messaging:general")
-            watcher.watch(cid)
+        val cid = StreamCid.parse("messaging:general")
+        watcher.watch(cid)
 
-            val callCount = mutableListOf<Int>()
-            rewatchListeners.add(
-                StreamCidRewatchListener { cids ->
-                    callCount.add(cids.size)
-                },
+        val callCount = mutableListOf<Int>()
+        rewatchListeners.add(StreamCidRewatchListener { cids -> callCount.add(cids.size) })
+
+        watcher.start()
+
+        val connectedState =
+            StreamConnectionState.Connected(
+                connectedUser = mockk<StreamConnectedUser>(relaxed = true),
+                connectionId = "conn-123",
             )
 
-            watcher.start()
+        // Trigger multiple state changes concurrently
+        repeat(5) { this.launch { clientListenerSlot.captured.onState(connectedState) } }
 
-            val connectedState =
-                StreamConnectionState.Connected(
-                    connectedUser = mockk<StreamConnectedUser>(relaxed = true),
-                    connectionId = "conn-123",
-                )
+        advanceUntilIdle()
 
-            // Trigger multiple state changes concurrently
-            repeat(5) {
-                this.launch {
-                    clientListenerSlot.captured.onState(connectedState)
-                }
-            }
+        // Wait for the real coroutines on Dispatchers.Default to complete
+        runBlocking { delay(100) }
 
-            advanceUntilIdle()
-
-            // Wait for the real coroutines on Dispatchers.Default to complete
-            runBlocking { delay(100) }
-
-            // All 5 state changes should have triggered rewatch
-            assertEquals(5, callCount.size)
-            assertTrue(callCount.all { it == 1 })
-        }
+        // All 5 state changes should have triggered rewatch
+        assertEquals(5, callCount.size)
+        assertTrue(callCount.all { it == 1 })
+    }
 
     // ========================================
     // Factory Method Tests

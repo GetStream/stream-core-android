@@ -162,8 +162,64 @@ StreamClient (Main Interface)
 │   ├── StreamNetworkMonitor (ConnectivityManager callbacks)
 │   └── StreamLifecycleMonitor (ProcessLifecycleOwner observer)
 ├── StreamConnectionRecoveryEvaluator (Reconnect heuristics)
+├── StreamCidWatcher (Watch registry & rewatch coordinator)
+│   ├── StreamSubscriptionManager<StreamCidRewatchListener> (Rewatch listener registry)
+│   └── StreamSubscriptionManager<StreamClientListener> (Connection state monitoring)
 └── StreamSubscriptionManager<StreamClientListener> (Event distribution)
 ```
+
+### Watch Management: StreamCidWatcher
+
+**Purpose:** Manages a registry of watched resources (channels/conversations) and automatically triggers re-watching when the WebSocket connection state changes.
+
+**Location:**
+- Interface: `stream-android-core/src/main/java/io/getstream/android/core/api/watcher/StreamCidWatcher.kt`
+- Implementation: `stream-android-core/src/main/java/io/getstream/android/core/internal/watcher/StreamCidWatcherImpl.kt`
+- Listener: `stream-android-core/src/main/java/io/getstream/android/core/api/watcher/StreamCidRewatchListener.kt`
+
+**Key Concept:** When the WebSocket reconnects (network recovery, app resume), all active watches must be re-established on the server. `StreamCidWatcher` maintains which `StreamCid`s (Channel IDs) are currently watched and notifies listeners on every `Connected` state transition.
+
+**Core Operations:**
+```kotlin
+// Add a CID to watch registry
+fun watch(cid: StreamCid): Result<StreamCid>
+
+// Remove a CID from watch registry
+fun stopWatching(cid: StreamCid): Result<StreamCid>
+
+// Clear all watched CIDs
+fun clear(): Result<Unit>
+
+// Subscribe to rewatch notifications
+fun subscribe(
+    listener: StreamCidRewatchListener,
+    options: StreamSubscriptionManager.Options
+): Result<StreamSubscription>
+
+// Lifecycle management (StreamStartableComponent)
+fun start(): Result<Unit>
+fun stop(): Result<Unit>
+```
+
+**Usage Flow:**
+1. Product SDK watches a channel: `watcher.watch(StreamCid.parse("messaging:general"))`
+2. Watcher adds CID to internal `ConcurrentHashMap<StreamCid, Unit>` registry
+3. Product SDK registers a rewatch listener: `watcher.subscribe(StreamCidRewatchListener { cids -> ... })`
+4. Call `watcher.start()` to begin monitoring connection state changes
+5. On `StreamConnectionState.Connected` event, watcher invokes all listeners with complete CID list
+6. Product SDK re-establishes server-side watches for each CID
+
+**Implementation Details:**
+- Thread-safe: Uses `ConcurrentHashMap` for CID registry (line 36 in `StreamCidWatcherImpl.kt`)
+- Async execution: Rewatch callbacks invoked on internal coroutine scope with `SupervisorJob + Dispatchers.Default` (line 45)
+- Error handling: Exceptions from rewatch callbacks are caught, logged, and surfaced via `StreamClientListener.onError` (lines 61-67)
+- Idempotent: Multiple `watch()` calls with same CID only maintain one entry
+- Only triggers on `Connected` state when registry is non-empty (line 51)
+
+**Test Coverage:**
+- Location: `stream-android-core/src/test/java/io/getstream/android/core/internal/watcher/StreamCidWatcherImplTest.kt`
+- 24 comprehensive test cases covering watch operations, lifecycle, state changes, error handling, and concurrency
+- 100% instruction/branch/line coverage (verified via Kover)
 
 ## Configuration Defaults
 

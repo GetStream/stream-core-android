@@ -290,13 +290,15 @@ public fun StreamClient(
             logger = logProvider.taggedLogger("SCConnectionRecoveryEvaluator"),
             singleFlightProcessor = singleFlight,
         ),
-    cidWatcher: StreamCidWatcher = StreamCidWatcher(
-        logProvider.taggedLogger("SCCidRewatcher"),
-        streamRewatchSubscriptionManager = StreamSubscriptionManager(
-            logger = logProvider.taggedLogger("SCRewatchSubscriptionManager")
+    cidWatcher: StreamCidWatcher =
+        StreamCidWatcher(
+            logProvider.taggedLogger("SCCidRewatcher"),
+            streamRewatchSubscriptionManager =
+                StreamSubscriptionManager(
+                    logger = logProvider.taggedLogger("SCRewatchSubscriptionManager")
+                ),
+            streamClientSubscriptionManager = clientSubscriptionManager,
         ),
-        streamClientSubscriptionManager = clientSubscriptionManager,
-    )
 ): StreamClient {
     val clientLogger = logProvider.taggedLogger(tag = "SCClient")
     val parent = scope.coroutineContext[Job]
