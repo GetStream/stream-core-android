@@ -1,11 +1,6 @@
-import com.vanniktech.maven.publish.JavadocJar
-import com.vanniktech.maven.publish.KotlinJvm
-
 plugins {
-    alias(libs.plugins.stream.java.library)
     alias(libs.plugins.jetbrains.kotlin.jvm)
-    alias(libs.plugins.maven.publish)
-    alias(libs.plugins.dokka)
+    alias(libs.plugins.stream.java.library)
 }
 
 dependencies {
@@ -21,18 +16,4 @@ tasks.jar {
     manifest {
         attributes["Lint-Registry-v2"] = "io.getstream.android.core.lint.StreamIssueRegistry"
     }
-}
-
-mavenPublishing {
-    coordinates(
-        groupId = io.getstream.core.Configuration.artifactGroup,
-        artifactId = "stream-android-core-lint",
-        version = rootProject.version.toString(),
-    )
-    configure(
-        KotlinJvm(
-            javadocJar = JavadocJar.Dokka("dokkaJavadoc"),
-            sourcesJar = true,
-        ),
-    )
 }

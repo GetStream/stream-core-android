@@ -46,15 +46,7 @@ class StreamNetworkAndLifecycleMonitorImplTest {
         StreamSubscriptionManager<StreamNetworkAndLifecycleMonitorListener>(TestLogger)
     private val fakeLifecycleMonitor = FakeLifecycleMonitor()
     private val fakeNetworkMonitor = FakeNetworkMonitor()
-    private val monitor: StreamNetworkAndLifeCycleMonitor =
-        StreamNetworkAndLifeCycleMonitor(
-            logger = TestLogger,
-            lifecycleMonitor = fakeLifecycleMonitor,
-            networkMonitor = fakeNetworkMonitor,
-            mutableLifecycleState = lifecycleState,
-            mutableNetworkState = networkState,
-            subscriptionManager = downstreamSubscriptionManager,
-        )
+    private val monitor: StreamNetworkAndLifeCycleMonitor = createMonitor()
     private val options = Options(retention = Retention.KEEP_UNTIL_CANCELLED)
 
     @Test
@@ -94,6 +86,23 @@ class StreamNetworkAndLifecycleMonitorImplTest {
             ),
             events,
         )
+    }
+
+    @Test
+    fun `network and lifecycle states are updated on start`() {
+        val initialNetworkState =
+            StreamNetworkState.Available(StreamNetworkInfo.Snapshot(internet = true))
+        val initialLifecycleState = StreamLifecycleState.Foreground
+
+        val monitor =
+            createMonitor(
+                networkMonitor = FakeNetworkMonitor(initialNetworkState.snapshot),
+                lifecycleMonitor = FakeLifecycleMonitor(initialLifecycleState),
+            )
+        monitor.start()
+
+        assertEquals(initialNetworkState, networkState.value)
+        assertEquals(initialLifecycleState, lifecycleState.value)
     }
 
     @Test
@@ -166,7 +175,9 @@ class StreamNetworkAndLifecycleMonitorImplTest {
         assertEquals(previousEventCount, events.size)
     }
 
-    private class FakeLifecycleMonitor : StreamLifecycleMonitor {
+    private class FakeLifecycleMonitor(
+        private val initialState: StreamLifecycleState = StreamLifecycleState.Unknown
+    ) : StreamLifecycleMonitor {
         private val listeners = mutableSetOf<StreamLifecycleListener>()
         var stopCalls: Int = 0
             private set
@@ -193,7 +204,7 @@ class StreamNetworkAndLifecycleMonitorImplTest {
             )
         }
 
-        override fun getCurrentState(): StreamLifecycleState = StreamLifecycleState.Unknown
+        override fun getCurrentState(): StreamLifecycleState = initialState
 
         fun emitForeground() {
             listeners.forEach { it.onForeground() }
@@ -206,12 +217,17 @@ class StreamNetworkAndLifecycleMonitorImplTest {
         fun hasListeners(): Boolean = listeners.isNotEmpty()
     }
 
-    private class FakeNetworkMonitor : StreamNetworkMonitor {
+    private class FakeNetworkMonitor(
+        private val initialSnapshot: StreamNetworkInfo.Snapshot? = null
+    ) : StreamNetworkMonitor {
         private var listener: StreamNetworkMonitorListener? = null
         var stopCalls: Int = 0
             private set
 
-        override fun start(): Result<Unit> = Result.success(Unit)
+        override fun start(): Result<Unit> {
+            initialSnapshot?.let(::emitConnected)
+            return Result.success(Unit)
+        }
 
         override fun stop(): Result<Unit> =
             Result.success(Unit).also {
@@ -245,4 +261,17 @@ class StreamNetworkAndLifecycleMonitorImplTest {
 
         fun hasListener(): Boolean = listener != null
     }
+
+    private fun createMonitor(
+        networkMonitor: StreamNetworkMonitor = fakeNetworkMonitor,
+        lifecycleMonitor: StreamLifecycleMonitor = fakeLifecycleMonitor,
+    ) =
+        StreamNetworkAndLifeCycleMonitor(
+            logger = TestLogger,
+            lifecycleMonitor = lifecycleMonitor,
+            networkMonitor = networkMonitor,
+            mutableLifecycleState = lifecycleState,
+            mutableNetworkState = networkState,
+            subscriptionManager = downstreamSubscriptionManager,
+        )
 }
