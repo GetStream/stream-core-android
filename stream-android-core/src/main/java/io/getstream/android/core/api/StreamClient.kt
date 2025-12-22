@@ -293,7 +293,7 @@ public fun StreamClient(
     cidWatcher: StreamCidWatcher = StreamCidWatcher(
         logProvider.taggedLogger("SCCidRewatcher"),
         streamRewatchSubscriptionManager = StreamSubscriptionManager(
-            logger = logProvider.taggedLogger("SCRewatchSubscritionManager")
+            logger = logProvider.taggedLogger("SCRewatchSubscriptionManager")
         ),
         streamClientSubscriptionManager = clientSubscriptionManager,
     )
@@ -354,7 +354,7 @@ public fun StreamClient(
 
     if (watchListener != null) {
         // Auto-subscribe the re-watch listener if any
-        cidWatcher.subscribe(watchListener)
+        cidWatcher.subscribe(watchListener).getOrThrow()
     }
 
     val mutableConnectionState = MutableStateFlow<StreamConnectionState>(StreamConnectionState.Idle)

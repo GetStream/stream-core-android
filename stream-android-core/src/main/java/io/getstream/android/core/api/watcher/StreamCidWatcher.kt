@@ -23,10 +23,10 @@ import io.getstream.android.core.internal.watcher.StreamCidWatcherImpl
  *
  * 1. Product SDK watches a channel: `watcher.watch(StreamCid.parse("messaging:general"))`
  * 2. Watcher adds the CID to its internal registry
- * 3. Product SDK registers a rewatch callback: `watcher.onRewatch { cids -> resubscribe(cids) }`
+ * 3. Product SDK registers a rewatch listener: `watcher.subscribe(StreamCidRewatchListener { cids -> resubscribe(cids) })`
  * 4. Call `watcher.start()` to begin monitoring connection state changes
  * 5. Connection state changes (e.g., reconnection after network loss)
- * 6. Watcher invokes callback with all watched CIDs: `["messaging:general", "livestream:sports"]`
+ * 6. Watcher invokes listener with all watched CIDs: `["messaging:general", "livestream:sports"]`
  * 7. Product SDK re-establishes server-side watches for each CID
  *
  * ## Threading
@@ -97,8 +97,8 @@ public interface StreamCidWatcher : StreamObservable<StreamCidRewatchListener>, 
     /**
      * Removes all entries from the watch registry.
      *
-     * After calling this method, the rewatch callback will be invoked with an empty list on
-     * subsequent connection state changes until new resources are watched.
+     * After calling this method, the rewatch callback will NOT be invoked on subsequent
+     * connection state changes (since the registry is empty) until new resources are watched.
      *
      * This method is typically called during cleanup or logout to ensure no stale watches remain.
      *
