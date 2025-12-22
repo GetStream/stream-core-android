@@ -90,18 +90,20 @@ internal class StreamNetworkAndLifecycleMonitorImpl(
         }
 
     override fun start(): Result<Unit> {
-        val networkStart =
-            networkMonitor
-                .start()
-                .flatMap { networkMonitor.subscribe(networkMonitorListener) }
-                .also { result -> networkHandle = result.getOrNull() }
         val lifecycleStart =
             lifecycleMonitor
                 .start()
                 .flatMap { lifecycleMonitor.subscribe(lifecycleListener) }
                 .also { result -> lifecycleHandle = result.getOrNull() }
-
         mutableLifecycleState.update(lifecycleMonitor.getCurrentState())
+
+        val networkStart =
+            networkMonitor
+                // Subscribe before start so we get notified about the initial state
+                .subscribe(networkMonitorListener)
+                .flatMap { subscription -> networkMonitor.start().map { subscription } }
+                .also { result -> networkHandle = result.getOrNull() }
+
         return (networkStart * lifecycleStart).flatMap { Result.success(Unit) }
     }
 
