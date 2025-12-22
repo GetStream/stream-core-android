@@ -49,9 +49,6 @@ android {
 dependencies {
     // Linter
     lintChecks(project(":stream-android-core-lint"))
-    lintPublish(project(":stream-android-core-lint")) {
-        isTransitive = false
-    }
     implementation(project(":stream-android-core-annotations"))
 
     implementation(libs.kotlinx.coroutines)
