@@ -47,7 +47,10 @@ import io.getstream.android.core.api.socket.StreamConnectionIdHolder
 import io.getstream.android.core.api.socket.StreamWebSocketFactory
 import io.getstream.android.core.api.socket.listeners.StreamClientListener
 import io.getstream.android.core.api.socket.monitor.StreamHealthMonitor
+import io.getstream.android.core.api.subscribe.StreamSubscription
 import io.getstream.android.core.api.subscribe.StreamSubscriptionManager
+import io.getstream.android.core.api.watcher.StreamCidRewatchListener
+import io.getstream.android.core.api.watcher.StreamCidWatcher
 import io.getstream.android.core.internal.client.StreamClientImpl
 import io.getstream.android.core.internal.http.interceptor.StreamApiKeyInterceptor
 import io.getstream.android.core.internal.http.interceptor.StreamAuthInterceptor
@@ -60,7 +63,9 @@ import io.getstream.android.core.internal.socket.StreamWebSocketImpl
 import io.getstream.android.core.internal.subscribe.StreamSubscriptionManagerImpl
 import io.getstream.android.core.testutil.assertFieldEquals
 import io.getstream.android.core.testutil.readPrivateField
+import io.mockk.every
 import io.mockk.mockk
+import io.mockk.verify
 import kotlin.test.assertEquals
 import kotlin.test.assertNotSame
 import kotlin.test.assertTrue
@@ -111,66 +116,88 @@ internal class StreamClientFactoryTest {
         val connectionRecoveryEvaluator: StreamConnectionRecoveryEvaluator,
     )
 
+    private fun createDependencies(): Dependencies =
+        Dependencies(
+            apiKey = StreamApiKey.fromString("key123"),
+            user = StreamUser(id = StreamUserId.fromString("user-123")),
+            wsUrl = StreamWsUrl.fromString("wss://test.stream/video"),
+            clientInfo =
+                StreamHttpClientInfoHeader.create(
+                    product = "android",
+                    productVersion = "1.0",
+                    os = "android",
+                    apiLevel = 33,
+                    deviceModel = "Pixel",
+                    app = "test-app",
+                    appVersion = "1.0.0",
+                ),
+            clientSubscriptionManager = mockk(relaxed = true),
+            tokenProvider = mockk(relaxed = true),
+            tokenManager = mockk(relaxed = true),
+            singleFlight = mockk(relaxed = true),
+            serialQueue = mockk(relaxed = true),
+            retryProcessor = mockk(relaxed = true),
+            connectionIdHolder = mockk(relaxed = true),
+            socketFactory = mockk(relaxed = true),
+            healthMonitor = mockk(relaxed = true),
+            batcher = mockk(relaxed = true),
+            lifecycleMonitor = mockk(relaxed = true),
+            networkMonitor = mockk(relaxed = true),
+            connectionRecoveryEvaluator = mockk(relaxed = true),
+        )
+
+    private fun buildClient(
+        deps: Dependencies,
+        httpConfig: StreamHttpConfig? = null,
+        watchListener: StreamCidRewatchListener? = null,
+        cidWatcher: StreamCidWatcher? = null,
+    ): StreamClient {
+        val watcher =
+            cidWatcher
+                ?: StreamCidWatcher(
+                    scope = testScope,
+                    logger = logProvider.taggedLogger("SCCidRewatcher"),
+                    streamRewatchSubscriptionManager =
+                        StreamSubscriptionManager(
+                            logger = logProvider.taggedLogger("SCRewatchSubscriptionManager")
+                        ),
+                    streamClientSubscriptionManager = deps.clientSubscriptionManager,
+                )
+
+        return StreamClient(
+            context = mockk(relaxed = true),
+            apiKey = deps.apiKey,
+            user = deps.user,
+            wsUrl = deps.wsUrl,
+            products = listOf("feeds"),
+            clientInfoHeader = deps.clientInfo,
+            clientSubscriptionManager = deps.clientSubscriptionManager,
+            tokenProvider = deps.tokenProvider,
+            tokenManager = deps.tokenManager,
+            singleFlight = deps.singleFlight,
+            serialQueue = deps.serialQueue,
+            retryProcessor = deps.retryProcessor,
+            scope = testScope,
+            connectionIdHolder = deps.connectionIdHolder,
+            socketFactory = deps.socketFactory,
+            healthMonitor = deps.healthMonitor,
+            batcher = deps.batcher,
+            httpConfig = httpConfig,
+            serializationConfig = serializationConfig,
+            watchListener = watchListener,
+            cidWatcher = watcher,
+            logProvider = logProvider,
+            networkMonitor = deps.networkMonitor,
+            lifecycleMonitor = deps.lifecycleMonitor,
+            connectionRecoveryEvaluator = deps.connectionRecoveryEvaluator,
+        )
+    }
+
     private fun createClient(
         httpConfig: StreamHttpConfig? = null
     ): Pair<StreamClient, Dependencies> {
-        val deps =
-            Dependencies(
-                apiKey = StreamApiKey.fromString("key123"),
-                user = StreamUser(id = StreamUserId.fromString("user-123")),
-                wsUrl = StreamWsUrl.fromString("wss://test.stream/video"),
-                clientInfo =
-                    StreamHttpClientInfoHeader.create(
-                        product = "android",
-                        productVersion = "1.0",
-                        os = "android",
-                        apiLevel = 33,
-                        deviceModel = "Pixel",
-                        app = "test-app",
-                        appVersion = "1.0.0",
-                    ),
-                clientSubscriptionManager = mockk(relaxed = true),
-                tokenProvider = mockk(relaxed = true),
-                tokenManager = mockk(relaxed = true),
-                singleFlight = mockk(relaxed = true),
-                serialQueue = mockk(relaxed = true),
-                retryProcessor = mockk(relaxed = true),
-                connectionIdHolder = mockk(relaxed = true),
-                socketFactory = mockk(relaxed = true),
-                healthMonitor = mockk(relaxed = true),
-                batcher = mockk(relaxed = true),
-                lifecycleMonitor = mockk(relaxed = true),
-                networkMonitor = mockk(relaxed = true),
-                connectionRecoveryEvaluator = mockk(relaxed = true),
-            )
-
-        val client =
-            StreamClient(
-                context = mockk(relaxed = true),
-                apiKey = deps.apiKey,
-                user = deps.user,
-                wsUrl = deps.wsUrl,
-                products = listOf("feeds"),
-                clientInfoHeader = deps.clientInfo,
-                clientSubscriptionManager = deps.clientSubscriptionManager,
-                tokenProvider = deps.tokenProvider,
-                tokenManager = deps.tokenManager,
-                singleFlight = deps.singleFlight,
-                serialQueue = deps.serialQueue,
-                retryProcessor = deps.retryProcessor,
-                scope = testScope,
-                connectionIdHolder = deps.connectionIdHolder,
-                socketFactory = deps.socketFactory,
-                healthMonitor = deps.healthMonitor,
-                batcher = deps.batcher,
-                httpConfig = httpConfig,
-                serializationConfig = serializationConfig,
-                logProvider = logProvider,
-                networkMonitor = deps.networkMonitor,
-                lifecycleMonitor = deps.lifecycleMonitor,
-                connectionRecoveryEvaluator = deps.connectionRecoveryEvaluator,
-            )
-
+        val deps = createDependencies()
+        val client = buildClient(deps = deps, httpConfig = httpConfig)
         return client to deps
     }
 
@@ -360,5 +387,28 @@ internal class StreamClientFactoryTest {
                 as StreamSubscriptionManagerImpl<*>
         manager.assertFieldEquals("maxStrongSubscriptions", 250)
         manager.assertFieldEquals("maxWeakSubscriptions", 250)
+    }
+
+    @Test
+    fun `StreamClient factory auto subscribes provided watch listener`() {
+        val deps = createDependencies()
+        val cidWatcher = mockk<StreamCidWatcher>(relaxed = true)
+        val listener = StreamCidRewatchListener { _, _ -> }
+        every { cidWatcher.subscribe(listener, any()) } returns
+            Result.success(mockk<StreamSubscription>(relaxed = true))
+
+        buildClient(deps = deps, watchListener = listener, cidWatcher = cidWatcher)
+
+        verify(exactly = 1) { cidWatcher.subscribe(listener, any()) }
+    }
+
+    @Test
+    fun `StreamClient factory skips watch listener subscription when absent`() {
+        val deps = createDependencies()
+        val cidWatcher = mockk<StreamCidWatcher>(relaxed = true)
+
+        buildClient(deps = deps, cidWatcher = cidWatcher)
+
+        verify(exactly = 0) { cidWatcher.subscribe(any(), any()) }
     }
 }
