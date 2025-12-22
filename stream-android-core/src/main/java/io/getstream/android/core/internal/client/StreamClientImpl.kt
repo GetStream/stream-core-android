@@ -38,6 +38,7 @@ import io.getstream.android.core.api.utils.flatMap
 import io.getstream.android.core.api.utils.onTokenError
 import io.getstream.android.core.api.utils.runCatchingCancellable
 import io.getstream.android.core.api.utils.update
+import io.getstream.android.core.api.watcher.StreamCidWatcher
 import io.getstream.android.core.internal.observers.StreamNetworkAndLifeCycleMonitor
 import io.getstream.android.core.internal.observers.StreamNetworkAndLifecycleMonitorListener
 import io.getstream.android.core.internal.socket.StreamSocketSession
@@ -53,6 +54,7 @@ internal class StreamClientImpl<T>(
     private val tokenManager: StreamTokenManager,
     private val singleFlight: StreamSingleFlightProcessor,
     private val serialQueue: StreamSerialProcessingQueue,
+    private val cidWatcher: StreamCidWatcher,
     private val connectionIdHolder: StreamConnectionIdHolder,
     private val socketSession: StreamSocketSession<T>,
     private val networkAndLifeCycleMonitor: StreamNetworkAndLifeCycleMonitor,
@@ -142,6 +144,7 @@ internal class StreamClientImpl<T>(
                 .fold(
                     onSuccess = { connected ->
                         logger.d { "Connected to socket: $connected" }
+                        cidWatcher.start()
                         mutableConnectionState.update(connected)
                         connectionIdHolder.setConnectionId(connected.connectionId).map {
                             connected.connectedUser
@@ -164,6 +167,7 @@ internal class StreamClientImpl<T>(
             socketSession.disconnect()
             socketSessionHandle?.cancel()
             networkAndLifeCycleMonitor.stop()
+            cidWatcher.stop()
             networkAndLifecycleMonitorHandle?.cancel()
             networkAndLifecycleMonitorHandle = null
             socketSessionHandle = null

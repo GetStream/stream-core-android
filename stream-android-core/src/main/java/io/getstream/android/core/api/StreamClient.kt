@@ -292,7 +292,8 @@ public fun StreamClient(
         ),
     cidWatcher: StreamCidWatcher =
         StreamCidWatcher(
-            logProvider.taggedLogger("SCCidRewatcher"),
+            scope = scope,
+            logger = logProvider.taggedLogger("SCCidRewatcher"),
             streamRewatchSubscriptionManager =
                 StreamSubscriptionManager(
                     logger = logProvider.taggedLogger("SCRewatchSubscriptionManager")
@@ -366,6 +367,7 @@ public fun StreamClient(
         tokenManager = tokenManager,
         singleFlight = singleFlight,
         serialQueue = serialQueue,
+        cidWatcher = cidWatcher,
         connectionIdHolder = connectionIdHolder,
         logger = clientLogger,
         mutableConnectionState = mutableConnectionState,

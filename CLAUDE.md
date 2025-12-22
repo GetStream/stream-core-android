@@ -204,21 +204,22 @@ fun stop(): Result<Unit>
 **Usage Flow:**
 1. Product SDK watches a channel: `watcher.watch(StreamCid.parse("messaging:general"))`
 2. Watcher adds CID to internal `ConcurrentHashMap<StreamCid, Unit>` registry
-3. Product SDK registers a rewatch listener: `watcher.subscribe(StreamCidRewatchListener { cids -> ... })`
+3. Product SDK registers a rewatch listener: `watcher.subscribe(StreamCidRewatchListener { cids, connectionId -> ... })`
 4. Call `watcher.start()` to begin monitoring connection state changes
-5. On `StreamConnectionState.Connected` event, watcher invokes all listeners with complete CID list
-6. Product SDK re-establishes server-side watches for each CID
+5. On `StreamConnectionState.Connected` event, watcher invokes all listeners with complete CID list AND the current connectionId
+6. Product SDK re-establishes server-side watches for each CID using the provided connectionId
 
 **Implementation Details:**
-- Thread-safe: Uses `ConcurrentHashMap` for CID registry (line 36 in `StreamCidWatcherImpl.kt`)
-- Async execution: Rewatch callbacks invoked on internal coroutine scope with `SupervisorJob + Dispatchers.Default` (line 45)
-- Error handling: Exceptions from rewatch callbacks are caught, logged, and surfaced via `StreamClientListener.onError` (lines 61-67)
+- Thread-safe: Uses `ConcurrentHashMap` for CID registry (line 52 in `StreamCidWatcherImpl.kt`)
+- Async execution: Rewatch callbacks invoked on internal coroutine scope with `SupervisorJob + Dispatchers.Default` (line 61)
+- Error handling: Exceptions from rewatch callbacks are caught, logged, and surfaced via `StreamClientListener.onError` (lines 77-82)
 - Idempotent: Multiple `watch()` calls with same CID only maintain one entry
-- Only triggers on `Connected` state when registry is non-empty (line 51)
+- Only triggers on `Connected` state when registry is non-empty (line 67)
+- Connection ID extracted from `Connected` state and passed to all listeners (line 70)
 
 **Test Coverage:**
 - Location: `stream-android-core/src/test/java/io/getstream/android/core/internal/watcher/StreamCidWatcherImplTest.kt`
-- 24 comprehensive test cases covering watch operations, lifecycle, state changes, error handling, and concurrency
+- 29 comprehensive test cases covering watch operations, lifecycle, state changes, error handling, concurrency, and connectionId verification
 - 100% instruction/branch/line coverage (verified via Kover)
 
 ## Configuration Defaults

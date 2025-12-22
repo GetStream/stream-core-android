@@ -24,6 +24,7 @@ import io.getstream.android.core.api.socket.listeners.StreamClientListener
 import io.getstream.android.core.api.subscribe.StreamObservable
 import io.getstream.android.core.api.subscribe.StreamSubscriptionManager
 import io.getstream.android.core.internal.watcher.StreamCidWatcherImpl
+import kotlinx.coroutines.CoroutineScope
 
 /**
  * Manages a registry of watched resources (channels, conversations, streams) and automatically
@@ -136,13 +137,85 @@ public interface StreamCidWatcher :
     public fun clear(): Result<Unit>
 }
 
+/**
+ * Creates a new [StreamCidWatcher] instance with the provided dependencies.
+ *
+ * This factory method instantiates the default implementation ([StreamCidWatcherImpl]) and wires
+ * all required dependencies for monitoring connection state changes and triggering rewatch
+ * callbacks.
+ *
+ * ## Parameters
+ * - **scope**: The [CoroutineScope] used for launching async operations (rewatch callbacks). This
+ *   scope should typically use `SupervisorJob + Dispatchers.Default` to ensure callback failures
+ *   don't cancel the scope and to avoid blocking the main thread. The scope is NOT cancelled when
+ *   [StreamCidWatcher.stop] is called, allowing the component to be restarted.
+ * - **logger**: A [StreamLogger] instance for diagnostic output, tagged appropriately (e.g.,
+ *   "SCCidWatcher"). Used for logging state changes, rewatch events, and errors.
+ * - **streamRewatchSubscriptionManager**: Manages subscriptions to [StreamCidRewatchListener]. This
+ *   manager handles the list of listeners that will be invoked when connection state changes
+ *   require re-watching CIDs.
+ * - **streamClientSubscriptionManager**: Manages subscriptions to [StreamClientListener]. This is
+ *   used to subscribe to connection state changes (via [StreamClientListener.onState]) and to
+ *   surface errors (via [StreamClientListener.onError]) when rewatch callbacks fail.
+ *
+ * ## Lifecycle
+ *
+ * The returned watcher is created in a stopped state. You must call [StreamCidWatcher.start] to
+ * begin monitoring connection state changes. The component can be started and stopped multiple
+ * times throughout its lifetime.
+ *
+ * ## Usage Example
+ *
+ * ```kotlin
+ * val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+ * val logger = StreamLogger.getLogger("MyApp.CidWatcher")
+ *
+ * val rewatchManager = StreamSubscriptionManager<StreamCidRewatchListener>(
+ *     logger = logger.withTag("RewatchSubscriptions")
+ * )
+ * val clientManager = StreamSubscriptionManager<StreamClientListener>(
+ *     logger = logger.withTag("ClientSubscriptions")
+ * )
+ *
+ * val watcher = StreamCidWatcher(
+ *     scope = scope,
+ *     logger = logger,
+ *     streamRewatchSubscriptionManager = rewatchManager,
+ *     streamClientSubscriptionManager = clientManager
+ * )
+ *
+ * // Register rewatch listener
+ * watcher.subscribe(StreamCidRewatchListener { cids, connectionId ->
+ *     println("Re-watching ${cids.size} channels on connection $connectionId")
+ *     // Re-establish server-side watches...
+ * })
+ *
+ * // Start monitoring
+ * watcher.start()
+ *
+ * // Watch channels
+ * watcher.watch(StreamCid.parse("messaging:general"))
+ * watcher.watch(StreamCid.parse("livestream:sports"))
+ * ```
+ *
+ * @param scope Coroutine scope for async operations (rewatch callback invocations)
+ * @param logger Logger for diagnostic output and error reporting
+ * @param streamRewatchSubscriptionManager Subscription manager for rewatch listeners
+ * @param streamClientSubscriptionManager Subscription manager for client state listeners
+ * @return A new [StreamCidWatcher] instance (implementation: [StreamCidWatcherImpl])
+ * @see StreamCidWatcher The interface contract
+ * @see StreamCidWatcherImpl The concrete implementation
+ * @see StreamCidRewatchListener Callback interface for rewatch notifications
+ */
 @StreamInternalApi
 public fun StreamCidWatcher(
+    scope: CoroutineScope,
     logger: StreamLogger,
     streamRewatchSubscriptionManager: StreamSubscriptionManager<StreamCidRewatchListener>,
     streamClientSubscriptionManager: StreamSubscriptionManager<StreamClientListener>,
 ): StreamCidWatcher =
     StreamCidWatcherImpl(
+        scope = scope,
         logger = logger,
         rewatchSubscriptions = streamRewatchSubscriptionManager,
         clientSubscriptions = streamClientSubscriptionManager,

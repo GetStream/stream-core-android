@@ -52,11 +52,11 @@ import io.getstream.android.core.api.model.StreamCid
  *
  * // Register a rewatch listener
  * watcher.subscribe(
- *     listener = StreamCidRewatchListener { cids ->
- *         logger.i { "Re-watching ${cids.size} channels" }
+ *     listener = StreamCidRewatchListener { cids, connectionId ->
+ *         logger.i { "Re-watching ${cids.size} channels on connection $connectionId" }
  *         cids.forEach { cid ->
  *             // Re-establish server-side watch for each CID
- *             channelClient.watch(cid)
+ *             channelClient.watch(cid, connectionId)
  *         }
  *     }
  * )
@@ -85,6 +85,7 @@ public fun interface StreamCidRewatchListener {
      * - The list represents a snapshot of the watch registry at the time of invocation
      * - Modifications to the list do not affect the internal registry
      * - Multiple calls may occur for the same set of CIDs during reconnection scenarios
+     * - The connectionId reflects the current active connection at the moment of invocation
      *
      * ## Error Handling
      *
@@ -92,6 +93,7 @@ public fun interface StreamCidRewatchListener {
      * failure of one listener does not prevent other listeners from being notified.
      *
      * @param list A non-empty list of [StreamCid]s that require re-watching
+     * @param connectionId The connection ID of the current active WebSocket connection
      */
-    public fun onRewatch(list: List<StreamCid>)
+    public fun onRewatch(list: List<StreamCid>, connectionId: String)
 }
