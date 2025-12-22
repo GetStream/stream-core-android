@@ -1047,7 +1047,35 @@ class StreamClientIImplTest {
         val result = client.connect()
 
         assertTrue(result.isSuccess)
+        verify(exactly = 2) { cidWatcher.start() }
+    }
+
+    @Test
+    fun `connect fails when StreamCidWatcher start fails`() = runTest {
+        val client = createClient(this)
+        every { socketSession.subscribe(any<StreamClientListener>(), any()) } returns
+            Result.success(mockk(relaxed = true))
+
+        val token = StreamToken.fromString("tok")
+        coEvery { tokenManager.loadIfAbsent() } returns Result.success(token)
+
+        val connectedUser = mockk<StreamConnectedUser>(relaxed = true)
+        val connectedState = StreamConnectionState.Connected(connectedUser, "conn-2")
+        coEvery { socketSession.connect(any()) } returns Result.success(connectedState)
+
+        val startError = IllegalStateException("Unable to start watcher")
+        every { cidWatcher.start() } returns Result.failure(startError)
+
+        val result = client.connect()
+
+        assertTrue(result.isFailure)
+        assertSame(startError, result.exceptionOrNull())
         verify(exactly = 1) { cidWatcher.start() }
+        verify(exactly = 0) { connectionIdHolder.setConnectionId(any()) }
+        val state = connFlow.value
+        assertTrue(state is StreamConnectionState.Disconnected)
+        val disconnected = state as StreamConnectionState.Disconnected
+        assertSame(startError, disconnected.cause)
     }
 
     @Test
