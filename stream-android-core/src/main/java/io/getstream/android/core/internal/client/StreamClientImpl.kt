@@ -141,11 +141,7 @@ internal class StreamClientImpl<T>(
                 .start()
                 .flatMap { tokenManager.loadIfAbsent() }
                 .flatMap { token -> connectSocketSession(token) }
-                .flatMap { connected ->
-                    cidWatcher.start().map {
-                        connected
-                    }
-                }
+                .flatMap { connected -> cidWatcher.start().map { connected } }
                 .fold(
                     onSuccess = { connected ->
                         logger.d { "Connected to socket: $connected" }
