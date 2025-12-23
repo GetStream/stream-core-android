@@ -111,66 +111,72 @@ internal class StreamClientFactoryTest {
         val connectionRecoveryEvaluator: StreamConnectionRecoveryEvaluator,
     )
 
+    private fun createDependencies(): Dependencies =
+        Dependencies(
+            apiKey = StreamApiKey.fromString("key123"),
+            user = StreamUser(id = StreamUserId.fromString("user-123")),
+            wsUrl = StreamWsUrl.fromString("wss://test.stream/video"),
+            clientInfo =
+                StreamHttpClientInfoHeader.create(
+                    product = "android",
+                    productVersion = "1.0",
+                    os = "android",
+                    apiLevel = 33,
+                    deviceModel = "Pixel",
+                    app = "test-app",
+                    appVersion = "1.0.0",
+                ),
+            clientSubscriptionManager = mockk(relaxed = true),
+            tokenProvider = mockk(relaxed = true),
+            tokenManager = mockk(relaxed = true),
+            singleFlight = mockk(relaxed = true),
+            serialQueue = mockk(relaxed = true),
+            retryProcessor = mockk(relaxed = true),
+            connectionIdHolder = mockk(relaxed = true),
+            socketFactory = mockk(relaxed = true),
+            healthMonitor = mockk(relaxed = true),
+            batcher = mockk(relaxed = true),
+            lifecycleMonitor = mockk(relaxed = true),
+            networkMonitor = mockk(relaxed = true),
+            connectionRecoveryEvaluator = mockk(relaxed = true),
+        )
+
+    private fun buildClient(
+        deps: Dependencies,
+        httpConfig: StreamHttpConfig? = null,
+    ): StreamClient {
+        return StreamClient(
+            context = mockk(relaxed = true),
+            apiKey = deps.apiKey,
+            user = deps.user,
+            wsUrl = deps.wsUrl,
+            products = listOf("feeds"),
+            clientInfoHeader = deps.clientInfo,
+            clientSubscriptionManager = deps.clientSubscriptionManager,
+            tokenProvider = deps.tokenProvider,
+            tokenManager = deps.tokenManager,
+            singleFlight = deps.singleFlight,
+            serialQueue = deps.serialQueue,
+            retryProcessor = deps.retryProcessor,
+            scope = testScope,
+            connectionIdHolder = deps.connectionIdHolder,
+            socketFactory = deps.socketFactory,
+            healthMonitor = deps.healthMonitor,
+            batcher = deps.batcher,
+            httpConfig = httpConfig,
+            serializationConfig = serializationConfig,
+            logProvider = logProvider,
+            networkMonitor = deps.networkMonitor,
+            lifecycleMonitor = deps.lifecycleMonitor,
+            connectionRecoveryEvaluator = deps.connectionRecoveryEvaluator,
+        )
+    }
+
     private fun createClient(
         httpConfig: StreamHttpConfig? = null
     ): Pair<StreamClient, Dependencies> {
-        val deps =
-            Dependencies(
-                apiKey = StreamApiKey.fromString("key123"),
-                user = StreamUser(id = StreamUserId.fromString("user-123")),
-                wsUrl = StreamWsUrl.fromString("wss://test.stream/video"),
-                clientInfo =
-                    StreamHttpClientInfoHeader.create(
-                        product = "android",
-                        productVersion = "1.0",
-                        os = "android",
-                        apiLevel = 33,
-                        deviceModel = "Pixel",
-                        app = "test-app",
-                        appVersion = "1.0.0",
-                    ),
-                clientSubscriptionManager = mockk(relaxed = true),
-                tokenProvider = mockk(relaxed = true),
-                tokenManager = mockk(relaxed = true),
-                singleFlight = mockk(relaxed = true),
-                serialQueue = mockk(relaxed = true),
-                retryProcessor = mockk(relaxed = true),
-                connectionIdHolder = mockk(relaxed = true),
-                socketFactory = mockk(relaxed = true),
-                healthMonitor = mockk(relaxed = true),
-                batcher = mockk(relaxed = true),
-                lifecycleMonitor = mockk(relaxed = true),
-                networkMonitor = mockk(relaxed = true),
-                connectionRecoveryEvaluator = mockk(relaxed = true),
-            )
-
-        val client =
-            StreamClient(
-                context = mockk(relaxed = true),
-                apiKey = deps.apiKey,
-                user = deps.user,
-                wsUrl = deps.wsUrl,
-                products = listOf("feeds"),
-                clientInfoHeader = deps.clientInfo,
-                clientSubscriptionManager = deps.clientSubscriptionManager,
-                tokenProvider = deps.tokenProvider,
-                tokenManager = deps.tokenManager,
-                singleFlight = deps.singleFlight,
-                serialQueue = deps.serialQueue,
-                retryProcessor = deps.retryProcessor,
-                scope = testScope,
-                connectionIdHolder = deps.connectionIdHolder,
-                socketFactory = deps.socketFactory,
-                healthMonitor = deps.healthMonitor,
-                batcher = deps.batcher,
-                httpConfig = httpConfig,
-                serializationConfig = serializationConfig,
-                logProvider = logProvider,
-                networkMonitor = deps.networkMonitor,
-                lifecycleMonitor = deps.lifecycleMonitor,
-                connectionRecoveryEvaluator = deps.connectionRecoveryEvaluator,
-            )
-
+        val deps = createDependencies()
+        val client = buildClient(deps = deps, httpConfig = httpConfig)
         return client to deps
     }
 
