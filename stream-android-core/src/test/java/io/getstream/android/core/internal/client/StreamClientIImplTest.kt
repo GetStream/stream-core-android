@@ -45,7 +45,6 @@ import io.getstream.android.core.api.socket.listeners.StreamClientListener
 import io.getstream.android.core.api.subscribe.StreamSubscription
 import io.getstream.android.core.api.subscribe.StreamSubscriptionManager
 import io.getstream.android.core.api.subscribe.StreamSubscriptionManager.Options
-import io.getstream.android.core.api.watcher.StreamCidWatcher
 import io.getstream.android.core.internal.observers.StreamNetworkAndLifeCycleMonitor
 import io.getstream.android.core.internal.observers.StreamNetworkAndLifecycleMonitorListener
 import io.getstream.android.core.internal.recovery.StreamConnectionRecoveryEvaluatorImpl
@@ -96,7 +95,6 @@ class StreamClientIImplTest {
     private lateinit var connectionIdHolder: StreamConnectionIdHolder
     private lateinit var socketSession: StreamSocketSession<Unit>
     private lateinit var logger: StreamLogger
-    private lateinit var cidWatcher: StreamCidWatcher
 
     private lateinit var subscriptionManager: StreamSubscriptionManager<StreamClientListener>
 
@@ -113,12 +111,9 @@ class StreamClientIImplTest {
         connectionIdHolder = mockk(relaxed = true)
         socketSession = mockk(relaxed = true)
         logger = mockk(relaxed = true)
-        cidWatcher = mockk(relaxed = true)
         subscriptionManager = mockk(relaxed = true)
         every { socketSession.subscribe(any(), any()) } returns
             Result.success(mockk(relaxed = true))
-        every { cidWatcher.start() } returns Result.success(Unit)
-        every { cidWatcher.stop() } returns Result.success(Unit)
 
         // SingleFlight: execute the lambda and wrap into Result
         singleFlight = mockk(relaxed = true)
@@ -151,7 +146,6 @@ class StreamClientIImplTest {
             tokenManager = tokenManager,
             singleFlight = singleFlight,
             serialQueue = serialQueue,
-            cidWatcher = cidWatcher,
             connectionIdHolder = connectionIdHolder,
             socketSession = socketSession,
             logger = logger,
@@ -1020,97 +1014,5 @@ class StreamClientIImplTest {
         verify { tokenManager.invalidate() }
         coVerify { tokenManager.refresh() }
         coVerify(exactly = 2) { socketSession.connect(any()) }
-    }
-
-    @Test
-    fun `connect starts StreamCidWatcher on successful connection`() = runTest {
-        val client = createClient(this)
-        coEvery { singleFlight.run(any(), any<suspend () -> StreamConnectedUser>()) } coAnswers
-            {
-                val block = secondArg<suspend () -> StreamConnectedUser>()
-                Result.success(block.invoke())
-            }
-
-        every { socketSession.subscribe(any<StreamClientListener>(), any()) } returns
-            Result.success(mockk(relaxed = true))
-
-        val token = StreamToken.fromString("tok")
-        coEvery { tokenManager.loadIfAbsent() } returns Result.success(token)
-
-        val connectedUser = mockk<StreamConnectedUser>(relaxed = true)
-        val connectedState = StreamConnectionState.Connected(connectedUser, "conn-1")
-        coEvery { socketSession.connect(any()) } returns Result.success(connectedState)
-
-        every { connectionIdHolder.setConnectionId("conn-1") } returns Result.success("conn-1")
-        every { cidWatcher.start() } returns Result.success(Unit)
-
-        val result = client.connect()
-
-        assertTrue(result.isSuccess)
-        verify(exactly = 2) { cidWatcher.start() }
-    }
-
-    @Test
-    fun `connect fails when StreamCidWatcher start fails`() = runTest {
-        val client = createClient(this)
-        every { socketSession.subscribe(any<StreamClientListener>(), any()) } returns
-            Result.success(mockk(relaxed = true))
-
-        val token = StreamToken.fromString("tok")
-        coEvery { tokenManager.loadIfAbsent() } returns Result.success(token)
-
-        val connectedUser = mockk<StreamConnectedUser>(relaxed = true)
-        val connectedState = StreamConnectionState.Connected(connectedUser, "conn-2")
-        coEvery { socketSession.connect(any()) } returns Result.success(connectedState)
-
-        val startError = IllegalStateException("Unable to start watcher")
-        every { cidWatcher.start() } returns Result.failure(startError)
-
-        val result = client.connect()
-
-        assertTrue(result.isFailure)
-        assertSame(startError, result.exceptionOrNull())
-        verify(exactly = 1) { cidWatcher.start() }
-        verify(exactly = 0) { connectionIdHolder.setConnectionId(any()) }
-        val state = connFlow.value
-        assertTrue(state is StreamConnectionState.Disconnected)
-        val disconnected = state as StreamConnectionState.Disconnected
-        assertSame(startError, disconnected.cause)
-    }
-
-    @Test
-    fun `disconnect stops StreamCidWatcher`() = runTest {
-        val networkMonitor = mockNetworkMonitor()
-        val client = createClient(this, networkMonitor)
-        coEvery { singleFlight.run(any(), any<suspend () -> Any>()) } coAnswers
-            {
-                val block = secondArg<suspend () -> Any>()
-                block()
-                Result.success(Unit)
-            }
-        coJustRun { singleFlight.clear(true) }
-
-        val fakeHandle = mockk<StreamSubscription>(relaxed = true)
-        val handleField =
-            client.javaClass.getDeclaredField("socketSessionHandle").apply { isAccessible = true }
-        handleField.set(client, fakeHandle)
-
-        val networkHandle = mockk<StreamSubscription>(relaxed = true)
-        val networkHandleField =
-            client.javaClass.getDeclaredField("networkAndLifecycleMonitorHandle").apply {
-                isAccessible = true
-            }
-        networkHandleField.set(client, networkHandle)
-
-        every { connectionIdHolder.clear() } returns Result.success(Unit)
-        every { socketSession.disconnect() } returns Result.success(Unit)
-        coEvery { serialQueue.stop(any()) } returns Result.success(Unit)
-        justRun { tokenManager.invalidate() }
-        every { cidWatcher.stop() } returns Result.success(Unit)
-
-        val result = client.disconnect()
-
-        assertTrue(result.isSuccess)
-        verify(exactly = 1) { cidWatcher.stop() }
     }
 }

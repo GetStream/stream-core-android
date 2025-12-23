@@ -18,21 +18,19 @@ package io.getstream.android.core.internal.watcher
 
 import io.getstream.android.core.annotations.StreamInternalApi
 import io.getstream.android.core.api.log.StreamLogger
-import io.getstream.android.core.api.model.StreamCid
 import io.getstream.android.core.api.model.connection.StreamConnectionState
 import io.getstream.android.core.api.socket.listeners.StreamClientListener
 import io.getstream.android.core.api.subscribe.StreamSubscription
 import io.getstream.android.core.api.subscribe.StreamSubscriptionManager
-import io.getstream.android.core.api.watcher.StreamCidRewatchListener
-import io.getstream.android.core.api.watcher.StreamCidWatcher
+import io.getstream.android.core.api.watcher.StreamRewatchListener
+import io.getstream.android.core.api.watcher.StreamWatcher
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 
 /**
- * Implementation of [StreamCidWatcher] that uses [StreamSubscriptionManager] to monitor connection
+ * Implementation of [StreamWatcher] that uses [StreamSubscriptionManager] to monitor connection
  * state changes and trigger rewatch callbacks.
  *
  * This implementation subscribes to connection state changes via [StreamClientListener] and uses
@@ -43,19 +41,19 @@ import kotlinx.coroutines.launch
  *
  * @param scope Coroutine scope for async operations (should use SupervisorJob to prevent callback
  *   failures from cancelling the scope)
- * @param watched Concurrent map storing watched CIDs (defaults to empty [ConcurrentHashMap])
+ * @param watched Concurrent map storing watched entries (defaults to empty [ConcurrentHashMap])
  * @param rewatchSubscriptions Manager for rewatch listener subscriptions
  * @param clientSubscriptions Manager for subscribing to connection state change notifications
  * @param logger Logger for diagnostic output and error reporting
  */
 @StreamInternalApi
-internal class StreamCidWatcherImpl(
+internal class StreamWatcherImpl<T>(
     private val scope: CoroutineScope,
-    private val watched: ConcurrentMap<StreamCid, Unit> = ConcurrentHashMap(),
-    private val rewatchSubscriptions: StreamSubscriptionManager<StreamCidRewatchListener>,
+    private val watched: ConcurrentMap<T, Unit> = ConcurrentHashMap(),
+    private val rewatchSubscriptions: StreamSubscriptionManager<StreamRewatchListener<T>>,
     private val clientSubscriptions: StreamSubscriptionManager<StreamClientListener>,
     private val logger: StreamLogger,
-) : StreamCidWatcher {
+) : StreamWatcher<T> {
 
     private var subscription: StreamSubscription? = null
 
@@ -65,10 +63,10 @@ internal class StreamCidWatcherImpl(
                 // Invoke rewatch callback on every connection state change
                 if (state is StreamConnectionState.Connected && watched.isNotEmpty()) {
                     scope.launch {
-                        val cids = watched.keys.toList()
+                        val cids = watched.keys.toSet()
                         val connectionId = state.connectionId
                         logger.v {
-                            "[onState] Triggering rewatch for ${cids.size} CIDs on connection $connectionId: ${cids.map { it.formatted() }}"
+                            "[onState] Triggering rewatch for ${cids.size} items on connection $connectionId: ${cids.joinToString()}"
                         }
 
                         if (cids.isNotEmpty()) {
@@ -76,14 +74,14 @@ internal class StreamCidWatcherImpl(
                                 .forEach { it.onRewatch(cids, connectionId) }
                                 .onFailure { error ->
                                     logger.e(error) {
-                                        "[onState] Rewatch callback failed for ${cids.size} CIDs. Error: ${error.message}"
+                                        "[onState] Rewatch callback failed for ${cids.size} items. Error: ${error.message}"
                                     }
                                     clientSubscriptions.forEach { it.onError(error) }
                                 }
                         }
                     }
                 } else {
-                    logger.v { "[onState] State: $state, CIDS count: ${watched.size}" }
+                    logger.v { "[onState] State: $state, items count: ${watched.size}" }
                 }
             }
         }
@@ -102,7 +100,6 @@ internal class StreamCidWatcherImpl(
             )
             .map { subscription = it }
     }
-    }
 
     override fun stop(): Result<Unit> = runCatching {
         subscription?.cancel()
@@ -110,20 +107,20 @@ internal class StreamCidWatcherImpl(
         // Don't cancel scope - allows restart like other StreamStartableComponent implementations
     }
 
-    override fun watch(cid: StreamCid) = runCatching {
-        watched[cid] = Unit
-        cid
+    override fun watch(item: T) = runCatching {
+        watched[item] = Unit
+        item
     }
 
-    override fun stopWatching(cid: StreamCid): Result<StreamCid> = runCatching {
-        watched.remove(cid)
-        cid
+    override fun stopWatching(item: T): Result<T> = runCatching {
+        watched.remove(item)
+        item
     }
 
     override fun clear(): Result<Unit> = runCatching { watched.clear() }
 
     override fun subscribe(
-        listener: StreamCidRewatchListener,
+        listener: StreamRewatchListener<T>,
         options: StreamSubscriptionManager.Options,
     ): Result<StreamSubscription> = rewatchSubscriptions.subscribe(listener, options)
 }

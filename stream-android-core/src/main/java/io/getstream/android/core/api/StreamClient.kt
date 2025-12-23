@@ -50,8 +50,7 @@ import io.getstream.android.core.api.socket.listeners.StreamClientListener
 import io.getstream.android.core.api.socket.monitor.StreamHealthMonitor
 import io.getstream.android.core.api.subscribe.StreamObservable
 import io.getstream.android.core.api.subscribe.StreamSubscriptionManager
-import io.getstream.android.core.api.watcher.StreamCidRewatchListener
-import io.getstream.android.core.api.watcher.StreamCidWatcher
+import io.getstream.android.core.api.watcher.StreamWatcher
 import io.getstream.android.core.internal.client.StreamClientImpl
 import io.getstream.android.core.internal.observers.StreamNetworkAndLifeCycleMonitor
 import io.getstream.android.core.internal.serialization.StreamCompositeEventSerializationImpl
@@ -224,7 +223,6 @@ public fun StreamClient(
     tokenProvider: StreamTokenProvider,
     serializationConfig: StreamClientSerializationConfig,
     httpConfig: StreamHttpConfig? = null,
-    watchListener: StreamCidRewatchListener? = null,
 
     // Component provider
     androidComponentsProvider: StreamAndroidComponentsProvider =
@@ -290,16 +288,6 @@ public fun StreamClient(
             logger = logProvider.taggedLogger("SCConnectionRecoveryEvaluator"),
             singleFlightProcessor = singleFlight,
         ),
-    cidWatcher: StreamCidWatcher =
-        StreamCidWatcher(
-            scope = scope,
-            logger = logProvider.taggedLogger("SCCidRewatcher"),
-            streamRewatchSubscriptionManager =
-                StreamSubscriptionManager(
-                    logger = logProvider.taggedLogger("SCRewatchSubscriptionManager")
-                ),
-            streamClientSubscriptionManager = clientSubscriptionManager,
-        ),
 ): StreamClient {
     val clientLogger = logProvider.taggedLogger(tag = "SCClient")
     val parent = scope.coroutineContext[Job]
@@ -355,11 +343,6 @@ public fun StreamClient(
                 ),
         )
 
-    if (watchListener != null) {
-        // Auto-subscribe the re-watch listener if any
-        cidWatcher.subscribe(watchListener).getOrThrow()
-    }
-
     val mutableConnectionState = MutableStateFlow<StreamConnectionState>(StreamConnectionState.Idle)
     return StreamClientImpl(
         user = user,
@@ -367,7 +350,6 @@ public fun StreamClient(
         tokenManager = tokenManager,
         singleFlight = singleFlight,
         serialQueue = serialQueue,
-        cidWatcher = cidWatcher,
         connectionIdHolder = connectionIdHolder,
         logger = clientLogger,
         mutableConnectionState = mutableConnectionState,

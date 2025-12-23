@@ -17,13 +17,12 @@
 package io.getstream.android.core.api.watcher
 
 import io.getstream.android.core.annotations.StreamInternalApi
-import io.getstream.android.core.api.model.StreamCid
 
 /**
  * Callback interface invoked when watched resources need to be re-subscribed after a connection
  * state change.
  *
- * This functional interface is used with [StreamCidWatcher] to receive notifications when the
+ * This functional interface is used with [StreamWatcher] to receive notifications when the
  * WebSocket connection state changes (especially during reconnections), allowing the product SDK to
  * re-establish server-side watches for all actively monitored resources.
  *
@@ -48,15 +47,15 @@ import io.getstream.android.core.api.model.StreamCid
  * ## Example Usage
  *
  * ```kotlin
- * val watcher = StreamCidWatcher(logger, rewatchManager, clientManager)
+ * val watcher = StreamWatcher<String>(scope, logger, rewatchManager, clientManager)
  *
  * // Register a rewatch listener
  * watcher.subscribe(
- *     listener = StreamCidRewatchListener { cids, connectionId ->
- *         logger.i { "Re-watching ${cids.size} channels on connection $connectionId" }
- *         cids.forEach { cid ->
- *             // Re-establish server-side watch for each CID
- *             channelClient.watch(cid, connectionId)
+ *     listener = StreamRewatchListener { ids, connectionId ->
+ *         logger.i { "Re-watching ${ids.size} channels on connection $connectionId" }
+ *         ids.forEach { id ->
+ *             // Re-establish server-side watch for each identifier
+ *             channelClient.watch(id, connectionId)
  *         }
  *     }
  * )
@@ -64,16 +63,15 @@ import io.getstream.android.core.api.model.StreamCid
  * watcher.start()
  * ```
  *
- * @see StreamCidWatcher Main component that manages the watch registry and triggers callbacks
- * @see StreamCid Channel identifier in format "type:id" (e.g., "messaging:general")
+ * @see StreamWatcher Main component that manages the watch registry and triggers callbacks
  */
 @StreamInternalApi
-public fun interface StreamCidRewatchListener {
+public fun interface StreamRewatchListener<T> {
 
     /**
      * Called when watched resources need to be re-subscribed.
      *
-     * This method is invoked with the complete list of [StreamCid]s currently in the watch registry
+     * This method is invoked with the complete set of entries currently in the watch registry
      * whenever the connection state changes to [StreamConnectionState.Connected] and the registry
      * is non-empty.
      *
@@ -92,8 +90,8 @@ public fun interface StreamCidRewatchListener {
      * Exceptions thrown by this method are caught, logged, and surfaced via error callbacks. The
      * failure of one listener does not prevent other listeners from being notified.
      *
-     * @param list A non-empty list of [StreamCid]s that require re-watching
+     * @param items A non-empty set of entries that require re-watching
      * @param connectionId The connection ID of the current active WebSocket connection
      */
-    public fun onRewatch(list: List<StreamCid>, connectionId: String)
+    public fun onRewatch(items: Set<T>, connectionId: String)
 }

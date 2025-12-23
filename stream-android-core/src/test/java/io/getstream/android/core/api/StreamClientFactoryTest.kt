@@ -47,10 +47,9 @@ import io.getstream.android.core.api.socket.StreamConnectionIdHolder
 import io.getstream.android.core.api.socket.StreamWebSocketFactory
 import io.getstream.android.core.api.socket.listeners.StreamClientListener
 import io.getstream.android.core.api.socket.monitor.StreamHealthMonitor
-import io.getstream.android.core.api.subscribe.StreamSubscription
 import io.getstream.android.core.api.subscribe.StreamSubscriptionManager
-import io.getstream.android.core.api.watcher.StreamCidRewatchListener
-import io.getstream.android.core.api.watcher.StreamCidWatcher
+import io.getstream.android.core.api.watcher.StreamRewatchListener
+import io.getstream.android.core.api.watcher.StreamWatcher
 import io.getstream.android.core.internal.client.StreamClientImpl
 import io.getstream.android.core.internal.http.interceptor.StreamApiKeyInterceptor
 import io.getstream.android.core.internal.http.interceptor.StreamAuthInterceptor
@@ -63,7 +62,6 @@ import io.getstream.android.core.internal.socket.StreamWebSocketImpl
 import io.getstream.android.core.internal.subscribe.StreamSubscriptionManagerImpl
 import io.getstream.android.core.testutil.assertFieldEquals
 import io.getstream.android.core.testutil.readPrivateField
-import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
 import kotlin.test.assertEquals
@@ -149,16 +147,15 @@ internal class StreamClientFactoryTest {
     private fun buildClient(
         deps: Dependencies,
         httpConfig: StreamHttpConfig? = null,
-        watchListener: StreamCidRewatchListener? = null,
-        cidWatcher: StreamCidWatcher? = null,
+        cidWatcher: StreamWatcher<String>? = null,
     ): StreamClient {
         val watcher =
             cidWatcher
-                ?: StreamCidWatcher(
+                ?: StreamWatcher<String>(
                     scope = testScope,
-                    logger = logProvider.taggedLogger("SCCidRewatcher"),
+                    logger = logProvider.taggedLogger("SCRewatcher"),
                     streamRewatchSubscriptionManager =
-                        StreamSubscriptionManager(
+                        StreamSubscriptionManager<StreamRewatchListener<String>>(
                             logger = logProvider.taggedLogger("SCRewatchSubscriptionManager")
                         ),
                     streamClientSubscriptionManager = deps.clientSubscriptionManager,
@@ -184,8 +181,6 @@ internal class StreamClientFactoryTest {
             batcher = deps.batcher,
             httpConfig = httpConfig,
             serializationConfig = serializationConfig,
-            watchListener = watchListener,
-            cidWatcher = watcher,
             logProvider = logProvider,
             networkMonitor = deps.networkMonitor,
             lifecycleMonitor = deps.lifecycleMonitor,
@@ -390,22 +385,9 @@ internal class StreamClientFactoryTest {
     }
 
     @Test
-    fun `StreamClient factory auto subscribes provided watch listener`() {
-        val deps = createDependencies()
-        val cidWatcher = mockk<StreamCidWatcher>(relaxed = true)
-        val listener = StreamCidRewatchListener { _, _ -> }
-        every { cidWatcher.subscribe(listener, any()) } returns
-            Result.success(mockk<StreamSubscription>(relaxed = true))
-
-        buildClient(deps = deps, watchListener = listener, cidWatcher = cidWatcher)
-
-        verify(exactly = 1) { cidWatcher.subscribe(listener, any()) }
-    }
-
-    @Test
     fun `StreamClient factory skips watch listener subscription when absent`() {
         val deps = createDependencies()
-        val cidWatcher = mockk<StreamCidWatcher>(relaxed = true)
+        val cidWatcher = mockk<StreamWatcher<String>>(relaxed = true)
 
         buildClient(deps = deps, cidWatcher = cidWatcher)
 

@@ -19,18 +19,18 @@
 package io.getstream.android.core.internal.watcher
 
 import io.getstream.android.core.api.log.StreamLogger
-import io.getstream.android.core.api.model.StreamCid
 import io.getstream.android.core.api.model.connection.StreamConnectedUser
 import io.getstream.android.core.api.model.connection.StreamConnectionState
 import io.getstream.android.core.api.socket.listeners.StreamClientListener
 import io.getstream.android.core.api.subscribe.StreamSubscription
 import io.getstream.android.core.api.subscribe.StreamSubscriptionManager
-import io.getstream.android.core.api.watcher.StreamCidRewatchListener
-import io.getstream.android.core.api.watcher.StreamCidWatcher
+import io.getstream.android.core.api.watcher.StreamRewatchListener
+import io.getstream.android.core.api.watcher.StreamWatcher
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
 import io.mockk.verify
+import java.util.Collections
 import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -49,13 +49,14 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
-class StreamCidWatcherImplTest {
+class StreamWatcherImplTest {
 
     private lateinit var logger: StreamLogger
-    private lateinit var rewatchSubscriptions: StreamSubscriptionManager<StreamCidRewatchListener>
+    private lateinit var rewatchSubscriptions:
+        StreamSubscriptionManager<StreamRewatchListener<String>>
     private lateinit var clientSubscriptions: StreamSubscriptionManager<StreamClientListener>
-    private lateinit var watcher: StreamCidWatcher
-    private lateinit var watched: ConcurrentHashMap<StreamCid, Unit>
+    private lateinit var watcher: StreamWatcher<String>
+    private lateinit var watched: ConcurrentHashMap<String, Unit>
     private lateinit var scope: CoroutineScope
 
     @Before
@@ -67,7 +68,7 @@ class StreamCidWatcherImplTest {
         scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
         watcher =
-            StreamCidWatcherImpl(
+            StreamWatcherImpl<String>(
                 scope = scope,
                 watched = watched,
                 rewatchSubscriptions = rewatchSubscriptions,
@@ -82,7 +83,7 @@ class StreamCidWatcherImplTest {
 
     @Test
     fun `watch adds CID to registry`() {
-        val cid = StreamCid.parse("messaging:general")
+        val cid = "messaging:general"
 
         val result = watcher.watch(cid)
 
@@ -93,7 +94,7 @@ class StreamCidWatcherImplTest {
 
     @Test
     fun `watch same CID twice is idempotent`() {
-        val cid = StreamCid.parse("messaging:general")
+        val cid = "messaging:general"
 
         watcher.watch(cid)
         watcher.watch(cid)
@@ -104,9 +105,9 @@ class StreamCidWatcherImplTest {
 
     @Test
     fun `watch multiple different CIDs`() {
-        val cid1 = StreamCid.parse("messaging:general")
-        val cid2 = StreamCid.parse("livestream:sports")
-        val cid3 = StreamCid.parse("messaging:random")
+        val cid1 = "messaging:general"
+        val cid2 = "livestream:sports"
+        val cid3 = "messaging:random"
 
         watcher.watch(cid1)
         watcher.watch(cid2)
@@ -120,7 +121,7 @@ class StreamCidWatcherImplTest {
 
     @Test
     fun `stopWatching removes CID from registry`() {
-        val cid = StreamCid.parse("messaging:general")
+        val cid = "messaging:general"
         watcher.watch(cid)
 
         val result = watcher.stopWatching(cid)
@@ -132,7 +133,7 @@ class StreamCidWatcherImplTest {
 
     @Test
     fun `stopWatching non-existent CID is a no-op`() {
-        val cid = StreamCid.parse("messaging:general")
+        val cid = "messaging:general"
 
         val result = watcher.stopWatching(cid)
 
@@ -143,9 +144,9 @@ class StreamCidWatcherImplTest {
 
     @Test
     fun `clear removes all CIDs from registry`() {
-        watcher.watch(StreamCid.parse("messaging:general"))
-        watcher.watch(StreamCid.parse("livestream:sports"))
-        watcher.watch(StreamCid.parse("messaging:random"))
+        watcher.watch("messaging:general")
+        watcher.watch("livestream:sports")
+        watcher.watch("messaging:random")
 
         val result = watcher.clear()
 
@@ -265,21 +266,23 @@ class StreamCidWatcherImplTest {
         every { clientSubscriptions.subscribe(capture(clientListenerSlot), any()) } returnsMany
             listOf(Result.success(mockSubscription1), Result.success(mockSubscription2))
 
-        val rewatchListeners = mutableListOf<StreamCidRewatchListener>()
-        every { rewatchSubscriptions.forEach(any<(StreamCidRewatchListener) -> Unit>()) } answers
+        val rewatchListeners = mutableListOf<StreamRewatchListener<String>>()
+        every {
+            rewatchSubscriptions.forEach(any<(StreamRewatchListener<String>) -> Unit>())
+        } answers
             {
-                val block = firstArg<(StreamCidRewatchListener) -> Unit>()
+                val block = firstArg<(StreamRewatchListener<String>) -> Unit>()
                 rewatchListeners.forEach { block(it) }
                 Result.success(Unit)
             }
 
-        val cid = StreamCid.parse("messaging:test")
+        val cid = "messaging:test"
         watcher.watch(cid)
 
-        val receivedCidsBeforeRestart = mutableListOf<List<StreamCid>>()
-        val receivedCidsAfterRestart = mutableListOf<List<StreamCid>>()
+        val receivedCidsBeforeRestart = mutableListOf<Set<String>>()
+        val receivedCidsAfterRestart = mutableListOf<Set<String>>()
         rewatchListeners.add(
-            StreamCidRewatchListener { cids, _ -> receivedCidsBeforeRestart.add(cids) }
+            StreamRewatchListener { cids, _ -> receivedCidsBeforeRestart.add(cids) }
         )
 
         // Start, trigger rewatch, stop
@@ -300,7 +303,7 @@ class StreamCidWatcherImplTest {
 
         // Add a second listener and restart
         rewatchListeners.add(
-            StreamCidRewatchListener { cids, _ -> receivedCidsAfterRestart.add(cids) }
+            StreamRewatchListener { cids, _ -> receivedCidsAfterRestart.add(cids) }
         )
         watcher.start()
 
@@ -336,27 +339,30 @@ class StreamCidWatcherImplTest {
             Result.success(mockSubscription)
 
         // Setup: Mock rewatch subscriptions
-        val rewatchListeners = mutableListOf<StreamCidRewatchListener>()
-        every { rewatchSubscriptions.forEach(any<(StreamCidRewatchListener) -> Unit>()) } answers
+        val rewatchListeners = mutableListOf<StreamRewatchListener<String>>()
+        every {
+            rewatchSubscriptions.forEach(any<(StreamRewatchListener<String>) -> Unit>())
+        } answers
             {
-                val block = firstArg<(StreamCidRewatchListener) -> Unit>()
+                val block = firstArg<(StreamRewatchListener<String>) -> Unit>()
                 rewatchListeners.forEach { block(it) }
                 Result.success(Unit)
             }
 
         // Setup: Add CIDs
-        val cid1 = StreamCid.parse("messaging:general")
-        val cid2 = StreamCid.parse("livestream:sports")
+        val cid1 = "messaging:general"
+        val cid2 = "livestream:sports"
         watcher.watch(cid1)
         watcher.watch(cid2)
 
         // Setup: Register rewatch listener
-        val receivedCids = mutableListOf<List<StreamCid>>()
+        val receivedCids = mutableListOf<Set<String>>()
         val receivedConnectionIds = mutableListOf<String>()
-        val rewatchListener = StreamCidRewatchListener { cids, connectionId ->
-            receivedCids.add(cids)
-            receivedConnectionIds.add(connectionId)
-        }
+        val rewatchListener: StreamRewatchListener<String> =
+            StreamRewatchListener { cids, connectionId ->
+                receivedCids.add(cids)
+                receivedConnectionIds.add(connectionId)
+            }
         rewatchListeners.add(rewatchListener)
 
         // Start watcher
@@ -395,18 +401,20 @@ class StreamCidWatcherImplTest {
         every { clientSubscriptions.subscribe(capture(clientListenerSlot), any()) } returns
             Result.success(mockSubscription)
 
-        val rewatchListeners = mutableListOf<StreamCidRewatchListener>()
-        every { rewatchSubscriptions.forEach(any<(StreamCidRewatchListener) -> Unit>()) } answers
+        val rewatchListeners = mutableListOf<StreamRewatchListener<String>>()
+        every {
+            rewatchSubscriptions.forEach(any<(StreamRewatchListener<String>) -> Unit>())
+        } answers
             {
-                val block = firstArg<(StreamCidRewatchListener) -> Unit>()
+                val block = firstArg<(StreamRewatchListener<String>) -> Unit>()
                 rewatchListeners.forEach { block(it) }
                 Result.success(Unit)
             }
 
-        watcher.watch(StreamCid.parse("messaging:general"))
+        watcher.watch("messaging:general")
 
-        val receivedCids = mutableListOf<List<StreamCid>>()
-        rewatchListeners.add(StreamCidRewatchListener { cids, _ -> receivedCids.add(cids) })
+        val receivedCids = mutableListOf<Set<String>>()
+        rewatchListeners.add(StreamRewatchListener { cids, _ -> receivedCids.add(cids) })
 
         watcher.start()
 
@@ -430,18 +438,20 @@ class StreamCidWatcherImplTest {
         every { clientSubscriptions.subscribe(capture(clientListenerSlot), any()) } returns
             Result.success(mockSubscription)
 
-        val rewatchListeners = mutableListOf<StreamCidRewatchListener>()
-        every { rewatchSubscriptions.forEach(any<(StreamCidRewatchListener) -> Unit>()) } answers
+        val rewatchListeners = mutableListOf<StreamRewatchListener<String>>()
+        every {
+            rewatchSubscriptions.forEach(any<(StreamRewatchListener<String>) -> Unit>())
+        } answers
             {
-                val block = firstArg<(StreamCidRewatchListener) -> Unit>()
+                val block = firstArg<(StreamRewatchListener<String>) -> Unit>()
                 rewatchListeners.forEach { block(it) }
                 Result.success(Unit)
             }
 
-        watcher.watch(StreamCid.parse("messaging:general"))
+        watcher.watch("messaging:general")
 
-        val receivedCids = mutableListOf<List<StreamCid>>()
-        rewatchListeners.add(StreamCidRewatchListener { cids, _ -> receivedCids.add(cids) })
+        val receivedCids = mutableListOf<Set<String>>()
+        rewatchListeners.add(StreamRewatchListener { cids, _ -> receivedCids.add(cids) })
 
         watcher.start()
 
@@ -462,18 +472,20 @@ class StreamCidWatcherImplTest {
         every { clientSubscriptions.subscribe(capture(clientListenerSlot), any()) } returns
             Result.success(mockSubscription)
 
-        val rewatchListeners = mutableListOf<StreamCidRewatchListener>()
-        every { rewatchSubscriptions.forEach(any<(StreamCidRewatchListener) -> Unit>()) } answers
+        val rewatchListeners = mutableListOf<StreamRewatchListener<String>>()
+        every {
+            rewatchSubscriptions.forEach(any<(StreamRewatchListener<String>) -> Unit>())
+        } answers
             {
-                val block = firstArg<(StreamCidRewatchListener) -> Unit>()
+                val block = firstArg<(StreamRewatchListener<String>) -> Unit>()
                 rewatchListeners.forEach { block(it) }
                 Result.success(Unit)
             }
 
-        watcher.watch(StreamCid.parse("messaging:general"))
+        watcher.watch("messaging:general")
 
-        val receivedCids = mutableListOf<List<StreamCid>>()
-        rewatchListeners.add(StreamCidRewatchListener { cids, _ -> receivedCids.add(cids) })
+        val receivedCids = mutableListOf<Set<String>>()
+        rewatchListeners.add(StreamRewatchListener { cids, _ -> receivedCids.add(cids) })
 
         watcher.start()
 
@@ -498,16 +510,18 @@ class StreamCidWatcherImplTest {
         every { clientSubscriptions.subscribe(capture(clientListenerSlot), any()) } returns
             Result.success(mockSubscription)
 
-        val rewatchListeners = mutableListOf<StreamCidRewatchListener>()
-        every { rewatchSubscriptions.forEach(any<(StreamCidRewatchListener) -> Unit>()) } answers
+        val rewatchListeners = mutableListOf<StreamRewatchListener<String>>()
+        every {
+            rewatchSubscriptions.forEach(any<(StreamRewatchListener<String>) -> Unit>())
+        } answers
             {
-                val block = firstArg<(StreamCidRewatchListener) -> Unit>()
+                val block = firstArg<(StreamRewatchListener<String>) -> Unit>()
                 rewatchListeners.forEach { block(it) }
                 Result.success(Unit)
             }
 
-        val receivedCids = mutableListOf<List<StreamCid>>()
-        rewatchListeners.add(StreamCidRewatchListener { cids, _ -> receivedCids.add(cids) })
+        val receivedCids = mutableListOf<Set<String>>()
+        rewatchListeners.add(StreamRewatchListener { cids, _ -> receivedCids.add(cids) })
 
         watcher.start()
 
@@ -539,24 +553,26 @@ class StreamCidWatcherImplTest {
         every { clientSubscriptions.subscribe(capture(clientListenerSlot), any()) } returns
             Result.success(mockSubscription)
 
-        val rewatchListeners = mutableListOf<StreamCidRewatchListener>()
-        every { rewatchSubscriptions.forEach(any<(StreamCidRewatchListener) -> Unit>()) } answers
+        val rewatchListeners = mutableListOf<StreamRewatchListener<String>>()
+        every {
+            rewatchSubscriptions.forEach(any<(StreamRewatchListener<String>) -> Unit>())
+        } answers
             {
-                val block = firstArg<(StreamCidRewatchListener) -> Unit>()
+                val block = firstArg<(StreamRewatchListener<String>) -> Unit>()
                 rewatchListeners.forEach { block(it) }
                 Result.success(Unit)
             }
 
-        val cid = StreamCid.parse("messaging:general")
+        val cid = "messaging:general"
         watcher.watch(cid)
 
-        val receivedCids1 = mutableListOf<List<StreamCid>>()
-        val receivedCids2 = mutableListOf<List<StreamCid>>()
-        val receivedCids3 = mutableListOf<List<StreamCid>>()
+        val receivedCids1 = mutableListOf<Set<String>>()
+        val receivedCids2 = mutableListOf<Set<String>>()
+        val receivedCids3 = mutableListOf<Set<String>>()
 
-        rewatchListeners.add(StreamCidRewatchListener { cids, _ -> receivedCids1.add(cids) })
-        rewatchListeners.add(StreamCidRewatchListener { cids, _ -> receivedCids2.add(cids) })
-        rewatchListeners.add(StreamCidRewatchListener { cids, _ -> receivedCids3.add(cids) })
+        rewatchListeners.add(StreamRewatchListener { cids, _ -> receivedCids1.add(cids) })
+        rewatchListeners.add(StreamRewatchListener { cids, _ -> receivedCids2.add(cids) })
+        rewatchListeners.add(StreamRewatchListener { cids, _ -> receivedCids3.add(cids) })
 
         watcher.start()
 
@@ -577,9 +593,9 @@ class StreamCidWatcherImplTest {
         assertEquals(1, receivedCids1.size)
         assertEquals(1, receivedCids2.size)
         assertEquals(1, receivedCids3.size)
-        assertEquals(listOf(cid), receivedCids1[0])
-        assertEquals(listOf(cid), receivedCids2[0])
-        assertEquals(listOf(cid), receivedCids3[0])
+        assertEquals(setOf(cid), receivedCids1[0])
+        assertEquals(setOf(cid), receivedCids2[0])
+        assertEquals(setOf(cid), receivedCids3[0])
     }
 
     // ========================================
@@ -597,8 +613,9 @@ class StreamCidWatcherImplTest {
             Result.success(mockSubscription)
 
         val error = RuntimeException("Rewatch failed")
-        every { rewatchSubscriptions.forEach(any<(StreamCidRewatchListener) -> Unit>()) } returns
-            Result.failure(error)
+        every {
+            rewatchSubscriptions.forEach(any<(StreamRewatchListener<String>) -> Unit>())
+        } returns Result.failure(error)
 
         val clientListeners = mutableListOf<StreamClientListener>()
         every { clientSubscriptions.forEach(any<(StreamClientListener) -> Unit>()) } answers
@@ -617,7 +634,7 @@ class StreamCidWatcherImplTest {
             }
         )
 
-        watcher.watch(StreamCid.parse("messaging:general"))
+        watcher.watch("messaging:general")
         watcher.start()
 
         val connectedState =
@@ -647,7 +664,7 @@ class StreamCidWatcherImplTest {
 
     @Test
     fun `subscribe delegates to rewatchSubscriptions`() {
-        val listener = StreamCidRewatchListener { _, _ -> }
+        val listener: StreamRewatchListener<String> = StreamRewatchListener { _, _ -> }
         val options =
             StreamSubscriptionManager.Options(
                 retention = StreamSubscriptionManager.Options.Retention.KEEP_UNTIL_CANCELLED
@@ -666,7 +683,7 @@ class StreamCidWatcherImplTest {
 
     @Test
     fun `subscribe returns failure when rewatchSubscriptions fails`() {
-        val listener = StreamCidRewatchListener { _, _ -> }
+        val listener: StreamRewatchListener<String> = StreamRewatchListener { _, _ -> }
         val options =
             StreamSubscriptionManager.Options(
                 retention = StreamSubscriptionManager.Options.Retention.KEEP_UNTIL_CANCELLED
@@ -687,7 +704,7 @@ class StreamCidWatcherImplTest {
 
     @Test
     fun `concurrent watch and stopWatching operations are thread-safe`() = runTest {
-        val cids = (1..100).map { StreamCid.parse("messaging:channel-$it") }
+        val cids = (1..100).map { "messaging:channel-$it" }
 
         // Concurrently add and remove CIDs
         val jobs =
@@ -714,19 +731,21 @@ class StreamCidWatcherImplTest {
         every { clientSubscriptions.subscribe(capture(clientListenerSlot), any()) } returns
             Result.success(mockSubscription)
 
-        val rewatchListeners = mutableListOf<StreamCidRewatchListener>()
-        every { rewatchSubscriptions.forEach(any<(StreamCidRewatchListener) -> Unit>()) } answers
+        val rewatchListeners = mutableListOf<StreamRewatchListener<String>>()
+        every {
+            rewatchSubscriptions.forEach(any<(StreamRewatchListener<String>) -> Unit>())
+        } answers
             {
-                val block = firstArg<(StreamCidRewatchListener) -> Unit>()
+                val block = firstArg<(StreamRewatchListener<String>) -> Unit>()
                 rewatchListeners.forEach { block(it) }
                 Result.success(Unit)
             }
 
-        val cid = StreamCid.parse("messaging:general")
+        val cid = "messaging:general"
         watcher.watch(cid)
 
-        val callCount = mutableListOf<Int>()
-        rewatchListeners.add(StreamCidRewatchListener { cids, _ -> callCount.add(cids.size) })
+        val callCount = Collections.synchronizedList(mutableListOf<Int>())
+        rewatchListeners.add(StreamRewatchListener { cids, _ -> callCount.add(cids.size) })
 
         watcher.start()
 
@@ -754,9 +773,9 @@ class StreamCidWatcherImplTest {
     // ========================================
 
     @Test
-    fun `factory method creates StreamCidWatcherImpl instance`() {
+    fun `factory method creates StreamWatcherImpl instance`() {
         val factoryWatcher =
-            io.getstream.android.core.api.watcher.StreamCidWatcher(
+            io.getstream.android.core.api.watcher.StreamWatcher<String>(
                 scope = scope,
                 logger = logger,
                 streamRewatchSubscriptionManager = rewatchSubscriptions,
@@ -764,13 +783,13 @@ class StreamCidWatcherImplTest {
             )
 
         // Verify it's the correct implementation type
-        assertTrue(factoryWatcher is StreamCidWatcherImpl)
+        assertTrue(factoryWatcher is StreamWatcherImpl<*>)
     }
 
     @Test
     fun `factory method wires dependencies correctly`() {
         val factoryWatcher =
-            io.getstream.android.core.api.watcher.StreamCidWatcher(
+            io.getstream.android.core.api.watcher.StreamWatcher<String>(
                 scope = scope,
                 logger = logger,
                 streamRewatchSubscriptionManager = rewatchSubscriptions,
@@ -778,7 +797,7 @@ class StreamCidWatcherImplTest {
             )
 
         // Verify the instance is functional by testing basic operations
-        val cid = StreamCid.parse("messaging:test")
+        val cid = "messaging:test"
         val result = factoryWatcher.watch(cid)
 
         assertTrue(result.isSuccess)
@@ -786,25 +805,25 @@ class StreamCidWatcherImplTest {
     }
 
     // ========================================
-    // StreamCidRewatchListener Tests
+    // StreamRewatchListener Tests
     // ========================================
 
     @Test
-    fun `StreamCidRewatchListener receives CID list and connectionId in onRewatch`() {
-        val receivedCids = mutableListOf<List<StreamCid>>()
+    fun `StreamRewatchListener receives identifier set and connectionId in onRewatch`() {
+        val receivedCids = mutableListOf<Set<String>>()
         val receivedConnectionIds = mutableListOf<String>()
 
-        val listener = StreamCidRewatchListener { cids, connectionId ->
+        val listener: StreamRewatchListener<String> = StreamRewatchListener { cids, connectionId ->
             receivedCids.add(cids)
             receivedConnectionIds.add(connectionId)
         }
 
-        val cid1 = StreamCid.parse("messaging:channel1")
-        val cid2 = StreamCid.parse("livestream:stream1")
-        val testList = listOf(cid1, cid2)
+        val cid1 = "messaging:channel1"
+        val cid2 = "livestream:stream1"
+        val testSet = setOf(cid1, cid2)
         val testConnectionId = "conn-test-123"
 
-        listener.onRewatch(testList, testConnectionId)
+        listener.onRewatch(testSet, testConnectionId)
 
         assertEquals(1, receivedCids.size)
         assertEquals(2, receivedCids[0].size)
@@ -815,31 +834,31 @@ class StreamCidWatcherImplTest {
     }
 
     @Test
-    fun `StreamCidRewatchListener handles empty list`() {
+    fun `StreamRewatchListener handles empty set`() {
         var callCount = 0
-        val listener = StreamCidRewatchListener { _, _ -> callCount++ }
+        val listener: StreamRewatchListener<String> = StreamRewatchListener { _, _ -> callCount++ }
 
-        listener.onRewatch(emptyList(), "conn-empty")
+        listener.onRewatch(emptySet(), "conn-empty")
 
         assertEquals(1, callCount)
     }
 
     @Test
-    fun `StreamCidRewatchListener can be called multiple times with different connectionIds`() {
-        val allReceivedCids = mutableListOf<List<StreamCid>>()
+    fun `StreamRewatchListener can be called multiple times with different connectionIds`() {
+        val allReceivedCids = mutableListOf<Set<String>>()
         val allConnectionIds = mutableListOf<String>()
-        val listener = StreamCidRewatchListener { cids, connectionId ->
+        val listener: StreamRewatchListener<String> = StreamRewatchListener { cids, connectionId ->
             allReceivedCids.add(cids)
             allConnectionIds.add(connectionId)
         }
 
-        val cid1 = StreamCid.parse("messaging:first")
-        val cid2 = StreamCid.parse("messaging:second")
-        val cid3 = StreamCid.parse("messaging:third")
+        val cid1 = "messaging:first"
+        val cid2 = "messaging:second"
+        val cid3 = "messaging:third"
 
-        listener.onRewatch(listOf(cid1), "conn-1")
-        listener.onRewatch(listOf(cid2, cid3), "conn-2")
-        listener.onRewatch(emptyList(), "conn-3")
+        listener.onRewatch(setOf(cid1), "conn-1")
+        listener.onRewatch(setOf(cid2, cid3), "conn-2")
+        listener.onRewatch(emptySet(), "conn-3")
 
         assertEquals(3, allReceivedCids.size)
         assertEquals(1, allReceivedCids[0].size)
