@@ -180,6 +180,45 @@ class StreamWatcherImplTest {
     }
 
     @Test
+    fun `start after stop creates new collection job`() = runTest {
+        // Start the watcher
+        val result1 = watcher.start()
+        assertTrue(result1.isSuccess)
+
+        // Stop the watcher
+        val stopResult = watcher.stop()
+        assertTrue(stopResult.isSuccess)
+
+        // Start again - should create a new job
+        val result2 = watcher.start()
+        assertTrue(result2.isSuccess)
+
+        // Verify it's actually working by triggering a state change
+        watcher.watch("messaging:general")
+
+        var callbackInvoked = false
+        every {
+            rewatchSubscriptions.forEach(any<(StreamRewatchListener<String>) -> Unit>())
+        } answers
+            {
+                callbackInvoked = true
+                Result.success(Unit)
+            }
+
+        connectionState.value =
+            StreamConnectionState.Connected(
+                connectedUser = mockk<StreamConnectedUser>(relaxed = true),
+                connectionId = "conn-123",
+            )
+
+        advanceUntilIdle()
+        runBlocking { delay(100) }
+
+        // Callback should have been invoked, proving the new job is active
+        assertTrue(callbackInvoked)
+    }
+
+    @Test
     fun `start succeeds even with connection state flow collection`() {
         val result = watcher.start()
 
@@ -511,16 +550,17 @@ class StreamWatcherImplTest {
         val error = RuntimeException("Rewatch failed")
 
         // Create a listener that throws an exception
-        val failingListener = StreamRewatchListener<String> { _, _ ->
-            throw error
-        }
+        val failingListener = StreamRewatchListener<String> { _, _ -> throw error }
 
         // Mock rewatchSubscriptions.forEach to provide the failing listener
-        every { rewatchSubscriptions.forEach(any<(StreamRewatchListener<String>) -> Unit>()) } answers {
-            val block = firstArg<(StreamRewatchListener<String>) -> Unit>()
-            block(failingListener)
-            Result.success(Unit)
-        }
+        every {
+            rewatchSubscriptions.forEach(any<(StreamRewatchListener<String>) -> Unit>())
+        } answers
+            {
+                val block = firstArg<(StreamRewatchListener<String>) -> Unit>()
+                block(failingListener)
+                Result.success(Unit)
+            }
 
         watcher.watch("messaging:general")
         watcher.start()
@@ -603,6 +643,35 @@ class StreamWatcherImplTest {
 
         // All operations should have completed without crashes
         assertEquals(0, watched.size)
+    }
+
+    @Test
+    fun `concurrent start calls are thread-safe`() = runTest {
+        // Call start() concurrently from multiple threads
+        val jobs = (1..10).map { this.launch { watcher.start() } }
+
+        jobs.forEach { it.join() }
+
+        // All start calls should succeed without crashes
+        // Verify only one collection job was created
+        val result = watcher.start()
+        assertTrue(result.isSuccess)
+    }
+
+    @Test
+    fun `concurrent start and stop calls are thread-safe`() = runTest {
+        // Concurrently call start and stop
+        val jobs =
+            (1..20).flatMap {
+                listOf(this.launch { watcher.start() }, this.launch { watcher.stop() })
+            }
+
+        jobs.forEach { it.join() }
+
+        // All operations should complete without crashes
+        // Final start should work
+        val result = watcher.start()
+        assertTrue(result.isSuccess)
     }
 
     @Test

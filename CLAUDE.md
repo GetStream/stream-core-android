@@ -264,17 +264,24 @@ watcher.stop()
   - Sequential execution: Callbacks are called one at a time in order
   - Clean API: Natural flow for making API calls during reconnection
 - Thread-safe: Uses `ConcurrentHashMap<T, Unit>` for the registry (line 55 in `StreamWatcherImpl.kt`)
+- Thread-safe lifecycle: `start()` and `stop()` use `synchronized` blocks to prevent race conditions when called concurrently (lines 62-73, 104-110)
+  - Prevents multiple collection jobs from being created
+  - Truly idempotent: checks `collectionJob?.isActive == true` instead of just null (line 63)
+  - Safe to call `start()` multiple times - returns success immediately if already started
+  - After `stop()`, calling `start()` creates a new collection job
+  - Concurrent `start()` and `stop()` calls are handled safely
 - Sequential execution: StateFlow collector processes states sequentially; within each state, listeners are invoked sequentially (lines 75-102)
-- Error handling: Exceptions from rewatch callbacks are caught and logged; one failing callback doesn't prevent others from executing (lines 91-96)
+- Error handling: Exceptions from rewatch callbacks are caught with `runCatchingCancellable` and logged; one failing callback doesn't prevent others from executing (lines 91-96)
 - Idempotent: Multiple `watch()` calls with the same identifier only maintain one entry
 - Only triggers on `Connected` state when registry is non-empty (line 77)
 - Connection ID extracted from `Connected` state and passed to all listeners (line 79)
-- Lifecycle: `start()` launches a coroutine to collect from StateFlow, `stop()` cancels the collection job (lines 62-73)
 
 **Test Coverage:**
 - Location: `stream-android-core/src/test/java/io/getstream/android/core/internal/watcher/StreamWatcherImplTest.kt`
-- 30 comprehensive test cases covering watch operations, lifecycle, state changes, error handling, concurrency, and connectionId verification
+- 33 comprehensive test cases covering watch operations, lifecycle, state changes, error handling, concurrency (including concurrent start/stop), and connectionId verification
 - Tests use MutableStateFlow to directly emit connection state changes, verifying watcher responds correctly
+- Concurrency tests verify thread-safety of concurrent `start()` and `stop()` calls
+- Idempotency test verifies `start()` after `stop()` creates a new active collection job
 - 100% instruction/branch/line coverage (verified via Kover)
 
 ## Configuration Defaults

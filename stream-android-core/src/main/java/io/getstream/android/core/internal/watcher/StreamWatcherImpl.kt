@@ -21,6 +21,7 @@ import io.getstream.android.core.api.log.StreamLogger
 import io.getstream.android.core.api.model.connection.StreamConnectionState
 import io.getstream.android.core.api.subscribe.StreamSubscription
 import io.getstream.android.core.api.subscribe.StreamSubscriptionManager
+import io.getstream.android.core.api.utils.runCatchingCancellable
 import io.getstream.android.core.api.watcher.StreamRewatchListener
 import io.getstream.android.core.api.watcher.StreamWatcher
 import java.util.concurrent.ConcurrentHashMap
@@ -58,18 +59,19 @@ internal class StreamWatcherImpl<T>(
 
     private var collectionJob: Job? = null
 
-    override fun start(): Result<Unit> {
-        if (collectionJob != null) {
-            return Result.success(Unit) // Already started
-        }
+    override fun start(): Result<Unit> =
+        synchronized(this) {
+            if (collectionJob?.isActive == true) {
+                return Result.success(Unit) // Already started
+            }
 
-        return runCatching {
-            collectionJob =
-                scope.launch {
-                    connectionState.collect { state -> handleConnectionStateChange(state) }
-                }
+            runCatching {
+                collectionJob =
+                    scope.launch {
+                        connectionState.collect { state -> handleConnectionStateChange(state) }
+                    }
+            }
         }
-    }
 
     private suspend fun handleConnectionStateChange(state: StreamConnectionState) {
         // Invoke rewatch callback when connected and have watched items
@@ -87,7 +89,7 @@ internal class StreamWatcherImpl<T>(
 
                 // Call each listener's suspend onRewatch sequentially
                 listeners.forEach { listener ->
-                    runCatching { listener.onRewatch(items, connectionId) }
+                    runCatchingCancellable { listener.onRewatch(items, connectionId) }
                         .onFailure { error ->
                             logger.e(error) {
                                 "[handleConnectionStateChange] Rewatch callback failed for ${items.size} items. Error: ${error.message}"
@@ -100,11 +102,15 @@ internal class StreamWatcherImpl<T>(
         }
     }
 
-    override fun stop(): Result<Unit> = runCatching {
-        collectionJob?.cancel()
-        collectionJob = null
-        // Don't cancel scope - allows restart like other StreamStartableComponent implementations
-    }
+    override fun stop(): Result<Unit> =
+        synchronized(this) {
+            runCatching {
+                collectionJob?.cancel()
+                collectionJob = null
+                // Don't cancel scope - allows restart like other StreamStartableComponent
+                // implementations
+            }
+        }
 
     override fun watch(item: T) = runCatching {
         watched[item] = Unit
@@ -121,5 +127,10 @@ internal class StreamWatcherImpl<T>(
     override fun subscribe(
         listener: StreamRewatchListener<T>,
         options: StreamSubscriptionManager.Options,
-    ): Result<StreamSubscription> = rewatchSubscriptions.subscribe(listener, options)
+    ): Result<StreamSubscription> {
+        if (collectionJob == null) {
+            logger.w { "Call start() on this instance to receive rewatch updates!" }
+        }
+        return rewatchSubscriptions.subscribe(listener, options)
+    }
 }
