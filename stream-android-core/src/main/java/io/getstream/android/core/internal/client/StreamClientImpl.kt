@@ -145,7 +145,6 @@ internal class StreamClientImpl<T>(
                 .fold(
                     onSuccess = { connected ->
                         logger.d { "Connected to socket: $connected" }
-                        cidWatcher.start()
                         mutableConnectionState.update(connected)
                         connectionIdHolder.setConnectionId(connected.connectionId).map {
                             connected.connectedUser
