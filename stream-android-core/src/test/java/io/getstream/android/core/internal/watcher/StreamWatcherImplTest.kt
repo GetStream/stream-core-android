@@ -509,9 +509,18 @@ class StreamWatcherImplTest {
     @Test
     fun `rewatch listener exception is caught and logged`() = runTest {
         val error = RuntimeException("Rewatch failed")
-        every {
-            rewatchSubscriptions.forEach(any<(StreamRewatchListener<String>) -> Unit>())
-        } returns Result.failure(error)
+
+        // Create a listener that throws an exception
+        val failingListener = StreamRewatchListener<String> { _, _ ->
+            throw error
+        }
+
+        // Mock rewatchSubscriptions.forEach to provide the failing listener
+        every { rewatchSubscriptions.forEach(any<(StreamRewatchListener<String>) -> Unit>()) } answers {
+            val block = firstArg<(StreamRewatchListener<String>) -> Unit>()
+            block(failingListener)
+            Result.success(Unit)
+        }
 
         watcher.watch("messaging:general")
         watcher.start()
@@ -623,8 +632,8 @@ class StreamWatcherImplTest {
         watcher.start()
         advanceUntilIdle()
 
-        // Trigger multiple state changes with different connection IDs (StateFlow is conflated, so
-        // same values are deduplicated)
+        // Trigger multiple state changes with different connection IDs
+        // Add delays to prevent StateFlow conflation from dropping emissions
         repeat(5) { i ->
             connectionState.value =
                 StreamConnectionState.Connected(
@@ -632,10 +641,12 @@ class StreamWatcherImplTest {
                     connectionId = "conn-$i",
                 )
             advanceUntilIdle()
+            // Allow time for the collector on Dispatchers.Default to process
+            runBlocking { delay(100) }
         }
 
         // Wait for the real coroutines on Dispatchers.Default to complete
-        runBlocking { delay(500) }
+        runBlocking { delay(200) }
 
         // All 5 state changes should have triggered rewatch
         assertEquals(5, callCount.size)
@@ -688,7 +699,7 @@ class StreamWatcherImplTest {
     // ========================================
 
     @Test
-    fun `StreamRewatchListener receives identifier set and connectionId in onRewatch`() {
+    fun `StreamRewatchListener receives identifier set and connectionId in onRewatch`() = runTest {
         val receivedCids = mutableListOf<Set<String>>()
         val receivedConnectionIds = mutableListOf<String>()
 
@@ -713,7 +724,7 @@ class StreamWatcherImplTest {
     }
 
     @Test
-    fun `StreamRewatchListener handles empty set`() {
+    fun `StreamRewatchListener handles empty set`() = runTest {
         var callCount = 0
         val listener: StreamRewatchListener<String> = StreamRewatchListener { _, _ -> callCount++ }
 
@@ -723,26 +734,28 @@ class StreamWatcherImplTest {
     }
 
     @Test
-    fun `StreamRewatchListener can be called multiple times with different connectionIds`() {
-        val allReceivedCids = mutableListOf<Set<String>>()
-        val allConnectionIds = mutableListOf<String>()
-        val listener: StreamRewatchListener<String> = StreamRewatchListener { cids, connectionId ->
-            allReceivedCids.add(cids)
-            allConnectionIds.add(connectionId)
+    fun `StreamRewatchListener can be called multiple times with different connectionIds`() =
+        runTest {
+            val allReceivedCids = mutableListOf<Set<String>>()
+            val allConnectionIds = mutableListOf<String>()
+            val listener: StreamRewatchListener<String> =
+                StreamRewatchListener { cids, connectionId ->
+                    allReceivedCids.add(cids)
+                    allConnectionIds.add(connectionId)
+                }
+
+            val cid1 = "messaging:first"
+            val cid2 = "messaging:second"
+            val cid3 = "messaging:third"
+
+            listener.onRewatch(setOf(cid1), "conn-1")
+            listener.onRewatch(setOf(cid2, cid3), "conn-2")
+            listener.onRewatch(emptySet(), "conn-3")
+
+            assertEquals(3, allReceivedCids.size)
+            assertEquals(1, allReceivedCids[0].size)
+            assertEquals(2, allReceivedCids[1].size)
+            assertEquals(0, allReceivedCids[2].size)
+            assertEquals(listOf("conn-1", "conn-2", "conn-3"), allConnectionIds)
         }
-
-        val cid1 = "messaging:first"
-        val cid2 = "messaging:second"
-        val cid3 = "messaging:third"
-
-        listener.onRewatch(setOf(cid1), "conn-1")
-        listener.onRewatch(setOf(cid2, cid3), "conn-2")
-        listener.onRewatch(emptySet(), "conn-3")
-
-        assertEquals(3, allReceivedCids.size)
-        assertEquals(1, allReceivedCids[0].size)
-        assertEquals(2, allReceivedCids[1].size)
-        assertEquals(0, allReceivedCids[2].size)
-        assertEquals(listOf("conn-1", "conn-2", "conn-3"), allConnectionIds)
-    }
 }

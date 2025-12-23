@@ -229,12 +229,12 @@ val watcher = StreamWatcher<String>(
     connectionState = streamClient.connectionState
 )
 
-// Register rewatch listener
+// Register rewatch listener - onRewatch is suspend!
 watcher.subscribe(
     listener = StreamRewatchListener { channelIds, connectionId ->
-        // Re-establish server-side watches after reconnection
+        // Directly call suspend API functions - no need to launch!
         channelIds.forEach { channelId ->
-            channelApi.watch(channelId, connectionId)
+            channelApi.watch(channelId, connectionId) // suspend function
         }
     },
     options = StreamSubscriptionManager.Options()
@@ -258,13 +258,18 @@ watcher.stop()
   - Simpler: Factory creates internal subscription manager automatically
   - Testable: Easy to test with `MutableStateFlow`
   - Standalone: Truly independent component with minimal dependencies
-- Thread-safe: Uses `ConcurrentHashMap<T, Unit>` for the registry (line 54 in `StreamWatcherImpl.kt`)
-- Async execution: Rewatch callbacks invoked on internal coroutine scope with `SupervisorJob + Dispatchers.Default` (line 78)
-- Error handling: Exceptions from rewatch callbacks are caught and logged (lines 88-92)
+- **Suspend callback**: `StreamRewatchListener.onRewatch` is a suspend function
+  - Product SDKs can directly call suspend API functions (e.g., `channelApi.watch()`)
+  - No need to launch coroutines manually in the callback
+  - Sequential execution: Callbacks are called one at a time in order
+  - Clean API: Natural flow for making API calls during reconnection
+- Thread-safe: Uses `ConcurrentHashMap<T, Unit>` for the registry (line 55 in `StreamWatcherImpl.kt`)
+- Sequential execution: StateFlow collector processes states sequentially; within each state, listeners are invoked sequentially (lines 75-102)
+- Error handling: Exceptions from rewatch callbacks are caught and logged; one failing callback doesn't prevent others from executing (lines 91-96)
 - Idempotent: Multiple `watch()` calls with the same identifier only maintain one entry
 - Only triggers on `Connected` state when registry is non-empty (line 77)
-- Connection ID extracted from `Connected` state and passed to all listeners (line 80)
-- Lifecycle: `start()` launches a coroutine to collect from StateFlow, `stop()` cancels the collection job (lines 61-72)
+- Connection ID extracted from `Connected` state and passed to all listeners (line 79)
+- Lifecycle: `start()` launches a coroutine to collect from StateFlow, `stop()` cancels the collection job (lines 62-73)
 
 **Test Coverage:**
 - Location: `stream-android-core/src/test/java/io/getstream/android/core/internal/watcher/StreamWatcherImplTest.kt`

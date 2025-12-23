@@ -71,19 +71,23 @@ internal class StreamWatcherImpl<T>(
         }
     }
 
-    private fun handleConnectionStateChange(state: StreamConnectionState) {
+    private suspend fun handleConnectionStateChange(state: StreamConnectionState) {
         // Invoke rewatch callback when connected and have watched items
         if (state is StreamConnectionState.Connected && watched.isNotEmpty()) {
-            scope.launch {
-                val items = watched.keys.toSet()
-                val connectionId = state.connectionId
-                logger.v {
-                    "[handleConnectionStateChange] Triggering rewatch for ${items.size} items on connection $connectionId: ${items.joinToString()}"
-                }
+            val items = watched.keys.toSet()
+            val connectionId = state.connectionId
+            logger.v {
+                "[handleConnectionStateChange] Triggering rewatch for ${items.size} items on connection $connectionId: ${items.joinToString()}"
+            }
 
-                if (items.isNotEmpty()) {
-                    rewatchSubscriptions
-                        .forEach { it.onRewatch(items, connectionId) }
+            if (items.isNotEmpty()) {
+                // Collect listeners into a list, then call each sequentially
+                val listeners = mutableListOf<StreamRewatchListener<T>>()
+                rewatchSubscriptions.forEach { listeners.add(it) }
+
+                // Call each listener's suspend onRewatch sequentially
+                listeners.forEach { listener ->
+                    runCatching { listener.onRewatch(items, connectionId) }
                         .onFailure { error ->
                             logger.e(error) {
                                 "[handleConnectionStateChange] Rewatch callback failed for ${items.size} items. Error: ${error.message}"

@@ -71,18 +71,27 @@ public fun interface StreamRewatchListener<T> {
     /**
      * Called when watched resources need to be re-subscribed.
      *
-     * This method is invoked with the complete set of entries currently in the watch registry
-     * whenever the connection state changes to [StreamConnectionState.Connected] and the registry
-     * is non-empty.
+     * This suspend method is invoked with the complete set of entries currently in the watch
+     * registry whenever the connection state changes to [StreamConnectionState.Connected] and the
+     * registry is non-empty.
      *
      * Implementations should iterate over the provided list and re-establish server-side watches
-     * for each CID to maintain active subscriptions across reconnection cycles.
+     * for each entry to maintain active subscriptions across reconnection cycles. Since this is a
+     * suspend function, you can directly call suspend API functions without launching coroutines.
+     *
+     * ## Execution Order
+     *
+     * Rewatch callbacks are executed **sequentially** using a serial processing queue. This
+     * ensures:
+     * - Callbacks execute in order, one at a time
+     * - No race conditions when re-establishing watches
+     * - Predictable execution order across reconnections
      *
      * ## Contract
-     * - The list is never empty when this method is called
-     * - The list represents a snapshot of the watch registry at the time of invocation
-     * - Modifications to the list do not affect the internal registry
-     * - Multiple calls may occur for the same set of CIDs during reconnection scenarios
+     * - The set is never empty when this method is called
+     * - The set represents a snapshot of the watch registry at the time of invocation
+     * - Modifications to the set do not affect the internal registry
+     * - Multiple calls may occur for the same set of entries during reconnection scenarios
      * - The connectionId reflects the current active connection at the moment of invocation
      *
      * ## Error Handling
@@ -90,8 +99,19 @@ public fun interface StreamRewatchListener<T> {
      * Exceptions thrown by this method are caught, logged, and surfaced via error callbacks. The
      * failure of one listener does not prevent other listeners from being notified.
      *
+     * ## Example
+     *
+     * ```kotlin
+     * watcher.subscribe(StreamRewatchListener { channelIds, connectionId ->
+     *     // Direct suspend calls - no need to launch!
+     *     channelIds.forEach { channelId ->
+     *         channelApi.watch(channelId, connectionId) // suspend function
+     *     }
+     * })
+     * ```
+     *
      * @param items A non-empty set of entries that require re-watching
      * @param connectionId The connection ID of the current active WebSocket connection
      */
-    public fun onRewatch(items: Set<T>, connectionId: String)
+    public suspend fun onRewatch(items: Set<T>, connectionId: String)
 }
