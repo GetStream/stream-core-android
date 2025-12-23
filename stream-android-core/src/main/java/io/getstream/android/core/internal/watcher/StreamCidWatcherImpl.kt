@@ -88,20 +88,20 @@ internal class StreamCidWatcherImpl(
             }
         }
 
-    override fun start(): Result<Unit> = runCatching {
+    override fun start(): Result<Unit> {
         if (subscription != null) {
-            return@runCatching // Already started
+            return Result.success(Unit) // Already started
         }
 
-        subscription =
-            clientSubscriptions
-                .subscribe(
-                    listener,
-                    StreamSubscriptionManager.Options(
-                        retention = StreamSubscriptionManager.Options.Retention.KEEP_UNTIL_CANCELLED
-                    ),
-                )
-                .getOrThrow()
+        return clientSubscriptions
+            .subscribe(
+                listener,
+                StreamSubscriptionManager.Options(
+                    retention = StreamSubscriptionManager.Options.Retention.KEEP_UNTIL_CANCELLED
+                ),
+            )
+            .map { subscription = it }
+    }
     }
 
     override fun stop(): Result<Unit> = runCatching {
