@@ -48,8 +48,6 @@ import io.getstream.android.core.api.socket.StreamWebSocketFactory
 import io.getstream.android.core.api.socket.listeners.StreamClientListener
 import io.getstream.android.core.api.socket.monitor.StreamHealthMonitor
 import io.getstream.android.core.api.subscribe.StreamSubscriptionManager
-import io.getstream.android.core.api.watcher.StreamRewatchListener
-import io.getstream.android.core.api.watcher.StreamWatcher
 import io.getstream.android.core.internal.client.StreamClientImpl
 import io.getstream.android.core.internal.http.interceptor.StreamApiKeyInterceptor
 import io.getstream.android.core.internal.http.interceptor.StreamAuthInterceptor
@@ -63,7 +61,6 @@ import io.getstream.android.core.internal.subscribe.StreamSubscriptionManagerImp
 import io.getstream.android.core.testutil.assertFieldEquals
 import io.getstream.android.core.testutil.readPrivateField
 import io.mockk.mockk
-import io.mockk.verify
 import kotlin.test.assertEquals
 import kotlin.test.assertNotSame
 import kotlin.test.assertTrue
@@ -147,20 +144,7 @@ internal class StreamClientFactoryTest {
     private fun buildClient(
         deps: Dependencies,
         httpConfig: StreamHttpConfig? = null,
-        cidWatcher: StreamWatcher<String>? = null,
     ): StreamClient {
-        val watcher =
-            cidWatcher
-                ?: StreamWatcher<String>(
-                    scope = testScope,
-                    logger = logProvider.taggedLogger("SCRewatcher"),
-                    streamRewatchSubscriptionManager =
-                        StreamSubscriptionManager<StreamRewatchListener<String>>(
-                            logger = logProvider.taggedLogger("SCRewatchSubscriptionManager")
-                        ),
-                    streamClientSubscriptionManager = deps.clientSubscriptionManager,
-                )
-
         return StreamClient(
             context = mockk(relaxed = true),
             apiKey = deps.apiKey,
@@ -382,15 +366,5 @@ internal class StreamClientFactoryTest {
                 as StreamSubscriptionManagerImpl<*>
         manager.assertFieldEquals("maxStrongSubscriptions", 250)
         manager.assertFieldEquals("maxWeakSubscriptions", 250)
-    }
-
-    @Test
-    fun `StreamClient factory skips watch listener subscription when absent`() {
-        val deps = createDependencies()
-        val cidWatcher = mockk<StreamWatcher<String>>(relaxed = true)
-
-        buildClient(deps = deps, cidWatcher = cidWatcher)
-
-        verify(exactly = 0) { cidWatcher.subscribe(any(), any()) }
     }
 }

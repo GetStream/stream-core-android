@@ -50,7 +50,6 @@ import io.getstream.android.core.api.socket.listeners.StreamClientListener
 import io.getstream.android.core.api.socket.monitor.StreamHealthMonitor
 import io.getstream.android.core.api.subscribe.StreamObservable
 import io.getstream.android.core.api.subscribe.StreamSubscriptionManager
-import io.getstream.android.core.api.watcher.StreamWatcher
 import io.getstream.android.core.internal.client.StreamClientImpl
 import io.getstream.android.core.internal.observers.StreamNetworkAndLifeCycleMonitor
 import io.getstream.android.core.internal.serialization.StreamCompositeEventSerializationImpl

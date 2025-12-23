@@ -20,7 +20,6 @@ import io.getstream.android.core.annotations.StreamInternalApi
 import io.getstream.android.core.api.log.StreamLogger
 import io.getstream.android.core.api.model.connection.StreamConnectionState
 import io.getstream.android.core.api.observers.StreamStartableComponent
-import io.getstream.android.core.api.socket.listeners.StreamClientListener
 import io.getstream.android.core.api.subscribe.StreamObservable
 import io.getstream.android.core.api.subscribe.StreamSubscriptionManager
 import io.getstream.android.core.internal.watcher.StreamWatcherImpl
@@ -39,8 +38,8 @@ import kotlinx.coroutines.flow.StateFlow
  * ## Typical Usage Flow
  * 1. Product SDK watches a channel: `watcher.watch("messaging:general")`
  * 2. Watcher adds the identifier to its internal registry
- * 3. Product SDK registers a rewatch listener: `watcher.subscribe(StreamRewatchListener { ids, connectionId ->
- *    resubscribe(ids, connectionId) })`
+ * 3. Product SDK registers a rewatch listener: `watcher.subscribe(StreamRewatchListener { ids,
+ *    connectionId -> resubscribe(ids, connectionId) })`
  * 4. Call `watcher.start()` to begin monitoring connection state changes
  * 5. Connection state changes (e.g., reconnection after network loss)
  * 6. Watcher invokes listener with all watched entries: `["messaging:general",
@@ -138,24 +137,22 @@ public interface StreamWatcher<T> :
 }
 
 /**
- * Creates a new [StreamWatcher] instance with the provided dependencies.
+ * Creates a new [StreamWatcher] instance that observes connection state changes.
  *
- * This factory method instantiates the default implementation ([StreamWatcherImpl]) and wires all
- * required dependencies for monitoring connection state changes and triggering rewatch callbacks.
+ * This factory method instantiates the default implementation ([StreamWatcherImpl]) and creates the
+ * necessary internal subscription manager. The watcher observes the provided connection state flow
+ * and triggers rewatch callbacks when the connection state changes to Connected.
  *
  * ## Parameters
- * - **scope**: The [CoroutineScope] used for launching async operations (rewatch callbacks). This
- *   scope should typically use `SupervisorJob + Dispatchers.Default` to ensure callback failures
- *   don't cancel the scope and to avoid blocking the main thread. The scope is NOT cancelled when
- *   [StreamWatcher.stop] is called, allowing the component to be restarted.
+ * - **scope**: The [CoroutineScope] used for launching async operations (collecting state flow and
+ *   invoking rewatch callbacks). This scope should typically use `SupervisorJob + Dispatchers.
+ *   Default` to ensure callback failures don't cancel the scope and to avoid blocking the main
+ *   thread. The scope is NOT cancelled when [StreamWatcher.stop] is called, allowing the component
+ *   to be restarted.
  * - **logger**: A [StreamLogger] instance for diagnostic output, tagged appropriately (e.g.,
- *   "SCWatcher"). Used for logging state changes, rewatch events, and errors.
- * - **streamRewatchSubscriptionManager**: Manages subscriptions to [StreamRewatchListener]. This
- *   manager handles the list of listeners that will be invoked when connection state changes
- *   require re-watching identifiers.
- * - **streamClientSubscriptionManager**: Manages subscriptions to [StreamClientListener]. This is
- *   used to subscribe to connection state changes (via [StreamClientListener.onState]) and to
- *   surface errors (via [StreamClientListener.onError]) when rewatch callbacks fail.
+ *   "Watcher"). Used for logging state changes, rewatch events, and errors.
+ * - **connectionState**: A [StateFlow] providing connection state updates. Typically obtained from
+ *   `streamClient.connectionState`. The watcher will collect from this flow when started.
  *
  * ## Lifecycle
  *
@@ -169,18 +166,11 @@ public interface StreamWatcher<T> :
  * val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
  * val logger = StreamLogger.getLogger("MyApp.Watcher")
  *
- * val rewatchManager = StreamSubscriptionManager<StreamRewatchListener<String>>(
- *     logger = logger.withTag("RewatchSubscriptions")
- * )
- * val clientManager = StreamSubscriptionManager<StreamClientListener>(
- *     logger = logger.withTag("ClientSubscriptions")
- * )
- *
+ * // Create watcher - only needs the connection state flow
  * val watcher = StreamWatcher<String>(
  *     scope = scope,
  *     logger = logger,
- *     streamRewatchSubscriptionManager = rewatchManager,
- *     streamClientSubscriptionManager = clientManager
+ *     connectionState = streamClient.connectionState
  * )
  *
  * // Register rewatch listener
@@ -197,10 +187,10 @@ public interface StreamWatcher<T> :
  * watcher.watch("livestream:sports")
  * ```
  *
- * @param scope Coroutine scope for async operations (rewatch callback invocations)
+ * @param scope Coroutine scope for async operations (state collection and rewatch callback
+ *   invocations)
  * @param logger Logger for diagnostic output and error reporting
- * @param streamRewatchSubscriptionManager Subscription manager for rewatch listeners
- * @param streamClientSubscriptionManager Subscription manager for client state listeners
+ * @param connectionState StateFlow providing connection state updates
  * @return A new [StreamWatcher] instance (implementation: [StreamWatcherImpl])
  * @see StreamWatcher The interface contract
  * @see StreamWatcherImpl The concrete implementation
@@ -210,12 +200,13 @@ public interface StreamWatcher<T> :
 public fun <T> StreamWatcher(
     scope: CoroutineScope,
     logger: StreamLogger,
-    streamRewatchSubscriptionManager: StreamSubscriptionManager<StreamRewatchListener<T>>,
-    streamClientSubscriptionManager: StreamSubscriptionManager<StreamClientListener>,
-): StreamWatcher<T> =
-    StreamWatcherImpl(
+    connectionState: StateFlow<StreamConnectionState>,
+): StreamWatcher<T> {
+    val rewatchSubscriptions = StreamSubscriptionManager<StreamRewatchListener<T>>(logger)
+    return StreamWatcherImpl(
         scope = scope,
+        connectionState = connectionState,
+        rewatchSubscriptions = rewatchSubscriptions,
         logger = logger,
-        rewatchSubscriptions = streamRewatchSubscriptionManager,
-        clientSubscriptions = streamClientSubscriptionManager,
     )
+}

@@ -163,8 +163,8 @@ StreamClient (Main Interface)
 │   └── StreamLifecycleMonitor (ProcessLifecycleOwner observer)
 ├── StreamConnectionRecoveryEvaluator (Reconnect heuristics)
 ├── StreamWatcher<T> (Watch registry & rewatch coordinator)
-│   ├── StreamSubscriptionManager<StreamRewatchListener<T>> (Rewatch listener registry)
-│   └── StreamSubscriptionManager<StreamClientListener> (Connection state monitoring)
+│   ├── StateFlow<StreamConnectionState> (Observes connection state)
+│   └── StreamSubscriptionManager<StreamRewatchListener<T>> (Rewatch listener registry)
 └── StreamSubscriptionManager<StreamClientListener> (Event distribution)
 ```
 
@@ -201,26 +201,75 @@ fun start(): Result<Unit>
 fun stop(): Result<Unit>
 ```
 
+**Factory Function:**
+```kotlin
+fun <T> StreamWatcher(
+    scope: CoroutineScope,
+    logger: StreamLogger,
+    connectionState: StateFlow<StreamConnectionState>
+): StreamWatcher<T>
+```
+
+The factory creates the watcher with an internal `StreamSubscriptionManager<StreamRewatchListener<T>>` automatically - product SDKs don't need to manage this.
+
 **Usage Flow:**
-1. Product SDK watches a channel: `watcher.watch("messaging:general")` (for `StreamWatcher<String>`)
-2. Watcher adds the identifier to an internal `ConcurrentHashMap<T, Unit>` registry
-3. Product SDK registers a rewatch listener: `watcher.subscribe(StreamRewatchListener { ids, connectionId -> ... })`
-4. Call `watcher.start()` to begin monitoring connection state changes
+1. Create watcher with connection state flow: `val watcher = StreamWatcher<String>(scope, logger, streamClient.connectionState)`
+2. Product SDK registers a rewatch listener: `watcher.subscribe(StreamRewatchListener { ids, connectionId -> ... })`
+3. Call `watcher.start()` to begin monitoring connection state changes
+4. Product SDK watches channels: `watcher.watch("messaging:general")`
 5. On `StreamConnectionState.Connected` event, watcher invokes all listeners with complete identifier list AND the current connectionId
 6. Product SDK re-establishes server-side watches for each identifier using the provided connectionId
 
+**Complete Example:**
+```kotlin
+// Create watcher for channel IDs
+val watcher = StreamWatcher<String>(
+    scope = CoroutineScope(SupervisorJob() + Dispatchers.Default),
+    logger = logger,
+    connectionState = streamClient.connectionState
+)
+
+// Register rewatch listener
+watcher.subscribe(
+    listener = StreamRewatchListener { channelIds, connectionId ->
+        // Re-establish server-side watches after reconnection
+        channelIds.forEach { channelId ->
+            channelApi.watch(channelId, connectionId)
+        }
+    },
+    options = StreamSubscriptionManager.Options()
+).getOrThrow()
+
+// Start monitoring
+watcher.start().getOrThrow()
+
+// Watch channels as users view them
+watcher.watch("messaging:general")
+watcher.watch("messaging:random")
+
+// When done
+watcher.stop()
+```
+
 **Implementation Details:**
 - **Generic type parameter**: Allows watching any type `T` - common usage is `String` for channel IDs, but can be custom data classes
-- Thread-safe: Uses `ConcurrentHashMap<T, Unit>` for the registry (line 52 in `StreamWatcherImpl.kt`)
-- Async execution: Rewatch callbacks invoked on internal coroutine scope with `SupervisorJob + Dispatchers.Default` (line 61)
-- Error handling: Exceptions from rewatch callbacks are caught, logged, and surfaced via `StreamClientListener.onError` (lines 77-82)
+- **StateFlow observation**: Watcher observes `StateFlow<StreamConnectionState>` directly, no intermediate subscription manager needed
+  - Safer: Only receives connection state, no access to full StreamClient APIs
+  - Simpler: Factory creates internal subscription manager automatically
+  - Testable: Easy to test with `MutableStateFlow`
+  - Standalone: Truly independent component with minimal dependencies
+- Thread-safe: Uses `ConcurrentHashMap<T, Unit>` for the registry (line 54 in `StreamWatcherImpl.kt`)
+- Async execution: Rewatch callbacks invoked on internal coroutine scope with `SupervisorJob + Dispatchers.Default` (line 78)
+- Error handling: Exceptions from rewatch callbacks are caught and logged (lines 88-92)
 - Idempotent: Multiple `watch()` calls with the same identifier only maintain one entry
-- Only triggers on `Connected` state when registry is non-empty (line 67)
-- Connection ID extracted from `Connected` state and passed to all listeners (line 70)
+- Only triggers on `Connected` state when registry is non-empty (line 77)
+- Connection ID extracted from `Connected` state and passed to all listeners (line 80)
+- Lifecycle: `start()` launches a coroutine to collect from StateFlow, `stop()` cancels the collection job (lines 61-72)
 
 **Test Coverage:**
 - Location: `stream-android-core/src/test/java/io/getstream/android/core/internal/watcher/StreamWatcherImplTest.kt`
-- 29 comprehensive test cases covering watch operations, lifecycle, state changes, error handling, concurrency, and connectionId verification
+- 30 comprehensive test cases covering watch operations, lifecycle, state changes, error handling, concurrency, and connectionId verification
+- Tests use MutableStateFlow to directly emit connection state changes, verifying watcher responds correctly
 - 100% instruction/branch/line coverage (verified via Kover)
 
 ## Configuration Defaults

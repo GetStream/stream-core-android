@@ -19,7 +19,6 @@ package io.getstream.android.core.internal.watcher
 import io.getstream.android.core.annotations.StreamInternalApi
 import io.getstream.android.core.api.log.StreamLogger
 import io.getstream.android.core.api.model.connection.StreamConnectionState
-import io.getstream.android.core.api.socket.listeners.StreamClientListener
 import io.getstream.android.core.api.subscribe.StreamSubscription
 import io.getstream.android.core.api.subscribe.StreamSubscriptionManager
 import io.getstream.android.core.api.watcher.StreamRewatchListener
@@ -27,83 +26,79 @@ import io.getstream.android.core.api.watcher.StreamWatcher
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
 /**
- * Implementation of [StreamWatcher] that uses [StreamSubscriptionManager] to monitor connection
- * state changes and trigger rewatch callbacks.
+ * Implementation of [StreamWatcher] that observes connection state changes via [StateFlow] and
+ * triggers rewatch callbacks.
  *
- * This implementation subscribes to connection state changes via [StreamClientListener] and uses
- * the provided [CoroutineScope] for invoking rewatch callbacks asynchronously.
+ * This implementation collects from the connection state flow and uses the provided
+ * [CoroutineScope] for invoking rewatch callbacks asynchronously.
  *
- * Exceptions thrown by the rewatch callback are caught, logged, and surfaced via the error callback
- * to prevent crashes while still allowing error handling by the product SDK.
+ * Exceptions thrown by rewatch callbacks are caught and logged to prevent crashes while still
+ * allowing error handling by the product SDK.
  *
  * @param scope Coroutine scope for async operations (should use SupervisorJob to prevent callback
  *   failures from cancelling the scope)
+ * @param connectionState StateFlow providing connection state updates
  * @param watched Concurrent map storing watched entries (defaults to empty [ConcurrentHashMap])
  * @param rewatchSubscriptions Manager for rewatch listener subscriptions
- * @param clientSubscriptions Manager for subscribing to connection state change notifications
  * @param logger Logger for diagnostic output and error reporting
  */
 @StreamInternalApi
 internal class StreamWatcherImpl<T>(
     private val scope: CoroutineScope,
+    private val connectionState: StateFlow<StreamConnectionState>,
     private val watched: ConcurrentMap<T, Unit> = ConcurrentHashMap(),
     private val rewatchSubscriptions: StreamSubscriptionManager<StreamRewatchListener<T>>,
-    private val clientSubscriptions: StreamSubscriptionManager<StreamClientListener>,
     private val logger: StreamLogger,
 ) : StreamWatcher<T> {
 
-    private var subscription: StreamSubscription? = null
-
-    private val listener =
-        object : StreamClientListener {
-            override fun onState(state: StreamConnectionState) {
-                // Invoke rewatch callback on every connection state change
-                if (state is StreamConnectionState.Connected && watched.isNotEmpty()) {
-                    scope.launch {
-                        val cids = watched.keys.toSet()
-                        val connectionId = state.connectionId
-                        logger.v {
-                            "[onState] Triggering rewatch for ${cids.size} items on connection $connectionId: ${cids.joinToString()}"
-                        }
-
-                        if (cids.isNotEmpty()) {
-                            rewatchSubscriptions
-                                .forEach { it.onRewatch(cids, connectionId) }
-                                .onFailure { error ->
-                                    logger.e(error) {
-                                        "[onState] Rewatch callback failed for ${cids.size} items. Error: ${error.message}"
-                                    }
-                                    clientSubscriptions.forEach { it.onError(error) }
-                                }
-                        }
-                    }
-                } else {
-                    logger.v { "[onState] State: $state, items count: ${watched.size}" }
-                }
-            }
-        }
+    private var collectionJob: Job? = null
 
     override fun start(): Result<Unit> {
-        if (subscription != null) {
+        if (collectionJob != null) {
             return Result.success(Unit) // Already started
         }
 
-        return clientSubscriptions
-            .subscribe(
-                listener,
-                StreamSubscriptionManager.Options(
-                    retention = StreamSubscriptionManager.Options.Retention.KEEP_UNTIL_CANCELLED
-                ),
-            )
-            .map { subscription = it }
+        return runCatching {
+            collectionJob =
+                scope.launch {
+                    connectionState.collect { state -> handleConnectionStateChange(state) }
+                }
+        }
+    }
+
+    private fun handleConnectionStateChange(state: StreamConnectionState) {
+        // Invoke rewatch callback when connected and have watched items
+        if (state is StreamConnectionState.Connected && watched.isNotEmpty()) {
+            scope.launch {
+                val items = watched.keys.toSet()
+                val connectionId = state.connectionId
+                logger.v {
+                    "[handleConnectionStateChange] Triggering rewatch for ${items.size} items on connection $connectionId: ${items.joinToString()}"
+                }
+
+                if (items.isNotEmpty()) {
+                    rewatchSubscriptions
+                        .forEach { it.onRewatch(items, connectionId) }
+                        .onFailure { error ->
+                            logger.e(error) {
+                                "[handleConnectionStateChange] Rewatch callback failed for ${items.size} items. Error: ${error.message}"
+                            }
+                        }
+                }
+            }
+        } else {
+            logger.v { "[handleConnectionStateChange] State: $state, items count: ${watched.size}" }
+        }
     }
 
     override fun stop(): Result<Unit> = runCatching {
-        subscription?.cancel()
-        subscription = null
+        collectionJob?.cancel()
+        collectionJob = null
         // Don't cancel scope - allows restart like other StreamStartableComponent implementations
     }
 
