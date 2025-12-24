@@ -18,7 +18,7 @@
 
 package io.getstream.android.core.internal.processing
 
-import io.getstream.android.core.api.model.StreamRetryPolicy
+import io.getstream.android.core.api.model.retry.StreamRetryPolicy
 import io.mockk.mockk
 import java.util.concurrent.atomic.AtomicInteger
 import kotlinx.coroutines.ExperimentalCoroutinesApi

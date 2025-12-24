@@ -18,7 +18,8 @@ package io.getstream.android.core.api.processing
 
 import io.getstream.android.core.annotations.StreamInternalApi
 import io.getstream.android.core.api.log.StreamLogger
-import io.getstream.android.core.api.model.StreamRetryPolicy
+import io.getstream.android.core.api.model.retry.StreamRetryAttemptInfo
+import io.getstream.android.core.api.model.retry.StreamRetryPolicy
 import io.getstream.android.core.internal.processing.StreamRetryProcessorImpl
 
 /**
@@ -54,7 +55,10 @@ public interface StreamRetryProcessor {
      * @param block The suspending operation to execute. It should throw on failure; the processor
      *   handles re-invocation.
      */
-    public suspend fun <T> retry(policy: StreamRetryPolicy, block: suspend () -> T): Result<T>
+    public suspend fun <T> retry(
+        policy: StreamRetryPolicy,
+        block: suspend (attempt: StreamRetryAttemptInfo) -> T,
+    ): Result<T>
 }
 
 /**
