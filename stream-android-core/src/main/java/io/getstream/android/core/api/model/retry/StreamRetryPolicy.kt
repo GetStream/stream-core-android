@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.getstream.android.core.api.model
+package io.getstream.android.core.api.model.retry
 
 import io.getstream.android.core.annotations.StreamInternalApi
 
