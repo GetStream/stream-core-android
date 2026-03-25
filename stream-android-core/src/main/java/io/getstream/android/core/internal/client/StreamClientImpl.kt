@@ -62,21 +62,15 @@ internal class StreamClientImpl<T>(
     private val subscriptionManager: StreamSubscriptionManager<StreamClientListener>,
     private val scope: CoroutineScope,
 ) : StreamClient {
-    private data class NetworkLifecycleSnapshot(
-        val networkState: StreamNetworkState,
-        val lifecycleState: StreamLifecycleState,
-    )
-
     companion object {
         private val connectKey = randomExecutionKey<StreamConnectedUser>()
         private val disconnectKey = randomExecutionKey<Unit>()
-        private const val RECOVERY_DEBOUNCE_MS = 300L
     }
 
     private var socketSessionHandle: StreamSubscription? = null
     private var networkAndLifecycleMonitorHandle: StreamSubscription? = null
-    private val recoveryDebouncer: StreamDebouncer<NetworkLifecycleSnapshot> =
-        StreamDebouncer(scope = scope, logger = logger, delayMs = RECOVERY_DEBOUNCE_MS)
+    private val recoveryDebouncer: StreamDebouncer<Pair<StreamNetworkState, StreamLifecycleState>> =
+        StreamDebouncer(scope = scope, logger = logger, delayMs = 500L)
     override val connectionState: StateFlow<StreamConnectionState>
         get() = mutableConnectionState.asStateFlow()
 
@@ -119,13 +113,13 @@ internal class StreamClientImpl<T>(
 
             if (networkAndLifecycleMonitorHandle == null) {
                 logger.v { "[connect] Setup network and lifecycle monitor callback" }
-                recoveryDebouncer.onValue { snapshot ->
+                recoveryDebouncer.onValue { (networkState, lifecycleState) ->
                     val connectionState = mutableConnectionState.value
                     val recovery =
                         connectionRecoveryEvaluator.evaluate(
                             connectionState,
-                            snapshot.lifecycleState,
-                            snapshot.networkState,
+                            lifecycleState,
+                            networkState,
                         )
                     recoveryEffect(recovery)
                 }
@@ -135,9 +129,7 @@ internal class StreamClientImpl<T>(
                             networkState: StreamNetworkState,
                             lifecycleState: StreamLifecycleState,
                         ) {
-                            recoveryDebouncer.submit(
-                                NetworkLifecycleSnapshot(networkState, lifecycleState)
-                            )
+                            recoveryDebouncer.submit(networkState to lifecycleState)
                         }
                     }
                 networkAndLifecycleMonitorHandle =
