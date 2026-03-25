@@ -49,7 +49,7 @@ internal class StreamDebouncerImpl<T>(
             }
         if (!pendingJob.compareAndSet(oldJob, newJob)) {
             newJob.cancel()
-            submit(value)
+            pendingValue.get()?.let { submit(it) }
             return
         }
         oldJob?.cancel()
