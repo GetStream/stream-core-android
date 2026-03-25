@@ -57,6 +57,7 @@ import okhttp3.Protocol
 import okhttp3.Request
 import okhttp3.Response
 import okhttp3.ResponseBody.Companion.toResponseBody
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -1418,72 +1419,81 @@ class StreamSocketSessionTest {
     }
 
     @Test
-    fun `handshake buffers non-auth messages and replays them on success`() = runTest {
-        val replayedMessages = mutableListOf<String>()
-        every { debounce.offer(any()) } answers
-            {
-                replayedMessages.add(firstArg())
-                true
-            }
-
-        every { health.onHeartbeat(any()) } just Runs
-        every { health.onUnhealthy(any()) } just Runs
-        every { debounce.onBatch(any()) } just Runs
-
-        val hsSub = mockk<StreamSubscription>(relaxed = true)
-        val eventSub = mockk<StreamSubscription>(relaxed = true)
-        var hsListener: StreamWebSocketListener? = null
-
-        every { socket.subscribe(any<StreamWebSocketListener>(), any()) } answers
-            {
-                hsListener = firstArg()
-                Result.success(hsSub)
-            }
-        every { socket.subscribe(any<StreamWebSocketListener>()) } returns Result.success(eventSub)
-
-        val connectedEvt =
-            mockk<StreamClientConnectedEvent>(relaxed = true).also {
-                every { it.connectionId } returns "conn-1"
-            }
-
-        val productEvent = mockk<StreamClientWsEvent>(relaxed = true)
-
-        // First message: product event (should be buffered)
-        // Second message: connection.ok (should complete handshake and replay)
-        var messageCount = 0
-        every { parser.deserialize(any()) } answers
-            {
-                val msg = firstArg<String>()
-                when (msg) {
-                    "PRODUCT_EVENT" ->
-                        Result.success(StreamCompositeSerializationEvent.internal(productEvent))
-                    "CONNECTED_JSON" ->
-                        Result.success(StreamCompositeSerializationEvent.internal(connectedEvt))
-                    else -> Result.failure(RuntimeException("unknown"))
+    fun `handshake buffers non-auth message and replays it exactly once after eventListener installed`() =
+        runTest {
+            val offeredMessages = mutableListOf<String>()
+            every { debounce.offer(any()) } answers
+                {
+                    offeredMessages.add(firstArg())
+                    true
                 }
-            }
 
-        every { socket.open(config) } answers
-            {
-                // Server sends a product event before the auth response
-                hsListener!!.onMessage("PRODUCT_EVENT")
-                // Then sends connection.ok
-                hsListener!!.onMessage("CONNECTED_JSON")
-                Result.success(Unit)
-            }
+            every { health.onHeartbeat(any()) } just Runs
+            every { health.onUnhealthy(any()) } just Runs
+            every { debounce.onBatch(any()) } just Runs
 
-        every { socket.close(any(), any()) } returns Result.success(Unit)
-        every { socket.send(any<String>()) } returns Result.success("Unit")
+            val hsSub = mockk<StreamSubscription>(relaxed = true)
+            val eventSub = mockk<StreamSubscription>(relaxed = true)
+            var hsListener: StreamWebSocketListener? = null
+            var eventListenerInstalled = false
 
-        val result = async { session.connect(connectUserData()) }.await()
+            every { socket.subscribe(any<StreamWebSocketListener>(), any()) } answers
+                {
+                    hsListener = firstArg()
+                    Result.success(hsSub)
+                }
+            every { socket.subscribe(any<StreamWebSocketListener>()) } answers
+                {
+                    eventListenerInstalled = true
+                    Result.success(eventSub)
+                }
 
-        assertTrue(result.isSuccess)
-        // The product event should have been replayed through the batcher
-        assertTrue(replayedMessages.contains("PRODUCT_EVENT"))
-        // eventListener should be subscribed after success
-        verify { socket.subscribe(any<StreamWebSocketListener>()) }
-        verify { health.start() }
-    }
+            val connectedEvt =
+                mockk<StreamClientConnectedEvent>(relaxed = true).also {
+                    every { it.connectionId } returns "conn-1"
+                }
+
+            val productEvent = mockk<StreamClientWsEvent>(relaxed = true)
+
+            every { parser.deserialize(any()) } answers
+                {
+                    val msg = firstArg<String>()
+                    when (msg) {
+                        "PRODUCT_EVENT" ->
+                            Result.success(StreamCompositeSerializationEvent.internal(productEvent))
+                        "CONNECTED_JSON" ->
+                            Result.success(StreamCompositeSerializationEvent.internal(connectedEvt))
+                        else -> Result.failure(RuntimeException("unknown"))
+                    }
+                }
+
+            every { socket.open(config) } answers
+                {
+                    // Product event arrives BEFORE auth response — must be buffered, not batched
+                    assertFalse(eventListenerInstalled)
+                    hsListener!!.onMessage("PRODUCT_EVENT")
+                    // Nothing should be offered to batcher during handshake
+                    assertTrue(offeredMessages.isEmpty())
+
+                    // Auth response completes handshake → triggers eventListener subscribe + replay
+                    hsListener!!.onMessage("CONNECTED_JSON")
+                    Result.success(Unit)
+                }
+
+            every { socket.close(any(), any()) } returns Result.success(Unit)
+            every { socket.send(any<String>()) } returns Result.success("Unit")
+
+            val result = async { session.connect(connectUserData()) }.await()
+
+            assertTrue(result.isSuccess)
+            // eventListener must be installed before replay
+            assertTrue(eventListenerInstalled)
+            // Buffered message replayed exactly once through batcher
+            assertEquals(1, offeredMessages.count { it == "PRODUCT_EVENT" })
+            // No other messages leaked to batcher (connection.ok is NOT replayed)
+            assertEquals(1, offeredMessages.size)
+            verify { health.start() }
+        }
 
     @Test
     fun `handshake acknowledges heartbeat for all messages including non-auth`() = runTest {
