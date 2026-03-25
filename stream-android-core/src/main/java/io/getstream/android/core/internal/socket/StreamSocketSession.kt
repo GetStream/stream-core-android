@@ -345,7 +345,9 @@ internal class StreamSocketSession<T>(
                             eventParser
                                 .serialize(StreamCompositeSerializationEvent.internal(authRequest))
                                 .mapCatching {
-                                    logger.v { "[onOpen] Sending auth request: $it" }
+                                    logger.v {
+                                        "[onOpen] Sending auth request (${it.length} bytes)"
+                                    }
                                     internalSocket.send(it)
                                 }
                                 .onFailure {

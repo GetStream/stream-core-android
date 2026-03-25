@@ -35,4 +35,7 @@ internal data class ConnectUserData(
     val invisible: Boolean = false,
     val language: String? = null,
     val custom: Map<String, Any?>? = null,
-)
+) {
+    override fun toString(): String =
+        "ConnectUserData(userId=$userId, token=<redacted>, name=$name, invisible=$invisible)"
+}
