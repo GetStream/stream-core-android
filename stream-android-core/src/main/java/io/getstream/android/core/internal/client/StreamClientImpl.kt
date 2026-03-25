@@ -27,6 +27,7 @@ import io.getstream.android.core.api.model.connection.lifecycle.StreamLifecycleS
 import io.getstream.android.core.api.model.connection.network.StreamNetworkState
 import io.getstream.android.core.api.model.connection.recovery.Recovery
 import io.getstream.android.core.api.model.value.StreamToken
+import io.getstream.android.core.api.processing.StreamDebouncer
 import io.getstream.android.core.api.processing.StreamSerialProcessingQueue
 import io.getstream.android.core.api.processing.StreamSingleFlightProcessor
 import io.getstream.android.core.api.recovery.StreamConnectionRecoveryEvaluator
@@ -46,7 +47,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.launch
 
 internal class StreamClientImpl<T>(
     private val user: StreamUser,
@@ -62,13 +62,21 @@ internal class StreamClientImpl<T>(
     private val subscriptionManager: StreamSubscriptionManager<StreamClientListener>,
     private val scope: CoroutineScope,
 ) : StreamClient {
+    private data class NetworkLifecycleSnapshot(
+        val networkState: StreamNetworkState,
+        val lifecycleState: StreamLifecycleState,
+    )
+
     companion object {
         private val connectKey = randomExecutionKey<StreamConnectedUser>()
         private val disconnectKey = randomExecutionKey<Unit>()
+        private const val RECOVERY_DEBOUNCE_MS = 300L
     }
 
     private var socketSessionHandle: StreamSubscription? = null
     private var networkAndLifecycleMonitorHandle: StreamSubscription? = null
+    private val recoveryDebouncer: StreamDebouncer<NetworkLifecycleSnapshot> =
+        StreamDebouncer(scope = scope, logger = logger, delayMs = RECOVERY_DEBOUNCE_MS)
     override val connectionState: StateFlow<StreamConnectionState>
         get() = mutableConnectionState.asStateFlow()
 
@@ -111,22 +119,25 @@ internal class StreamClientImpl<T>(
 
             if (networkAndLifecycleMonitorHandle == null) {
                 logger.v { "[connect] Setup network and lifecycle monitor callback" }
+                recoveryDebouncer.onValue { snapshot ->
+                    val connectionState = mutableConnectionState.value
+                    val recovery =
+                        connectionRecoveryEvaluator.evaluate(
+                            connectionState,
+                            snapshot.lifecycleState,
+                            snapshot.networkState,
+                        )
+                    recoveryEffect(recovery)
+                }
                 val networkAndLifecycleMonitorListener =
                     object : StreamNetworkAndLifecycleMonitorListener {
                         override fun onNetworkAndLifecycleState(
                             networkState: StreamNetworkState,
                             lifecycleState: StreamLifecycleState,
                         ) {
-                            scope.launch {
-                                val connectionState = mutableConnectionState.value
-                                val recovery =
-                                    connectionRecoveryEvaluator.evaluate(
-                                        connectionState,
-                                        lifecycleState,
-                                        networkState,
-                                    )
-                                recoveryEffect(recovery)
-                            }
+                            recoveryDebouncer.submit(
+                                NetworkLifecycleSnapshot(networkState, lifecycleState)
+                            )
                         }
                     }
                 networkAndLifecycleMonitorHandle =
@@ -159,6 +170,7 @@ internal class StreamClientImpl<T>(
     override suspend fun disconnect(): Result<Unit> =
         singleFlight.run(disconnectKey) {
             logger.d { "Disconnecting from socket" }
+            recoveryDebouncer.cancel()
             mutableConnectionState.update(StreamConnectionState.Disconnected())
             connectionIdHolder.clear()
             socketSession.disconnect()
