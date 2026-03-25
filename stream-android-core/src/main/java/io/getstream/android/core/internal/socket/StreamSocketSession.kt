@@ -182,6 +182,7 @@ internal class StreamSocketSession<T>(
     suspend fun connect(data: ConnectUserData): Result<StreamConnectionState.Connected> =
         suspendCancellableCoroutine { continuation ->
             var handshakeSubscription: StreamSubscription? = null
+            val pendingMessages = mutableListOf<String>()
 
             // Ensure we clean up if the caller cancels the connect coroutine
             continuation.invokeOnCancellation { cause ->
@@ -282,8 +283,38 @@ internal class StreamSocketSession<T>(
             }
 
             // Success/Failure continuations
-            val success: (StreamConnectedUser, String) -> Unit = { user, connectionId ->
+            val success: (StreamConnectedUser, String) -> Unit = success@{ user, connectionId ->
                 handshakeSubscription?.cancel()
+
+                // Subscribe eventListener for steady-state operation
+                val eventSubscription =
+                    internalSocket.subscribe(eventListener).getOrElse { err ->
+                        logger.e(err) { "[success] Failed to subscribe event listener" }
+                        disconnect(err)
+                        if (continuation.isActive) {
+                            continuation.resume(Result.failure(err))
+                        }
+                        return@success
+                    }
+                socketSubscription = eventSubscription
+
+                // Replay messages buffered during handshake
+                for (message in pendingMessages) {
+                    if (!batcher.offer(message)) {
+                        val err =
+                            IllegalStateException(
+                                "Failed to replay buffered message during handshake transition"
+                            )
+                        logger.e(err) { "[success] Buffered message replay failed" }
+                        disconnect(err)
+                        if (continuation.isActive) {
+                            continuation.resume(Result.failure(err))
+                        }
+                        return@success
+                    }
+                }
+                pendingMessages.clear()
+
                 if (continuation.isActive) {
                     healthMonitor.start()
                     val connected = StreamConnectionState.Connected(user, connectionId)
@@ -310,15 +341,9 @@ internal class StreamSocketSession<T>(
             // Notify listeners: Opening (block until dispatched)
             notifyState(StreamConnectionState.Connecting.Opening(data.userId))
 
-            // Subscribe for socket events
-            val socketSubRes = internalSocket.subscribe(eventListener)
-            if (socketSubRes.isFailure) {
-                failure(socketSubRes.exceptionOrNull()!!)
-                return@suspendCancellableCoroutine
-            }
-            socketSubscription = socketSubRes.getOrNull()
-
-            // Temporary listener to handle the initial open/auth handshake
+            // Only the handshake listener is subscribed initially.
+            // eventListener subscribes after handshake succeeds (in the success callback)
+            // to avoid dual-listener processing of the same message.
             val connectListener =
                 object : StreamWebSocketListener {
                     override fun onOpen(response: Response) {
@@ -370,16 +395,16 @@ internal class StreamSocketSession<T>(
 
                     override fun onMessage(text: String) {
                         logger.d { "[onMessage] Socket message (string): $text" }
+                        healthMonitor.acknowledgeHeartbeat()
                         eventParser
                             .deserialize(text)
-                            .map { it.core }
-                            .map { authResponse ->
-                                when (authResponse) {
+                            .onSuccess { event ->
+                                when (val coreEvent = event.core) {
                                     is StreamClientConnectedEvent -> {
                                         logger.v {
-                                            "[onMessage] Handling connected event: $authResponse"
+                                            "[onMessage] Handling connected event: $coreEvent"
                                         }
-                                        val me = authResponse.me
+                                        val me = coreEvent.me
                                         val connectedUser =
                                             StreamConnectedUser(
                                                 me.createdAt,
@@ -396,19 +421,26 @@ internal class StreamSocketSession<T>(
                                                 me.lastActive,
                                                 me.name,
                                             )
-                                        streamClientConnectedEvent = authResponse
-                                        success(connectedUser, authResponse.connectionId)
+                                        streamClientConnectedEvent = coreEvent
+                                        success(connectedUser, coreEvent.connectionId)
                                     }
 
                                     is StreamClientConnectionErrorEvent -> {
                                         logger.e {
-                                            "[onMessage] Socket connection recoverable error: $authResponse"
+                                            "[onMessage] Socket connection recoverable error: $coreEvent"
                                         }
-                                        apiFailure(authResponse.error)
+                                        apiFailure(coreEvent.error)
+                                    }
+
+                                    else -> {
+                                        logger.v {
+                                            "[onMessage] Buffering non-auth message during handshake"
+                                        }
+                                        pendingMessages.add(text)
                                     }
                                 }
                             }
-                            .recover {
+                            .onFailure {
                                 logger.e(it) {
                                     "[onMessage] Failed to deserialize socket message. ${it.message}"
                                 }
@@ -454,6 +486,7 @@ internal class StreamSocketSession<T>(
                 return@suspendCancellableCoroutine
             }
             handshakeSubscription = hsRes.getOrNull()
+            socketSubscription = handshakeSubscription
 
             // Open socket
             val openRes = internalSocket.open(config)

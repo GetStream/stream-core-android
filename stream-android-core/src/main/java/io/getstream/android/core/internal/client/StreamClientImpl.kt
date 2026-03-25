@@ -27,6 +27,7 @@ import io.getstream.android.core.api.model.connection.lifecycle.StreamLifecycleS
 import io.getstream.android.core.api.model.connection.network.StreamNetworkState
 import io.getstream.android.core.api.model.connection.recovery.Recovery
 import io.getstream.android.core.api.model.value.StreamToken
+import io.getstream.android.core.api.processing.StreamDebouncer
 import io.getstream.android.core.api.processing.StreamSerialProcessingQueue
 import io.getstream.android.core.api.processing.StreamSingleFlightProcessor
 import io.getstream.android.core.api.recovery.StreamConnectionRecoveryEvaluator
@@ -46,7 +47,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.launch
 
 internal class StreamClientImpl<T>(
     private val user: StreamUser,
@@ -69,6 +69,8 @@ internal class StreamClientImpl<T>(
 
     private var socketSessionHandle: StreamSubscription? = null
     private var networkAndLifecycleMonitorHandle: StreamSubscription? = null
+    private val recoveryDebouncer: StreamDebouncer<Pair<StreamNetworkState, StreamLifecycleState>> =
+        StreamDebouncer(scope = scope, logger = logger, delayMs = 500L)
     override val connectionState: StateFlow<StreamConnectionState>
         get() = mutableConnectionState.asStateFlow()
 
@@ -111,22 +113,23 @@ internal class StreamClientImpl<T>(
 
             if (networkAndLifecycleMonitorHandle == null) {
                 logger.v { "[connect] Setup network and lifecycle monitor callback" }
+                recoveryDebouncer.onValue { (networkState, lifecycleState) ->
+                    val connectionState = mutableConnectionState.value
+                    val recovery =
+                        connectionRecoveryEvaluator.evaluate(
+                            connectionState,
+                            lifecycleState,
+                            networkState,
+                        )
+                    recoveryEffect(recovery)
+                }
                 val networkAndLifecycleMonitorListener =
                     object : StreamNetworkAndLifecycleMonitorListener {
                         override fun onNetworkAndLifecycleState(
                             networkState: StreamNetworkState,
                             lifecycleState: StreamLifecycleState,
                         ) {
-                            scope.launch {
-                                val connectionState = mutableConnectionState.value
-                                val recovery =
-                                    connectionRecoveryEvaluator.evaluate(
-                                        connectionState,
-                                        lifecycleState,
-                                        networkState,
-                                    )
-                                recoveryEffect(recovery)
-                            }
+                            recoveryDebouncer.submit(networkState to lifecycleState)
                         }
                     }
                 networkAndLifecycleMonitorHandle =
@@ -159,6 +162,7 @@ internal class StreamClientImpl<T>(
     override suspend fun disconnect(): Result<Unit> =
         singleFlight.run(disconnectKey) {
             logger.d { "Disconnecting from socket" }
+            recoveryDebouncer.cancel()
             mutableConnectionState.update(StreamConnectionState.Disconnected())
             connectionIdHolder.clear()
             socketSession.disconnect()

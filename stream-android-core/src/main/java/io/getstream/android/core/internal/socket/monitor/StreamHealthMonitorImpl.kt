@@ -18,6 +18,8 @@ package io.getstream.android.core.internal.socket.monitor
 
 import io.getstream.android.core.api.log.StreamLogger
 import io.getstream.android.core.api.socket.monitor.StreamHealthMonitor
+import java.util.concurrent.atomic.AtomicLong
+import java.util.concurrent.atomic.AtomicReference
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.CoroutineScope
@@ -48,8 +50,8 @@ internal class StreamHealthMonitorImpl(
         const val ALIVE_THRESHOLD = 60_000L
     }
 
-    private var monitorJob: Job? = null
-    private var lastAck: Long = clock.now().toEpochMilliseconds()
+    private val monitorJob = AtomicReference<Job?>(null)
+    private val lastAck = AtomicLong(clock.now().toEpochMilliseconds())
 
     // callbacks default to no-op
     private var onIntervalCallback: suspend () -> Unit = {}
@@ -64,23 +66,24 @@ internal class StreamHealthMonitorImpl(
     }
 
     override fun acknowledgeHeartbeat() {
-        lastAck = clock.now().toEpochMilliseconds()
+        lastAck.set(clock.now().toEpochMilliseconds())
     }
 
-    /** Starts (or restarts) the periodic health-check loop */
+    /** Starts (or restarts) the periodic health-check loop. */
     override fun start() = runCatching {
-        logger.d { "[start] Staring health monitor" }
-        if (monitorJob?.isActive == true) {
+        logger.d { "[start] Starting health monitor" }
+        val current = monitorJob.get()
+        if (current?.isActive == true) {
             logger.d { "Health monitor already running" }
             return@runCatching
         }
-        monitorJob =
+        val newJob =
             scope.launch {
                 while (isActive) {
                     delay(interval)
 
                     val now = clock.now().toEpochMilliseconds()
-                    if (now - lastAck >= livenessThreshold) {
+                    if (now - lastAck.get() >= livenessThreshold) {
                         logger.d { "Liveness threshold reached" }
                         onLivenessThresholdCallback()
                     } else {
@@ -89,12 +92,15 @@ internal class StreamHealthMonitorImpl(
                     }
                 }
             }
+        if (!monitorJob.compareAndSet(current, newJob)) {
+            newJob.cancel()
+        }
     }
 
-    /** Stops the health-check loop */
+    /** Stops the health-check loop. */
     override fun stop() = runCatching {
-        logger.d { "[stop] Stopping heath monitor" }
-        monitorJob?.cancel()
+        logger.d { "[stop] Stopping health monitor" }
+        monitorJob.getAndSet(null)?.cancel()
         Unit
     }
 }
