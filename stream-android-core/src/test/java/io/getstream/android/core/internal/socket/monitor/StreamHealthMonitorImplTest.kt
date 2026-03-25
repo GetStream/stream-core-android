@@ -18,7 +18,7 @@ package io.getstream.android.core.internal.socket.monitor
 
 import io.getstream.android.core.api.log.StreamLogger
 import io.mockk.mockk
-import kotlin.test.assertNotNull
+import java.util.concurrent.atomic.AtomicReference
 import kotlin.test.assertNotSame
 import kotlin.test.assertSame
 import kotlin.time.Clock
@@ -170,16 +170,16 @@ class StreamHealthMonitorImplTest {
         monitor.start()
         val jobField =
             monitor.javaClass.getDeclaredField("monitorJob").apply { isAccessible = true }
-        val firstJob = jobField.get(monitor) as Job
+        @Suppress("UNCHECKED_CAST") val jobRef = jobField.get(monitor) as AtomicReference<Job?>
+        val firstJob = jobRef.get()!!
 
-        // Stop it → cancels the job, so !isActive but not null
+        // Stop it → cancels the job and sets ref to null
         monitor.stop()
         assertFalse(firstJob.isActive)
-        assertNotNull(jobField.get(monitor))
 
         // Restart should create a NEW active job
         monitor.start()
-        val secondJob = jobField.get(monitor) as Job
+        val secondJob = jobRef.get()!!
         assertTrue(secondJob.isActive)
         assertNotSame(firstJob, secondJob)
     }
@@ -213,19 +213,17 @@ class StreamHealthMonitorImplTest {
             )
 
         monitor.start()
-        val firstJob =
+        @Suppress("UNCHECKED_CAST")
+        val jobRef =
             monitor.javaClass
                 .getDeclaredField("monitorJob")
                 .apply { isAccessible = true }
-                .get(monitor)
+                .get(monitor) as AtomicReference<Job?>
+        val firstJob = jobRef.get()
 
         monitor.start() // second time should no-op
 
-        val secondJob =
-            monitor.javaClass
-                .getDeclaredField("monitorJob")
-                .apply { isAccessible = true }
-                .get(monitor)
+        val secondJob = jobRef.get()
 
         // Same job instance, not restarted
         assertSame(firstJob, secondJob)
@@ -242,13 +240,16 @@ class StreamHealthMonitorImplTest {
                 livenessThreshold = 100,
             )
 
-        // No start() => monitorJob is null
+        // No start() => monitorJob ref holds null
         monitor.stop()
 
-        val jobField = monitor.javaClass.getDeclaredField("monitorJob")
-        jobField.isAccessible = true
-        val job = jobField.get(monitor) as Job?
-        assertTrue(job == null)
+        @Suppress("UNCHECKED_CAST")
+        val jobRef =
+            monitor.javaClass
+                .getDeclaredField("monitorJob")
+                .apply { isAccessible = true }
+                .get(monitor) as AtomicReference<Job?>
+        assertTrue(jobRef.get() == null)
     }
 
     @Test
@@ -268,9 +269,13 @@ class StreamHealthMonitorImplTest {
         // Start the monitor, job is created but suspended at delay()
         monitor.start()
 
-        val jobField =
-            monitor.javaClass.getDeclaredField("monitorJob").apply { isAccessible = true }
-        val job = jobField.get(monitor) as Job
+        @Suppress("UNCHECKED_CAST")
+        val jobRef =
+            monitor.javaClass
+                .getDeclaredField("monitorJob")
+                .apply { isAccessible = true }
+                .get(monitor) as AtomicReference<Job?>
+        val job = jobRef.get()!!
 
         // Cancel the job before advancing time so that `isActive == false`
         job.cancel()
@@ -287,6 +292,7 @@ class StreamHealthMonitorImplTest {
     private fun getJob(monitor: StreamHealthMonitorImpl): Job? {
         val field = StreamHealthMonitorImpl::class.java.getDeclaredField("monitorJob")
         field.isAccessible = true
-        return field.get(monitor) as Job?
+        @Suppress("UNCHECKED_CAST") val ref = field.get(monitor) as AtomicReference<Job?>
+        return ref.get()
     }
 }

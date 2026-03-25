@@ -57,6 +57,7 @@ import okhttp3.Protocol
 import okhttp3.Request
 import okhttp3.Response
 import okhttp3.ResponseBody.Companion.toResponseBody
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -451,11 +452,8 @@ class StreamSocketSessionTest {
 
     @Test
     fun `connect fails when handshake subscribe fails - no open`() = runTest {
-        val lifecycleSub = mockk<StreamSubscription>(relaxed = true)
         val boom = RuntimeException("handshake sub failed")
 
-        every { socket.subscribe(any<StreamWebSocketListener>()) } returns
-            Result.success(lifecycleSub)
         every { socket.subscribe(any<StreamWebSocketListener>(), any()) } returns
             Result.failure(boom)
         every { socket.open(config) } answers
@@ -466,7 +464,7 @@ class StreamSocketSessionTest {
         val result = session.connect(connectUserData())
 
         assertTrue(result.isFailure)
-        verify(exactly = 1) { socket.subscribe(any<StreamWebSocketListener>()) }
+        verify(exactly = 0) { socket.subscribe(any<StreamWebSocketListener>()) }
         verify(exactly = 1) { socket.subscribe(any<StreamWebSocketListener>(), any()) }
         verify(exactly = 0) { socket.open(any()) }
         verify { subs.forEach(any()) } // Opening + Disconnected.Error dispatched
@@ -474,11 +472,8 @@ class StreamSocketSessionTest {
 
     @Test
     fun `connect returns failure when open fails - no health start, no auth send`() = runTest {
-        val lifecycleSub = mockk<StreamSubscription>(relaxed = true)
         val handshakeSub = mockk<StreamSubscription>(relaxed = true)
 
-        every { socket.subscribe(any<StreamWebSocketListener>()) } returns
-            Result.success(lifecycleSub)
         every { socket.subscribe(any<StreamWebSocketListener>(), any()) } returns
             Result.success(handshakeSub)
 
@@ -488,7 +483,8 @@ class StreamSocketSessionTest {
         val result = session.connect(connectUserData())
 
         assertTrue(result.isFailure)
-        verify(exactly = 2) { socket.subscribe(any<StreamWebSocketListener>(), any()) }
+        verify(exactly = 0) { socket.subscribe(any<StreamWebSocketListener>()) }
+        verify(exactly = 1) { socket.subscribe(any<StreamWebSocketListener>(), any()) }
         verify(exactly = 1) { socket.open(config) }
         verify(exactly = 0) { socket.send(any<String>()) }
         verify(exactly = 0) { health.start() }
@@ -497,13 +493,10 @@ class StreamSocketSessionTest {
 
     @Test
     fun `handshake onOpen non-101 causes failure - no auth send`() = runTest {
-        val lifecycleSub = mockk<StreamSubscription>(relaxed = true)
         val handshakeSub = mockk<StreamSubscription>(relaxed = true)
 
         var hsListener: StreamWebSocketListener? = null
 
-        every { socket.subscribe(any<StreamWebSocketListener>()) } returns
-            Result.success(lifecycleSub)
         every { socket.subscribe(any<StreamWebSocketListener>(), any()) } answers
             {
                 hsListener = firstArg()
@@ -534,13 +527,10 @@ class StreamSocketSessionTest {
 
     @Test
     fun `handshake onOpen 101 but auth serialize fails - connect fails`() = runTest {
-        val lifecycleSub = mockk<StreamSubscription>(relaxed = true)
         val handshakeSub = mockk<StreamSubscription>(relaxed = true)
 
         var hsListener: StreamWebSocketListener? = null
 
-        every { socket.subscribe(any<StreamWebSocketListener>()) } returns
-            Result.success(lifecycleSub)
         every { socket.subscribe(any<StreamWebSocketListener>(), any()) } answers
             {
                 hsListener = firstArg()
@@ -572,34 +562,32 @@ class StreamSocketSessionTest {
     }
 
     @Test
-    fun `connect fails when lifecycle subscribe fails - no handshake subscribe, no open`() =
-        runTest {
-            every { socket.subscribe(any<StreamWebSocketListener>(), any()) } returns
-                Result.failure(RuntimeException("lifecycle sub failed"))
+    fun `connect fails when handshake subscribe fails - no open, no event listener`() = runTest {
+        every { socket.subscribe(any<StreamWebSocketListener>(), any()) } returns
+            Result.failure(RuntimeException("handshake sub failed"))
 
-            val result = session.connect(connectUserData())
+        val result = session.connect(connectUserData())
 
-            assertTrue(result.isFailure)
-            verify(exactly = 1) { socket.subscribe(any<StreamWebSocketListener>(), any()) }
-            verify(exactly = 0) { socket.open(any()) }
-            verify(exactly = 0) { socket.send(any<String>()) }
-            verify(exactly = 0) { health.start() }
-            verify(atLeast = 1) { subs.forEach(any()) }
-        }
+        assertTrue(result.isFailure)
+        verify(exactly = 0) { socket.subscribe(any<StreamWebSocketListener>()) }
+        verify(exactly = 1) { socket.subscribe(any<StreamWebSocketListener>(), any()) }
+        verify(exactly = 0) { socket.open(any()) }
+        verify(exactly = 0) { socket.send(any<String>()) }
+        verify(exactly = 0) { health.start() }
+        verify(atLeast = 1) { subs.forEach(any()) }
+    }
 
     @Test
     fun `connect fails when open fails - no health start, no auth send`() = runTest {
-        every { socket.subscribe(any<StreamWebSocketListener>(), any()) } returnsMany
-            listOf(
-                Result.success(mockk(relaxed = true)), // lifecycle
-                Result.success(mockk(relaxed = true)), // handshake
-            )
+        every { socket.subscribe(any<StreamWebSocketListener>(), any()) } returns
+            Result.success(mockk(relaxed = true))
         every { socket.open(config) } returns Result.failure(RuntimeException("open failed"))
 
         val result = session.connect(connectUserData())
 
         assertTrue(result.isFailure)
-        verify(exactly = 2) { socket.subscribe(any<StreamWebSocketListener>(), any()) }
+        verify(exactly = 0) { socket.subscribe(any<StreamWebSocketListener>()) }
+        verify(exactly = 1) { socket.subscribe(any<StreamWebSocketListener>(), any()) }
         verify(exactly = 1) { socket.open(config) }
         verify(exactly = 0) { socket.send(any<String>()) }
         verify(exactly = 0) { health.start() }
@@ -619,13 +607,12 @@ class StreamSocketSessionTest {
             val job = async { session.connect(connectUserData()) }
 
             advanceUntilIdle()
-            verify { socket.subscribe(any<StreamWebSocketListener>()) }
             verify { socket.subscribe(any<StreamWebSocketListener>(), any()) }
 
             job.cancelAndJoin()
             advanceUntilIdle()
 
-            verify(atLeast = 2) { sub.cancel() }
+            verify(atLeast = 1) { sub.cancel() }
             verify { socket.close(any(), any()) }
             verify { health.stop() }
             verify { debounce.stop() }
@@ -637,9 +624,9 @@ class StreamSocketSessionTest {
         every { health.onHeartbeat(any()) } answers { heartbeatCb = arg(0) }
         every { health.onUnhealthy(any()) } just Runs
 
-        every { socket.subscribe(any<StreamWebSocketListener>()) } returns
-            Result.success(mockk(relaxed = true))
         every { socket.subscribe(any<StreamWebSocketListener>(), any()) } returns
+            Result.success(mockk(relaxed = true))
+        every { socket.subscribe(any<StreamWebSocketListener>()) } returns
             Result.success(mockk(relaxed = true))
         every { socket.open(config) } returns Result.success(Unit)
         every { socket.close(any(), any()) } returns Result.success(Unit)
@@ -693,9 +680,9 @@ class StreamSocketSessionTest {
             every { health.onHeartbeat(any()) } answers { heartbeatCb = arg(0) }
             every { health.onUnhealthy(any()) } just Runs
 
-            every { socket.subscribe(any<StreamWebSocketListener>()) } returns
-                Result.success(mockk(relaxed = true))
             every { socket.subscribe(any<StreamWebSocketListener>(), any()) } returns
+                Result.success(mockk(relaxed = true))
+            every { socket.subscribe(any<StreamWebSocketListener>()) } returns
                 Result.success(mockk(relaxed = true))
             every { socket.open(config) } returns Result.success(Unit)
             every { socket.close(any(), any()) } returns Result.success(Unit)
@@ -1184,7 +1171,7 @@ class StreamSocketSessionTest {
         }
 
     @Test
-    fun `connect fails when handshake subscribe fails - cancels lifecycle, no open`() = runTest {
+    fun `connect fails when handshake subscribe fails - emits disconnected, no open`() = runTest {
         val states = mutableListOf<StreamConnectionState>()
         every { subs.forEach(any()) } answers
             {
@@ -1429,6 +1416,198 @@ class StreamSocketSessionTest {
         verify(exactly = 0) { health.start() }
 
         return result
+    }
+
+    @Test
+    fun `handshake buffers non-auth message and replays it exactly once after eventListener installed`() =
+        runTest {
+            val offeredMessages = mutableListOf<String>()
+            every { debounce.offer(any()) } answers
+                {
+                    offeredMessages.add(firstArg())
+                    true
+                }
+
+            every { health.onHeartbeat(any()) } just Runs
+            every { health.onUnhealthy(any()) } just Runs
+            every { debounce.onBatch(any()) } just Runs
+
+            val hsSub = mockk<StreamSubscription>(relaxed = true)
+            val eventSub = mockk<StreamSubscription>(relaxed = true)
+            var hsListener: StreamWebSocketListener? = null
+            var eventListenerInstalled = false
+
+            every { socket.subscribe(any<StreamWebSocketListener>(), any()) } answers
+                {
+                    hsListener = firstArg()
+                    Result.success(hsSub)
+                }
+            every { socket.subscribe(any<StreamWebSocketListener>()) } answers
+                {
+                    eventListenerInstalled = true
+                    Result.success(eventSub)
+                }
+
+            val connectedEvt =
+                mockk<StreamClientConnectedEvent>(relaxed = true).also {
+                    every { it.connectionId } returns "conn-1"
+                }
+
+            val productEvent = mockk<StreamClientWsEvent>(relaxed = true)
+
+            every { parser.deserialize(any()) } answers
+                {
+                    val msg = firstArg<String>()
+                    when (msg) {
+                        "PRODUCT_EVENT" ->
+                            Result.success(StreamCompositeSerializationEvent.internal(productEvent))
+                        "CONNECTED_JSON" ->
+                            Result.success(StreamCompositeSerializationEvent.internal(connectedEvt))
+                        else -> Result.failure(RuntimeException("unknown"))
+                    }
+                }
+
+            every { socket.open(config) } answers
+                {
+                    // Product event arrives BEFORE auth response — must be buffered, not batched
+                    assertFalse(eventListenerInstalled)
+                    hsListener!!.onMessage("PRODUCT_EVENT")
+                    // Nothing should be offered to batcher during handshake
+                    assertTrue(offeredMessages.isEmpty())
+
+                    // Auth response completes handshake → triggers eventListener subscribe + replay
+                    hsListener!!.onMessage("CONNECTED_JSON")
+                    Result.success(Unit)
+                }
+
+            every { socket.close(any(), any()) } returns Result.success(Unit)
+            every { socket.send(any<String>()) } returns Result.success("Unit")
+
+            val result = async { session.connect(connectUserData()) }.await()
+
+            assertTrue(result.isSuccess)
+            // eventListener must be installed before replay
+            assertTrue(eventListenerInstalled)
+            // Buffered message replayed exactly once through batcher
+            assertEquals(1, offeredMessages.count { it == "PRODUCT_EVENT" })
+            // No other messages leaked to batcher (connection.ok is NOT replayed)
+            assertEquals(1, offeredMessages.size)
+            verify { health.start() }
+        }
+
+    @Test
+    fun `handshake acknowledges heartbeat for all messages including non-auth`() = runTest {
+        every { health.onHeartbeat(any()) } just Runs
+        every { health.onUnhealthy(any()) } just Runs
+        every { debounce.onBatch(any()) } just Runs
+
+        var hsListener: StreamWebSocketListener? = null
+        every { socket.subscribe(any<StreamWebSocketListener>(), any()) } answers
+            {
+                hsListener = firstArg()
+                Result.success(mockk(relaxed = true))
+            }
+        every { socket.open(config) } returns Result.success(Unit)
+        every { socket.close(any(), any()) } returns Result.success(Unit)
+
+        // Non-auth event that won't match
+        every { parser.deserialize("SOME_EVENT") } returns
+            Result.success(
+                StreamCompositeSerializationEvent.internal(
+                    mockk<StreamClientWsEvent>(relaxed = true)
+                )
+            )
+
+        val job = async { session.connect(connectUserData()) }
+        advanceUntilIdle()
+
+        hsListener!!.onMessage("SOME_EVENT")
+
+        verify { health.acknowledgeHeartbeat() }
+        job.cancelAndJoin()
+    }
+
+    @Test
+    fun `connect fails when eventListener subscribe fails after handshake`() = runTest {
+        every { health.onHeartbeat(any()) } just Runs
+        every { health.onUnhealthy(any()) } just Runs
+        every { debounce.onBatch(any()) } just Runs
+
+        val hsSub = mockk<StreamSubscription>(relaxed = true)
+        var hsListener: StreamWebSocketListener? = null
+
+        every { socket.subscribe(any<StreamWebSocketListener>(), any()) } answers
+            {
+                hsListener = firstArg()
+                Result.success(hsSub)
+            }
+        // eventListener subscribe fails
+        every { socket.subscribe(any<StreamWebSocketListener>()) } returns
+            Result.failure(RuntimeException("event sub failed"))
+        every { socket.close(any(), any()) } returns Result.success(Unit)
+
+        val connectedEvt =
+            mockk<StreamClientConnectedEvent>(relaxed = true).also {
+                every { it.connectionId } returns "conn-1"
+            }
+        every { parser.deserialize("OK") } returns
+            Result.success(StreamCompositeSerializationEvent.internal(connectedEvt))
+
+        every { socket.open(config) } answers
+            {
+                hsListener!!.onMessage("OK")
+                Result.success(Unit)
+            }
+
+        val result = async { session.connect(connectUserData()) }.await()
+
+        assertTrue(result.isFailure)
+        // Should tear down instead of continuing
+        verify { socket.close(any(), any()) }
+        verify(exactly = 0) { health.start() }
+    }
+
+    @Test
+    fun `connect fails when buffered message replay fails`() = runTest {
+        every { health.onHeartbeat(any()) } just Runs
+        every { health.onUnhealthy(any()) } just Runs
+        every { debounce.onBatch(any()) } just Runs
+        every { debounce.offer(any()) } returns false // replay will fail
+
+        val hsSub = mockk<StreamSubscription>(relaxed = true)
+        val eventSub = mockk<StreamSubscription>(relaxed = true)
+        var hsListener: StreamWebSocketListener? = null
+
+        every { socket.subscribe(any<StreamWebSocketListener>(), any()) } answers
+            {
+                hsListener = firstArg()
+                Result.success(hsSub)
+            }
+        every { socket.subscribe(any<StreamWebSocketListener>()) } returns Result.success(eventSub)
+        every { socket.close(any(), any()) } returns Result.success(Unit)
+
+        val productEvt = mockk<StreamClientWsEvent>(relaxed = true)
+        val connectedEvt =
+            mockk<StreamClientConnectedEvent>(relaxed = true).also {
+                every { it.connectionId } returns "conn-1"
+            }
+        every { parser.deserialize("BUFFERED") } returns
+            Result.success(StreamCompositeSerializationEvent.internal(productEvt))
+        every { parser.deserialize("OK") } returns
+            Result.success(StreamCompositeSerializationEvent.internal(connectedEvt))
+
+        every { socket.open(config) } answers
+            {
+                hsListener!!.onMessage("BUFFERED") // gets buffered
+                hsListener!!.onMessage("OK") // triggers success → replay fails
+                Result.success(Unit)
+            }
+
+        val result = async { session.connect(connectUserData()) }.await()
+
+        assertTrue(result.isFailure)
+        verify { socket.close(any(), any()) }
+        verify(exactly = 0) { health.start() }
     }
 
     private fun connectUserData(): ConnectUserData =
