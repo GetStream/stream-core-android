@@ -283,21 +283,34 @@ internal class StreamSocketSession<T>(
             }
 
             // Success/Failure continuations
-            val success: (StreamConnectedUser, String) -> Unit = { user, connectionId ->
+            val success: (StreamConnectedUser, String) -> Unit = success@{ user, connectionId ->
                 handshakeSubscription?.cancel()
 
                 // Subscribe eventListener for steady-state operation
-                val socketSubRes = internalSocket.subscribe(eventListener)
-                socketSubRes.onFailure { err ->
-                    logger.e(err) { "[success] Failed to subscribe event listener" }
-                }
-                socketSubscription = socketSubRes.getOrNull()
+                val eventSubscription =
+                    internalSocket.subscribe(eventListener).getOrElse { err ->
+                        logger.e(err) { "[success] Failed to subscribe event listener" }
+                        disconnect(err)
+                        if (continuation.isActive) {
+                            continuation.resume(Result.failure(err))
+                        }
+                        return@success
+                    }
+                socketSubscription = eventSubscription
 
                 // Replay messages buffered during handshake
-                pendingMessages.forEach { message ->
-                    val accepted = batcher.offer(message)
-                    if (!accepted) {
-                        logger.e { "[success] Failed to replay buffered message: $message" }
+                for (message in pendingMessages) {
+                    if (!batcher.offer(message)) {
+                        val err =
+                            IllegalStateException(
+                                "Failed to replay buffered message during handshake transition"
+                            )
+                        logger.e(err) { "[success] Buffered message replay failed" }
+                        disconnect(err)
+                        if (continuation.isActive) {
+                            continuation.resume(Result.failure(err))
+                        }
+                        return@success
                     }
                 }
                 pendingMessages.clear()

@@ -1417,6 +1417,189 @@ class StreamSocketSessionTest {
         return result
     }
 
+    @Test
+    fun `handshake buffers non-auth messages and replays them on success`() = runTest {
+        val replayedMessages = mutableListOf<String>()
+        every { debounce.offer(any()) } answers
+            {
+                replayedMessages.add(firstArg())
+                true
+            }
+
+        every { health.onHeartbeat(any()) } just Runs
+        every { health.onUnhealthy(any()) } just Runs
+        every { debounce.onBatch(any()) } just Runs
+
+        val hsSub = mockk<StreamSubscription>(relaxed = true)
+        val eventSub = mockk<StreamSubscription>(relaxed = true)
+        var hsListener: StreamWebSocketListener? = null
+
+        every { socket.subscribe(any<StreamWebSocketListener>(), any()) } answers
+            {
+                hsListener = firstArg()
+                Result.success(hsSub)
+            }
+        every { socket.subscribe(any<StreamWebSocketListener>()) } returns Result.success(eventSub)
+
+        val connectedEvt =
+            mockk<StreamClientConnectedEvent>(relaxed = true).also {
+                every { it.connectionId } returns "conn-1"
+            }
+
+        val productEvent = mockk<StreamClientWsEvent>(relaxed = true)
+
+        // First message: product event (should be buffered)
+        // Second message: connection.ok (should complete handshake and replay)
+        var messageCount = 0
+        every { parser.deserialize(any()) } answers
+            {
+                val msg = firstArg<String>()
+                when (msg) {
+                    "PRODUCT_EVENT" ->
+                        Result.success(StreamCompositeSerializationEvent.internal(productEvent))
+                    "CONNECTED_JSON" ->
+                        Result.success(StreamCompositeSerializationEvent.internal(connectedEvt))
+                    else -> Result.failure(RuntimeException("unknown"))
+                }
+            }
+
+        every { socket.open(config) } answers
+            {
+                // Server sends a product event before the auth response
+                hsListener!!.onMessage("PRODUCT_EVENT")
+                // Then sends connection.ok
+                hsListener!!.onMessage("CONNECTED_JSON")
+                Result.success(Unit)
+            }
+
+        every { socket.close(any(), any()) } returns Result.success(Unit)
+        every { socket.send(any<String>()) } returns Result.success("Unit")
+
+        val result = async { session.connect(connectUserData()) }.await()
+
+        assertTrue(result.isSuccess)
+        // The product event should have been replayed through the batcher
+        assertTrue(replayedMessages.contains("PRODUCT_EVENT"))
+        // eventListener should be subscribed after success
+        verify { socket.subscribe(any<StreamWebSocketListener>()) }
+        verify { health.start() }
+    }
+
+    @Test
+    fun `handshake acknowledges heartbeat for all messages including non-auth`() = runTest {
+        every { health.onHeartbeat(any()) } just Runs
+        every { health.onUnhealthy(any()) } just Runs
+        every { debounce.onBatch(any()) } just Runs
+
+        var hsListener: StreamWebSocketListener? = null
+        every { socket.subscribe(any<StreamWebSocketListener>(), any()) } answers
+            {
+                hsListener = firstArg()
+                Result.success(mockk(relaxed = true))
+            }
+        every { socket.open(config) } returns Result.success(Unit)
+        every { socket.close(any(), any()) } returns Result.success(Unit)
+
+        // Non-auth event that won't match
+        every { parser.deserialize("SOME_EVENT") } returns
+            Result.success(
+                StreamCompositeSerializationEvent.internal(
+                    mockk<StreamClientWsEvent>(relaxed = true)
+                )
+            )
+
+        val job = async { session.connect(connectUserData()) }
+        advanceUntilIdle()
+
+        hsListener!!.onMessage("SOME_EVENT")
+
+        verify { health.acknowledgeHeartbeat() }
+        job.cancelAndJoin()
+    }
+
+    @Test
+    fun `connect fails when eventListener subscribe fails after handshake`() = runTest {
+        every { health.onHeartbeat(any()) } just Runs
+        every { health.onUnhealthy(any()) } just Runs
+        every { debounce.onBatch(any()) } just Runs
+
+        val hsSub = mockk<StreamSubscription>(relaxed = true)
+        var hsListener: StreamWebSocketListener? = null
+
+        every { socket.subscribe(any<StreamWebSocketListener>(), any()) } answers
+            {
+                hsListener = firstArg()
+                Result.success(hsSub)
+            }
+        // eventListener subscribe fails
+        every { socket.subscribe(any<StreamWebSocketListener>()) } returns
+            Result.failure(RuntimeException("event sub failed"))
+        every { socket.close(any(), any()) } returns Result.success(Unit)
+
+        val connectedEvt =
+            mockk<StreamClientConnectedEvent>(relaxed = true).also {
+                every { it.connectionId } returns "conn-1"
+            }
+        every { parser.deserialize("OK") } returns
+            Result.success(StreamCompositeSerializationEvent.internal(connectedEvt))
+
+        every { socket.open(config) } answers
+            {
+                hsListener!!.onMessage("OK")
+                Result.success(Unit)
+            }
+
+        val result = async { session.connect(connectUserData()) }.await()
+
+        assertTrue(result.isFailure)
+        // Should tear down instead of continuing
+        verify { socket.close(any(), any()) }
+        verify(exactly = 0) { health.start() }
+    }
+
+    @Test
+    fun `connect fails when buffered message replay fails`() = runTest {
+        every { health.onHeartbeat(any()) } just Runs
+        every { health.onUnhealthy(any()) } just Runs
+        every { debounce.onBatch(any()) } just Runs
+        every { debounce.offer(any()) } returns false // replay will fail
+
+        val hsSub = mockk<StreamSubscription>(relaxed = true)
+        val eventSub = mockk<StreamSubscription>(relaxed = true)
+        var hsListener: StreamWebSocketListener? = null
+
+        every { socket.subscribe(any<StreamWebSocketListener>(), any()) } answers
+            {
+                hsListener = firstArg()
+                Result.success(hsSub)
+            }
+        every { socket.subscribe(any<StreamWebSocketListener>()) } returns Result.success(eventSub)
+        every { socket.close(any(), any()) } returns Result.success(Unit)
+
+        val productEvt = mockk<StreamClientWsEvent>(relaxed = true)
+        val connectedEvt =
+            mockk<StreamClientConnectedEvent>(relaxed = true).also {
+                every { it.connectionId } returns "conn-1"
+            }
+        every { parser.deserialize("BUFFERED") } returns
+            Result.success(StreamCompositeSerializationEvent.internal(productEvt))
+        every { parser.deserialize("OK") } returns
+            Result.success(StreamCompositeSerializationEvent.internal(connectedEvt))
+
+        every { socket.open(config) } answers
+            {
+                hsListener!!.onMessage("BUFFERED") // gets buffered
+                hsListener!!.onMessage("OK") // triggers success → replay fails
+                Result.success(Unit)
+            }
+
+        val result = async { session.connect(connectUserData()) }.await()
+
+        assertTrue(result.isFailure)
+        verify { socket.close(any(), any()) }
+        verify(exactly = 0) { health.start() }
+    }
+
     private fun connectUserData(): ConnectUserData =
         ConnectUserData("u", "t", null, null, false, null, emptyMap())
 }
