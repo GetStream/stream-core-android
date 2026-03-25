@@ -451,11 +451,8 @@ class StreamSocketSessionTest {
 
     @Test
     fun `connect fails when handshake subscribe fails - no open`() = runTest {
-        val lifecycleSub = mockk<StreamSubscription>(relaxed = true)
         val boom = RuntimeException("handshake sub failed")
 
-        every { socket.subscribe(any<StreamWebSocketListener>()) } returns
-            Result.success(lifecycleSub)
         every { socket.subscribe(any<StreamWebSocketListener>(), any()) } returns
             Result.failure(boom)
         every { socket.open(config) } answers
@@ -466,7 +463,7 @@ class StreamSocketSessionTest {
         val result = session.connect(connectUserData())
 
         assertTrue(result.isFailure)
-        verify(exactly = 1) { socket.subscribe(any<StreamWebSocketListener>()) }
+        verify(exactly = 0) { socket.subscribe(any<StreamWebSocketListener>()) }
         verify(exactly = 1) { socket.subscribe(any<StreamWebSocketListener>(), any()) }
         verify(exactly = 0) { socket.open(any()) }
         verify { subs.forEach(any()) } // Opening + Disconnected.Error dispatched
@@ -474,11 +471,8 @@ class StreamSocketSessionTest {
 
     @Test
     fun `connect returns failure when open fails - no health start, no auth send`() = runTest {
-        val lifecycleSub = mockk<StreamSubscription>(relaxed = true)
         val handshakeSub = mockk<StreamSubscription>(relaxed = true)
 
-        every { socket.subscribe(any<StreamWebSocketListener>()) } returns
-            Result.success(lifecycleSub)
         every { socket.subscribe(any<StreamWebSocketListener>(), any()) } returns
             Result.success(handshakeSub)
 
@@ -488,7 +482,8 @@ class StreamSocketSessionTest {
         val result = session.connect(connectUserData())
 
         assertTrue(result.isFailure)
-        verify(exactly = 2) { socket.subscribe(any<StreamWebSocketListener>(), any()) }
+        verify(exactly = 0) { socket.subscribe(any<StreamWebSocketListener>()) }
+        verify(exactly = 1) { socket.subscribe(any<StreamWebSocketListener>(), any()) }
         verify(exactly = 1) { socket.open(config) }
         verify(exactly = 0) { socket.send(any<String>()) }
         verify(exactly = 0) { health.start() }
@@ -497,13 +492,10 @@ class StreamSocketSessionTest {
 
     @Test
     fun `handshake onOpen non-101 causes failure - no auth send`() = runTest {
-        val lifecycleSub = mockk<StreamSubscription>(relaxed = true)
         val handshakeSub = mockk<StreamSubscription>(relaxed = true)
 
         var hsListener: StreamWebSocketListener? = null
 
-        every { socket.subscribe(any<StreamWebSocketListener>()) } returns
-            Result.success(lifecycleSub)
         every { socket.subscribe(any<StreamWebSocketListener>(), any()) } answers
             {
                 hsListener = firstArg()
@@ -534,13 +526,10 @@ class StreamSocketSessionTest {
 
     @Test
     fun `handshake onOpen 101 but auth serialize fails - connect fails`() = runTest {
-        val lifecycleSub = mockk<StreamSubscription>(relaxed = true)
         val handshakeSub = mockk<StreamSubscription>(relaxed = true)
 
         var hsListener: StreamWebSocketListener? = null
 
-        every { socket.subscribe(any<StreamWebSocketListener>()) } returns
-            Result.success(lifecycleSub)
         every { socket.subscribe(any<StreamWebSocketListener>(), any()) } answers
             {
                 hsListener = firstArg()
@@ -572,34 +561,32 @@ class StreamSocketSessionTest {
     }
 
     @Test
-    fun `connect fails when lifecycle subscribe fails - no handshake subscribe, no open`() =
-        runTest {
-            every { socket.subscribe(any<StreamWebSocketListener>(), any()) } returns
-                Result.failure(RuntimeException("lifecycle sub failed"))
+    fun `connect fails when handshake subscribe fails - no open, no event listener`() = runTest {
+        every { socket.subscribe(any<StreamWebSocketListener>(), any()) } returns
+            Result.failure(RuntimeException("handshake sub failed"))
 
-            val result = session.connect(connectUserData())
+        val result = session.connect(connectUserData())
 
-            assertTrue(result.isFailure)
-            verify(exactly = 1) { socket.subscribe(any<StreamWebSocketListener>(), any()) }
-            verify(exactly = 0) { socket.open(any()) }
-            verify(exactly = 0) { socket.send(any<String>()) }
-            verify(exactly = 0) { health.start() }
-            verify(atLeast = 1) { subs.forEach(any()) }
-        }
+        assertTrue(result.isFailure)
+        verify(exactly = 0) { socket.subscribe(any<StreamWebSocketListener>()) }
+        verify(exactly = 1) { socket.subscribe(any<StreamWebSocketListener>(), any()) }
+        verify(exactly = 0) { socket.open(any()) }
+        verify(exactly = 0) { socket.send(any<String>()) }
+        verify(exactly = 0) { health.start() }
+        verify(atLeast = 1) { subs.forEach(any()) }
+    }
 
     @Test
     fun `connect fails when open fails - no health start, no auth send`() = runTest {
-        every { socket.subscribe(any<StreamWebSocketListener>(), any()) } returnsMany
-            listOf(
-                Result.success(mockk(relaxed = true)), // lifecycle
-                Result.success(mockk(relaxed = true)), // handshake
-            )
+        every { socket.subscribe(any<StreamWebSocketListener>(), any()) } returns
+            Result.success(mockk(relaxed = true))
         every { socket.open(config) } returns Result.failure(RuntimeException("open failed"))
 
         val result = session.connect(connectUserData())
 
         assertTrue(result.isFailure)
-        verify(exactly = 2) { socket.subscribe(any<StreamWebSocketListener>(), any()) }
+        verify(exactly = 0) { socket.subscribe(any<StreamWebSocketListener>()) }
+        verify(exactly = 1) { socket.subscribe(any<StreamWebSocketListener>(), any()) }
         verify(exactly = 1) { socket.open(config) }
         verify(exactly = 0) { socket.send(any<String>()) }
         verify(exactly = 0) { health.start() }
@@ -619,13 +606,12 @@ class StreamSocketSessionTest {
             val job = async { session.connect(connectUserData()) }
 
             advanceUntilIdle()
-            verify { socket.subscribe(any<StreamWebSocketListener>()) }
             verify { socket.subscribe(any<StreamWebSocketListener>(), any()) }
 
             job.cancelAndJoin()
             advanceUntilIdle()
 
-            verify(atLeast = 2) { sub.cancel() }
+            verify(atLeast = 1) { sub.cancel() }
             verify { socket.close(any(), any()) }
             verify { health.stop() }
             verify { debounce.stop() }
@@ -637,9 +623,9 @@ class StreamSocketSessionTest {
         every { health.onHeartbeat(any()) } answers { heartbeatCb = arg(0) }
         every { health.onUnhealthy(any()) } just Runs
 
-        every { socket.subscribe(any<StreamWebSocketListener>()) } returns
-            Result.success(mockk(relaxed = true))
         every { socket.subscribe(any<StreamWebSocketListener>(), any()) } returns
+            Result.success(mockk(relaxed = true))
+        every { socket.subscribe(any<StreamWebSocketListener>()) } returns
             Result.success(mockk(relaxed = true))
         every { socket.open(config) } returns Result.success(Unit)
         every { socket.close(any(), any()) } returns Result.success(Unit)
@@ -693,9 +679,9 @@ class StreamSocketSessionTest {
             every { health.onHeartbeat(any()) } answers { heartbeatCb = arg(0) }
             every { health.onUnhealthy(any()) } just Runs
 
-            every { socket.subscribe(any<StreamWebSocketListener>()) } returns
-                Result.success(mockk(relaxed = true))
             every { socket.subscribe(any<StreamWebSocketListener>(), any()) } returns
+                Result.success(mockk(relaxed = true))
+            every { socket.subscribe(any<StreamWebSocketListener>()) } returns
                 Result.success(mockk(relaxed = true))
             every { socket.open(config) } returns Result.success(Unit)
             every { socket.close(any(), any()) } returns Result.success(Unit)
@@ -1184,7 +1170,7 @@ class StreamSocketSessionTest {
         }
 
     @Test
-    fun `connect fails when handshake subscribe fails - cancels lifecycle, no open`() = runTest {
+    fun `connect fails when handshake subscribe fails - emits disconnected, no open`() = runTest {
         val states = mutableListOf<StreamConnectionState>()
         every { subs.forEach(any()) } answers
             {

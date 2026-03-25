@@ -18,6 +18,7 @@ package io.getstream.android.core.internal.socket.monitor
 
 import io.getstream.android.core.api.log.StreamLogger
 import io.getstream.android.core.api.socket.monitor.StreamHealthMonitor
+import java.util.concurrent.atomic.AtomicLong
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.CoroutineScope
@@ -49,7 +50,7 @@ internal class StreamHealthMonitorImpl(
     }
 
     private var monitorJob: Job? = null
-    private var lastAck: Long = clock.now().toEpochMilliseconds()
+    private val lastAck = AtomicLong(clock.now().toEpochMilliseconds())
 
     // callbacks default to no-op
     private var onIntervalCallback: suspend () -> Unit = {}
@@ -64,7 +65,7 @@ internal class StreamHealthMonitorImpl(
     }
 
     override fun acknowledgeHeartbeat() {
-        lastAck = clock.now().toEpochMilliseconds()
+        lastAck.set(clock.now().toEpochMilliseconds())
     }
 
     /** Starts (or restarts) the periodic health-check loop */
@@ -80,7 +81,7 @@ internal class StreamHealthMonitorImpl(
                     delay(interval)
 
                     val now = clock.now().toEpochMilliseconds()
-                    if (now - lastAck >= livenessThreshold) {
+                    if (now - lastAck.get() >= livenessThreshold) {
                         logger.d { "Liveness threshold reached" }
                         onLivenessThresholdCallback()
                     } else {
