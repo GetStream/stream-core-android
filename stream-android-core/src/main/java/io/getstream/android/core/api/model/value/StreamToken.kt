@@ -26,6 +26,8 @@ import io.getstream.android.core.annotations.StreamPublishedApi
 @StreamPublishedApi
 @JvmInline
 public value class StreamToken private constructor(public val rawValue: String) {
+    override fun toString(): String = "StreamToken(<redacted>)"
+
     public companion object {
         /**
          * Creates a new [StreamToken] from a string.
