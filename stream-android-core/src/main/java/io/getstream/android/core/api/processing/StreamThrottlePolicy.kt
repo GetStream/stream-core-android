@@ -61,25 +61,25 @@ public sealed interface StreamThrottlePolicy {
      *
      * @property windowMs Minimum time between delivered values. Defaults to 3000ms.
      */
-    public data class Leading(override val windowMs: Long = DEFAULT_WINDOW_MS) :
-        StreamThrottlePolicy
+    public data class Leading
+    internal constructor(override val windowMs: Long = DEFAULT_WINDOW_MS) : StreamThrottlePolicy
 
     /**
      * Values collected during the window; only the last value is delivered when the window expires.
      *
      * @property windowMs Collection window duration. Defaults to 3000ms.
      */
-    public data class Trailing(override val windowMs: Long = DEFAULT_WINDOW_MS) :
-        StreamThrottlePolicy
+    public data class Trailing
+    internal constructor(override val windowMs: Long = DEFAULT_WINDOW_MS) : StreamThrottlePolicy
 
     /**
      * First value passes immediately; the last value is also delivered when the window expires (if
-     * a newer value arrived during the window).
+     * a newer value was submitted during the window).
      *
      * @property windowMs Minimum time between delivered values. Defaults to 3000ms.
      */
-    public data class LeadingAndTrailing(override val windowMs: Long = DEFAULT_WINDOW_MS) :
-        StreamThrottlePolicy
+    public data class LeadingAndTrailing
+    internal constructor(override val windowMs: Long = DEFAULT_WINDOW_MS) : StreamThrottlePolicy
 
     /** Factory methods for creating [StreamThrottlePolicy] instances. */
     public companion object {

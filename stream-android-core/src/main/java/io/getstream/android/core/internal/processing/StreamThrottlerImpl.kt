@@ -58,8 +58,8 @@ internal class StreamThrottlerImpl<T>(
 
     override fun reset() {
         windowJob.getAndSet(null)?.cancel()
-        windowActive.set(false)
         trailingValue.set(null)
+        windowActive.set(false)
     }
 
     private fun submitLeading(value: T): Boolean {

@@ -31,9 +31,9 @@ import kotlinx.coroutines.CoroutineScope
  *   **last** value delivered when the window expires. Best for: position/progress updates where
  *   latest state matters.
  * - **[LeadingAndTrailing][StreamThrottlePolicy.LeadingAndTrailing]:** First value delivered
- *   immediately, AND the last value delivered when the window expires (if different from the
- *   leading value). Best for: scroll position tracking, where both responsiveness and final
- *   accuracy matter.
+ *   immediately, AND the last value delivered when the window expires (if a newer value was
+ *   submitted during the window). Best for: scroll position tracking, where both responsiveness and
+ *   final accuracy matter.
  *
  * ### Semantics
  * - **Thread-safety:** All functions are safe to call from multiple coroutines.
