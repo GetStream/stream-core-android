@@ -61,6 +61,7 @@ public sealed interface StreamThrottlePolicy {
      *
      * @property windowMs Minimum time between delivered values. Defaults to 3000ms.
      */
+    @ConsistentCopyVisibility
     public data class Leading
     internal constructor(override val windowMs: Long = DEFAULT_WINDOW_MS) : StreamThrottlePolicy
 
@@ -69,6 +70,7 @@ public sealed interface StreamThrottlePolicy {
      *
      * @property windowMs Collection window duration. Defaults to 3000ms.
      */
+    @ConsistentCopyVisibility
     public data class Trailing
     internal constructor(override val windowMs: Long = DEFAULT_WINDOW_MS) : StreamThrottlePolicy
 
@@ -78,6 +80,7 @@ public sealed interface StreamThrottlePolicy {
      *
      * @property windowMs Minimum time between delivered values. Defaults to 3000ms.
      */
+    @ConsistentCopyVisibility
     public data class LeadingAndTrailing
     internal constructor(override val windowMs: Long = DEFAULT_WINDOW_MS) : StreamThrottlePolicy
 
