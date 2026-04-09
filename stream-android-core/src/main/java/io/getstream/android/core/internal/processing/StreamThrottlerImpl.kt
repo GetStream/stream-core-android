@@ -30,6 +30,9 @@ import kotlinx.coroutines.launch
  * Throttler implementation that supports [Leading][StreamThrottlePolicy.Leading],
  * [Trailing][StreamThrottlePolicy.Trailing], and
  * [LeadingAndTrailing][StreamThrottlePolicy.LeadingAndTrailing] strategies.
+ *
+ * A shared window-expiry job tracks the active coroutine across all modes. Resetting cancels it to
+ * prevent stale coroutines from prematurely closing a new window.
  */
 internal class StreamThrottlerImpl<T>(
     private val scope: CoroutineScope,
@@ -40,7 +43,7 @@ internal class StreamThrottlerImpl<T>(
     private val windowActive = AtomicBoolean(false)
     private val callbackRef = AtomicReference<suspend (T) -> Unit> {}
     private val trailingValue = AtomicReference<T?>(null)
-    private val trailingJob = AtomicReference<Job?>(null)
+    private val windowJob = AtomicReference<Job?>(null)
 
     override fun onValue(callback: suspend (T) -> Unit) {
         callbackRef.set(callback)
@@ -54,9 +57,9 @@ internal class StreamThrottlerImpl<T>(
         }
 
     override fun reset() {
+        windowJob.getAndSet(null)?.cancel()
         windowActive.set(false)
         trailingValue.set(null)
-        trailingJob.getAndSet(null)?.cancel()
     }
 
     private fun submitLeading(value: T): Boolean {
@@ -66,10 +69,7 @@ internal class StreamThrottlerImpl<T>(
         } else {
             logger.v { "[throttle:leading] Accepted: $value" }
             scope.launch { callbackRef.get().invoke(value) }
-            scope.launch {
-                delay(policy.windowMs)
-                windowActive.set(false)
-            }
+            scheduleWindowExpiry(deliverTrailing = false)
         }
         return accepted
     }
@@ -78,7 +78,7 @@ internal class StreamThrottlerImpl<T>(
         trailingValue.set(value)
         if (windowActive.compareAndSet(false, true)) {
             logger.v { "[throttle:trailing] Window started, pending: $value" }
-            scheduleTrailingDelivery()
+            scheduleWindowExpiry(deliverTrailing = true)
         } else {
             logger.v { "[throttle:trailing] Updated pending: $value" }
         }
@@ -91,7 +91,7 @@ internal class StreamThrottlerImpl<T>(
             logger.v { "[throttle:leading+trailing] Leading: $value" }
             trailingValue.set(null)
             scope.launch { callbackRef.get().invoke(value) }
-            scheduleTrailingDelivery()
+            scheduleWindowExpiry(deliverTrailing = true)
         } else {
             logger.v { "[throttle:leading+trailing] Pending trailing: $value" }
             trailingValue.set(value)
@@ -99,17 +99,19 @@ internal class StreamThrottlerImpl<T>(
         return true
     }
 
-    private fun scheduleTrailingDelivery() {
+    private fun scheduleWindowExpiry(deliverTrailing: Boolean) {
         val job =
             scope.launch {
                 delay(policy.windowMs)
                 windowActive.set(false)
-                val pending = trailingValue.getAndSet(null)
-                if (pending != null) {
-                    logger.v { "[throttle] Trailing delivery: $pending" }
-                    callbackRef.get().invoke(pending)
+                if (deliverTrailing) {
+                    val pending = trailingValue.getAndSet(null)
+                    if (pending != null) {
+                        logger.v { "[throttle] Trailing delivery: $pending" }
+                        callbackRef.get().invoke(pending)
+                    }
                 }
             }
-        trailingJob.getAndSet(job)?.cancel()
+        windowJob.getAndSet(job)?.cancel()
     }
 }

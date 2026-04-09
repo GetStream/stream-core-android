@@ -174,6 +174,47 @@ class StreamThrottlerImplTest {
     }
 
     @Test
+    fun `leading - stale window expiry does not close new window after reset`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val scope = CoroutineScope(SupervisorJob() + dispatcher)
+        val delivered = mutableListOf<String>()
+        val throttler =
+            StreamThrottlerImpl<String>(
+                scope = scope,
+                logger = mockk(relaxed = true),
+                policy = StreamThrottlePolicy.leading(windowMs = 1_000),
+            )
+        throttler.onValue { delivered.add(it) }
+
+        // t=0: submit A, starts window expiry at t=1000
+        throttler.submit("A")
+        testScheduler.runCurrent()
+
+        // t=300: reset cancels old window job
+        advanceTimeBy(300)
+        throttler.reset()
+
+        // t=300: submit B, starts new window expiry at t=1300
+        assertTrue(throttler.submit("B"))
+        testScheduler.runCurrent()
+
+        // t=1000: old delay WOULD have fired here — must NOT clear the window
+        advanceTimeBy(700)
+        testScheduler.runCurrent()
+
+        // C should be rejected because B's window (until t=1300) is still active
+        assertFalse(throttler.submit("C"))
+
+        // t=1301: B's window expires
+        advanceTimeBy(301)
+        testScheduler.runCurrent()
+        assertTrue(throttler.submit("D"))
+        testScheduler.runCurrent()
+
+        assertEquals(listOf("A", "B", "D"), delivered)
+    }
+
+    @Test
     fun `leading - no crash when no callback registered`() = runTest {
         val dispatcher = StandardTestDispatcher(testScheduler)
         val scope = CoroutineScope(SupervisorJob() + dispatcher)
