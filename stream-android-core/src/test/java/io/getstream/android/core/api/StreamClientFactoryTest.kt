@@ -38,7 +38,6 @@ import io.getstream.android.core.api.model.value.StreamWsUrl
 import io.getstream.android.core.api.observers.lifecycle.StreamLifecycleMonitor
 import io.getstream.android.core.api.observers.network.StreamNetworkMonitor
 import io.getstream.android.core.api.processing.StreamBatcher
-import io.getstream.android.core.api.processing.StreamRetryProcessor
 import io.getstream.android.core.api.processing.StreamSerialProcessingQueue
 import io.getstream.android.core.api.processing.StreamSingleFlightProcessor
 import io.getstream.android.core.api.recovery.StreamConnectionRecoveryEvaluator
@@ -101,7 +100,6 @@ internal class StreamClientFactoryTest {
         val tokenManager: StreamTokenManager,
         val singleFlight: StreamSingleFlightProcessor,
         val serialQueue: StreamSerialProcessingQueue,
-        val retryProcessor: StreamRetryProcessor,
         val connectionIdHolder: StreamConnectionIdHolder,
         val socketFactory: StreamWebSocketFactory,
         val healthMonitor: StreamHealthMonitor,
@@ -131,7 +129,6 @@ internal class StreamClientFactoryTest {
             tokenManager = mockk(relaxed = true),
             singleFlight = mockk(relaxed = true),
             serialQueue = mockk(relaxed = true),
-            retryProcessor = mockk(relaxed = true),
             connectionIdHolder = mockk(relaxed = true),
             socketFactory = mockk(relaxed = true),
             healthMonitor = mockk(relaxed = true),
@@ -145,7 +142,7 @@ internal class StreamClientFactoryTest {
         deps: Dependencies,
         httpConfig: StreamHttpConfig? = null,
     ): StreamClient {
-        return StreamClient(
+        return createStreamClientInternal(
             context = mockk(relaxed = true),
             apiKey = deps.apiKey,
             user = deps.user,
@@ -157,7 +154,6 @@ internal class StreamClientFactoryTest {
             tokenManager = deps.tokenManager,
             singleFlight = deps.singleFlight,
             serialQueue = deps.serialQueue,
-            retryProcessor = deps.retryProcessor,
             scope = testScope,
             connectionIdHolder = deps.connectionIdHolder,
             socketFactory = deps.socketFactory,
@@ -338,7 +334,7 @@ internal class StreamClientFactoryTest {
                 customData = mapOf("custom" to "data"),
             )
         val client =
-            StreamClient(
+            createStreamClientInternal(
                 scope = testScope,
                 context = context,
                 apiKey = StreamApiKey.fromString("key123"),
