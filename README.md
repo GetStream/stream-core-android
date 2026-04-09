@@ -25,7 +25,7 @@ Rather than duplicating infrastructure code across multiple SDKs, Stream Android
 - **Authentication**: Token lifecycle management with automatic refresh
 - **State management**: Connection state, network availability, app lifecycle tracking
 - **Reliability**: Retry policies, exponential backoff, and connection recovery
-- **Performance**: Request deduplication, batching, serial processing queues
+- **Performance**: Request deduplication, batching, throttling, serial processing queues
 - **Thread safety**: Cross-thread execution utilities and subscription management
 - **Observability**: Structured logging and event propagation
 
@@ -45,7 +45,7 @@ Rather than duplicating infrastructure code across multiple SDKs, Stream Android
 │  • WebSocket connections    • Serial processing         │
 │  • Token management          • Retry logic              │
 │  • Lifecycle monitoring      • Event batching           │
-│  • Network detection         • Thread utilities         │
+│  • Network detection         • Throttling & debouncing  │
 └────────────────────────┬────────────────────────────────┘
                          │
 ┌────────────────────────┴────────────────────────────────┐
@@ -63,7 +63,7 @@ Rather than duplicating infrastructure code across multiple SDKs, Stream Android
 - Retry policies with backoff strategies
 - Serial processing queues
 - Single-flight execution (request deduplication)
-- Batching & debouncing
+- Batching, debouncing & throttling
 - Thread-safe subscription management
 - WebSocket connections with health monitoring
 - Structured logging
@@ -96,6 +96,8 @@ Stream Android Core uses annotations to distinguish between stable public APIs a
   - [Single-Flight Processor](#single-flight-processor)
   - [Retry Processor](#retry-processor)
   - [Batcher](#batcher)
+  - [Debouncer](#debouncer)
+  - [Throttler](#throttler)
   - [Threading Utilities](#threading-utilities)
   - [Token Management](#token-management)
   - [WebSocket Connections](#websocket-connections)
@@ -529,6 +531,108 @@ batcher.stop().getOrThrow()
 - Reducing network calls
 
 **Pattern**: Debouncing + size-based flushing
+
+---
+
+### Debouncer
+
+Coalesces rapid state changes into a single settled action. Only the **last** value is delivered after a quiet period.
+
+#### Basic Usage
+
+```kotlin
+import io.getstream.android.core.api.processing.StreamDebouncer
+
+val debouncer = StreamDebouncer<String>(
+    scope = scope,
+    logger = logger,
+    delayMs = 300 // Deliver after 300ms of silence
+)
+
+debouncer.onValue { settled ->
+    // Only called once with the final value
+    updateSearch(settled)
+}
+
+// Rapid submissions — only "third" is delivered after 300ms of silence
+debouncer.submit("first")
+debouncer.submit("second")
+debouncer.submit("third")
+
+// Cancel pending delivery
+debouncer.cancel()
+```
+
+#### Use Cases
+
+- Search-as-you-type (wait for user to stop typing)
+- Network/lifecycle state coalescing (avoid reconnection storms)
+- UI state settling (wait for animations to finish)
+
+**Pattern**: Last-write-wins with timer reset on each submission
+
+---
+
+### Throttler
+
+Rate-limits bursty values with configurable strategies.
+
+#### Strategies
+
+```kotlin
+import io.getstream.android.core.api.processing.StreamThrottler
+import io.getstream.android.core.api.processing.StreamThrottlePolicy
+
+// Leading: first value immediately, drop the rest until window expires
+val typing = StreamThrottler<TypingEvent>(
+    scope = scope,
+    logger = logger,
+    policy = StreamThrottlePolicy.leading(windowMs = 3_000)
+)
+
+// Trailing: collect during window, deliver last value when it expires
+val position = StreamThrottler<Position>(
+    scope = scope,
+    logger = logger,
+    policy = StreamThrottlePolicy.trailing(windowMs = 1_000)
+)
+
+// Leading + Trailing: first value immediately, last value at window end
+val scroll = StreamThrottler<Int>(
+    scope = scope,
+    logger = logger,
+    policy = StreamThrottlePolicy.leadingAndTrailing(windowMs = 500)
+)
+```
+
+#### Basic Usage
+
+```kotlin
+val throttler = StreamThrottler<String>(
+    scope = scope,
+    logger = logger,
+    policy = StreamThrottlePolicy.leading(windowMs = 3_000)
+)
+
+throttler.onValue { event -> api.sendTypingEvent(event) }
+
+throttler.submit("typing") // delivered immediately
+throttler.submit("typing") // dropped (within window)
+// ... 3 seconds pass ...
+throttler.submit("typing") // delivered immediately (new window)
+
+// Reset window manually
+throttler.reset()
+```
+
+#### Use Cases
+
+- Typing indicators (leading — fire immediately, suppress duplicates)
+- Read receipts (leading — don't flood the server)
+- Position/progress updates (trailing — only latest state matters)
+- Scroll tracking (leading + trailing — responsiveness + final accuracy)
+
+**Pattern**: Configurable rate-limiting via `StreamThrottlePolicy`
 
 ---
 
@@ -1136,7 +1240,7 @@ stream-android-core/
 │       │   ├── observers/             # Lifecycle & network monitoring
 │       │   │   ├── lifecycle/
 │       │   │   └── network/
-│       │   ├── processing/            # Queue, retry, single-flight, batcher
+│       │   ├── processing/            # Queue, retry, single-flight, batcher, debouncer, throttler
 │       │   ├── subscribe/             # Subscription management
 │       │   ├── socket/                # WebSocket connections
 │       │   ├── log/                   # Logging infrastructure
