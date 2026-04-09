@@ -18,6 +18,7 @@
 
 package io.getstream.android.core.internal.processing
 
+import io.getstream.android.core.api.processing.StreamThrottlePolicy
 import io.mockk.mockk
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -32,8 +33,10 @@ import org.junit.Test
 
 class StreamThrottlerImplTest {
 
+    // ---- Leading mode ----
+
     @Test
-    fun `first value is delivered immediately`() = runTest {
+    fun `leading - first value is delivered immediately`() = runTest {
         val dispatcher = StandardTestDispatcher(testScheduler)
         val scope = CoroutineScope(SupervisorJob() + dispatcher)
         val delivered = mutableListOf<String>()
@@ -41,7 +44,7 @@ class StreamThrottlerImplTest {
             StreamThrottlerImpl<String>(
                 scope = scope,
                 logger = mockk(relaxed = true),
-                windowMs = 1_000,
+                policy = StreamThrottlePolicy.leading(windowMs = 1_000),
             )
         throttler.onValue { delivered.add(it) }
 
@@ -53,7 +56,7 @@ class StreamThrottlerImplTest {
     }
 
     @Test
-    fun `second value within window is dropped`() = runTest {
+    fun `leading - second value within window is dropped`() = runTest {
         val dispatcher = StandardTestDispatcher(testScheduler)
         val scope = CoroutineScope(SupervisorJob() + dispatcher)
         val delivered = mutableListOf<String>()
@@ -61,22 +64,20 @@ class StreamThrottlerImplTest {
             StreamThrottlerImpl<String>(
                 scope = scope,
                 logger = mockk(relaxed = true),
-                windowMs = 1_000,
+                policy = StreamThrottlePolicy.leading(windowMs = 1_000),
             )
         throttler.onValue { delivered.add(it) }
 
-        val first = throttler.submit("first")
+        assertTrue(throttler.submit("first"))
         testScheduler.runCurrent()
-        val second = throttler.submit("second")
+        assertFalse(throttler.submit("second"))
         testScheduler.runCurrent()
 
-        assertTrue(first)
-        assertFalse(second)
         assertEquals(listOf("first"), delivered)
     }
 
     @Test
-    fun `value after window expires is delivered`() = runTest {
+    fun `leading - value after window expires is delivered`() = runTest {
         val dispatcher = StandardTestDispatcher(testScheduler)
         val scope = CoroutineScope(SupervisorJob() + dispatcher)
         val delivered = mutableListOf<String>()
@@ -84,25 +85,23 @@ class StreamThrottlerImplTest {
             StreamThrottlerImpl<String>(
                 scope = scope,
                 logger = mockk(relaxed = true),
-                windowMs = 1_000,
+                policy = StreamThrottlePolicy.leading(windowMs = 1_000),
             )
         throttler.onValue { delivered.add(it) }
 
         throttler.submit("first")
         testScheduler.runCurrent()
-
         advanceTimeBy(1_001)
         testScheduler.runCurrent()
 
-        val accepted = throttler.submit("second")
+        assertTrue(throttler.submit("second"))
         testScheduler.runCurrent()
 
-        assertTrue(accepted)
         assertEquals(listOf("first", "second"), delivered)
     }
 
     @Test
-    fun `rapid burst delivers only the first value`() = runTest {
+    fun `leading - rapid burst delivers only the first value`() = runTest {
         val dispatcher = StandardTestDispatcher(testScheduler)
         val scope = CoroutineScope(SupervisorJob() + dispatcher)
         val delivered = mutableListOf<Int>()
@@ -110,7 +109,7 @@ class StreamThrottlerImplTest {
             StreamThrottlerImpl<Int>(
                 scope = scope,
                 logger = mockk(relaxed = true),
-                windowMs = 1_000,
+                policy = StreamThrottlePolicy.leading(windowMs = 1_000),
             )
         throttler.onValue { delivered.add(it) }
 
@@ -123,7 +122,7 @@ class StreamThrottlerImplTest {
     }
 
     @Test
-    fun `multiple windows deliver one value each`() = runTest {
+    fun `leading - multiple windows deliver one value each`() = runTest {
         val dispatcher = StandardTestDispatcher(testScheduler)
         val scope = CoroutineScope(SupervisorJob() + dispatcher)
         val delivered = mutableListOf<String>()
@@ -131,21 +130,20 @@ class StreamThrottlerImplTest {
             StreamThrottlerImpl<String>(
                 scope = scope,
                 logger = mockk(relaxed = true),
-                windowMs = 500,
+                policy = StreamThrottlePolicy.leading(windowMs = 500),
             )
         throttler.onValue { delivered.add(it) }
 
         throttler.submit("a")
         testScheduler.runCurrent()
-
         advanceTimeBy(501)
         testScheduler.runCurrent()
+
         throttler.submit("b")
         testScheduler.runCurrent()
-        assertFalse(throttler.submit("b-dropped"))
-
         advanceTimeBy(501)
         testScheduler.runCurrent()
+
         throttler.submit("c")
         testScheduler.runCurrent()
 
@@ -153,7 +151,7 @@ class StreamThrottlerImplTest {
     }
 
     @Test
-    fun `reset allows immediate delivery`() = runTest {
+    fun `leading - reset allows immediate delivery`() = runTest {
         val dispatcher = StandardTestDispatcher(testScheduler)
         val scope = CoroutineScope(SupervisorJob() + dispatcher)
         val delivered = mutableListOf<String>()
@@ -161,58 +159,37 @@ class StreamThrottlerImplTest {
             StreamThrottlerImpl<String>(
                 scope = scope,
                 logger = mockk(relaxed = true),
-                windowMs = 1_000,
+                policy = StreamThrottlePolicy.leading(windowMs = 1_000),
             )
         throttler.onValue { delivered.add(it) }
 
         throttler.submit("first")
         testScheduler.runCurrent()
-
         throttler.reset()
 
-        val accepted = throttler.submit("after-reset")
+        assertTrue(throttler.submit("after-reset"))
         testScheduler.runCurrent()
 
-        assertTrue(accepted)
         assertEquals(listOf("first", "after-reset"), delivered)
     }
 
     @Test
-    fun `submit returns false when window is active`() = runTest {
+    fun `leading - no crash when no callback registered`() = runTest {
         val dispatcher = StandardTestDispatcher(testScheduler)
         val scope = CoroutineScope(SupervisorJob() + dispatcher)
         val throttler =
             StreamThrottlerImpl<String>(
                 scope = scope,
                 logger = mockk(relaxed = true),
-                windowMs = 1_000,
-            )
-        throttler.onValue {}
-
-        assertTrue(throttler.submit("first"))
-        assertFalse(throttler.submit("second"))
-        assertFalse(throttler.submit("third"))
-    }
-
-    @Test
-    fun `no crash when no callback registered`() = runTest {
-        val dispatcher = StandardTestDispatcher(testScheduler)
-        val scope = CoroutineScope(SupervisorJob() + dispatcher)
-        val throttler =
-            StreamThrottlerImpl<String>(
-                scope = scope,
-                logger = mockk(relaxed = true),
-                windowMs = 1_000,
+                policy = StreamThrottlePolicy.leading(windowMs = 1_000),
             )
 
-        val accepted = throttler.submit("orphan")
+        assertTrue(throttler.submit("orphan"))
         testScheduler.runCurrent()
-
-        assertTrue(accepted)
     }
 
     @Test
-    fun `reset mid-window allows new value through`() = runTest {
+    fun `leading - window reopens exactly after windowMs`() = runTest {
         val dispatcher = StandardTestDispatcher(testScheduler)
         val scope = CoroutineScope(SupervisorJob() + dispatcher)
         val delivered = mutableListOf<String>()
@@ -220,49 +197,322 @@ class StreamThrottlerImplTest {
             StreamThrottlerImpl<String>(
                 scope = scope,
                 logger = mockk(relaxed = true),
-                windowMs = 1_000,
+                policy = StreamThrottlePolicy.leading(windowMs = 1_000),
             )
         throttler.onValue { delivered.add(it) }
 
         throttler.submit("first")
         testScheduler.runCurrent()
 
-        advanceTimeBy(300)
-        throttler.reset()
-
-        throttler.submit("mid-window")
-        testScheduler.runCurrent()
-
-        assertEquals(listOf("first", "mid-window"), delivered)
-    }
-
-    @Test
-    fun `window reopens exactly after windowMs`() = runTest {
-        val dispatcher = StandardTestDispatcher(testScheduler)
-        val scope = CoroutineScope(SupervisorJob() + dispatcher)
-        val delivered = mutableListOf<String>()
-        val throttler =
-            StreamThrottlerImpl<String>(
-                scope = scope,
-                logger = mockk(relaxed = true),
-                windowMs = 1_000,
-            )
-        throttler.onValue { delivered.add(it) }
-
-        throttler.submit("first")
-        testScheduler.runCurrent()
-
-        // At exactly 999ms, still within window
         advanceTimeBy(999)
         testScheduler.runCurrent()
         assertFalse(throttler.submit("too-early"))
 
-        // At 1001ms total, window should have closed
         advanceTimeBy(2)
         testScheduler.runCurrent()
         assertTrue(throttler.submit("on-time"))
         testScheduler.runCurrent()
 
         assertEquals(listOf("first", "on-time"), delivered)
+    }
+
+    // ---- Trailing mode ----
+
+    @Test
+    fun `trailing - single value delivered after window expires`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val scope = CoroutineScope(SupervisorJob() + dispatcher)
+        val delivered = mutableListOf<String>()
+        val throttler =
+            StreamThrottlerImpl<String>(
+                scope = scope,
+                logger = mockk(relaxed = true),
+                policy = StreamThrottlePolicy.trailing(windowMs = 1_000),
+            )
+        throttler.onValue { delivered.add(it) }
+
+        assertTrue(throttler.submit("first"))
+        testScheduler.runCurrent()
+        assertTrue(delivered.isEmpty())
+
+        advanceTimeBy(1_001)
+        testScheduler.runCurrent()
+
+        assertEquals(listOf("first"), delivered)
+    }
+
+    @Test
+    fun `trailing - last value wins within window`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val scope = CoroutineScope(SupervisorJob() + dispatcher)
+        val delivered = mutableListOf<String>()
+        val throttler =
+            StreamThrottlerImpl<String>(
+                scope = scope,
+                logger = mockk(relaxed = true),
+                policy = StreamThrottlePolicy.trailing(windowMs = 1_000),
+            )
+        throttler.onValue { delivered.add(it) }
+
+        assertTrue(throttler.submit("first"))
+        assertTrue(throttler.submit("second"))
+        assertTrue(throttler.submit("third"))
+        testScheduler.runCurrent()
+        assertTrue(delivered.isEmpty())
+
+        advanceTimeBy(1_001)
+        testScheduler.runCurrent()
+
+        assertEquals(listOf("third"), delivered)
+    }
+
+    @Test
+    fun `trailing - all submits return true`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val scope = CoroutineScope(SupervisorJob() + dispatcher)
+        val throttler =
+            StreamThrottlerImpl<String>(
+                scope = scope,
+                logger = mockk(relaxed = true),
+                policy = StreamThrottlePolicy.trailing(windowMs = 1_000),
+            )
+        throttler.onValue {}
+
+        assertTrue(throttler.submit("a"))
+        assertTrue(throttler.submit("b"))
+        assertTrue(throttler.submit("c"))
+    }
+
+    @Test
+    fun `trailing - multiple windows deliver last value each`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val scope = CoroutineScope(SupervisorJob() + dispatcher)
+        val delivered = mutableListOf<String>()
+        val throttler =
+            StreamThrottlerImpl<String>(
+                scope = scope,
+                logger = mockk(relaxed = true),
+                policy = StreamThrottlePolicy.trailing(windowMs = 500),
+            )
+        throttler.onValue { delivered.add(it) }
+
+        throttler.submit("a1")
+        throttler.submit("a2")
+        advanceTimeBy(501)
+        testScheduler.runCurrent()
+
+        throttler.submit("b1")
+        throttler.submit("b2")
+        throttler.submit("b3")
+        advanceTimeBy(501)
+        testScheduler.runCurrent()
+
+        assertEquals(listOf("a2", "b3"), delivered)
+    }
+
+    @Test
+    fun `trailing - reset cancels pending delivery`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val scope = CoroutineScope(SupervisorJob() + dispatcher)
+        val delivered = mutableListOf<String>()
+        val throttler =
+            StreamThrottlerImpl<String>(
+                scope = scope,
+                logger = mockk(relaxed = true),
+                policy = StreamThrottlePolicy.trailing(windowMs = 1_000),
+            )
+        throttler.onValue { delivered.add(it) }
+
+        throttler.submit("pending")
+        testScheduler.runCurrent()
+        throttler.reset()
+
+        advanceTimeBy(1_001)
+        testScheduler.runCurrent()
+
+        assertTrue(delivered.isEmpty())
+    }
+
+    @Test
+    fun `trailing - submit after reset starts new window`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val scope = CoroutineScope(SupervisorJob() + dispatcher)
+        val delivered = mutableListOf<String>()
+        val throttler =
+            StreamThrottlerImpl<String>(
+                scope = scope,
+                logger = mockk(relaxed = true),
+                policy = StreamThrottlePolicy.trailing(windowMs = 500),
+            )
+        throttler.onValue { delivered.add(it) }
+
+        throttler.submit("cancelled")
+        throttler.reset()
+
+        throttler.submit("fresh")
+        advanceTimeBy(501)
+        testScheduler.runCurrent()
+
+        assertEquals(listOf("fresh"), delivered)
+    }
+
+    // ---- LeadingAndTrailing mode ----
+
+    @Test
+    fun `leadingAndTrailing - first value delivered immediately`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val scope = CoroutineScope(SupervisorJob() + dispatcher)
+        val delivered = mutableListOf<String>()
+        val throttler =
+            StreamThrottlerImpl<String>(
+                scope = scope,
+                logger = mockk(relaxed = true),
+                policy = StreamThrottlePolicy.leadingAndTrailing(windowMs = 1_000),
+            )
+        throttler.onValue { delivered.add(it) }
+
+        throttler.submit("first")
+        testScheduler.runCurrent()
+
+        assertEquals(listOf("first"), delivered)
+    }
+
+    @Test
+    fun `leadingAndTrailing - trailing value delivered at window end`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val scope = CoroutineScope(SupervisorJob() + dispatcher)
+        val delivered = mutableListOf<String>()
+        val throttler =
+            StreamThrottlerImpl<String>(
+                scope = scope,
+                logger = mockk(relaxed = true),
+                policy = StreamThrottlePolicy.leadingAndTrailing(windowMs = 1_000),
+            )
+        throttler.onValue { delivered.add(it) }
+
+        throttler.submit("first")
+        testScheduler.runCurrent()
+        throttler.submit("second")
+        throttler.submit("third")
+
+        advanceTimeBy(1_001)
+        testScheduler.runCurrent()
+
+        assertEquals(listOf("first", "third"), delivered)
+    }
+
+    @Test
+    fun `leadingAndTrailing - no trailing delivery if no new values`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val scope = CoroutineScope(SupervisorJob() + dispatcher)
+        val delivered = mutableListOf<String>()
+        val throttler =
+            StreamThrottlerImpl<String>(
+                scope = scope,
+                logger = mockk(relaxed = true),
+                policy = StreamThrottlePolicy.leadingAndTrailing(windowMs = 1_000),
+            )
+        throttler.onValue { delivered.add(it) }
+
+        throttler.submit("only-one")
+        testScheduler.runCurrent()
+
+        advanceTimeBy(1_001)
+        testScheduler.runCurrent()
+
+        assertEquals(listOf("only-one"), delivered)
+    }
+
+    @Test
+    fun `leadingAndTrailing - all submits return true`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val scope = CoroutineScope(SupervisorJob() + dispatcher)
+        val throttler =
+            StreamThrottlerImpl<String>(
+                scope = scope,
+                logger = mockk(relaxed = true),
+                policy = StreamThrottlePolicy.leadingAndTrailing(windowMs = 1_000),
+            )
+        throttler.onValue {}
+
+        assertTrue(throttler.submit("a"))
+        assertTrue(throttler.submit("b"))
+        assertTrue(throttler.submit("c"))
+    }
+
+    @Test
+    fun `leadingAndTrailing - multiple windows`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val scope = CoroutineScope(SupervisorJob() + dispatcher)
+        val delivered = mutableListOf<String>()
+        val throttler =
+            StreamThrottlerImpl<String>(
+                scope = scope,
+                logger = mockk(relaxed = true),
+                policy = StreamThrottlePolicy.leadingAndTrailing(windowMs = 500),
+            )
+        throttler.onValue { delivered.add(it) }
+
+        // Window 1: leading=a, trailing=c
+        throttler.submit("a")
+        testScheduler.runCurrent()
+        throttler.submit("b")
+        throttler.submit("c")
+        advanceTimeBy(501)
+        testScheduler.runCurrent()
+
+        // Window 2: leading=d, no trailing
+        throttler.submit("d")
+        testScheduler.runCurrent()
+        advanceTimeBy(501)
+        testScheduler.runCurrent()
+
+        assertEquals(listOf("a", "c", "d"), delivered)
+    }
+
+    @Test
+    fun `leadingAndTrailing - reset clears pending trailing`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val scope = CoroutineScope(SupervisorJob() + dispatcher)
+        val delivered = mutableListOf<String>()
+        val throttler =
+            StreamThrottlerImpl<String>(
+                scope = scope,
+                logger = mockk(relaxed = true),
+                policy = StreamThrottlePolicy.leadingAndTrailing(windowMs = 1_000),
+            )
+        throttler.onValue { delivered.add(it) }
+
+        throttler.submit("leading")
+        testScheduler.runCurrent()
+        throttler.submit("pending-trailing")
+        throttler.reset()
+
+        advanceTimeBy(1_001)
+        testScheduler.runCurrent()
+
+        assertEquals(listOf("leading"), delivered)
+    }
+
+    @Test
+    fun `leadingAndTrailing - rapid burst delivers first and last`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val scope = CoroutineScope(SupervisorJob() + dispatcher)
+        val delivered = mutableListOf<Int>()
+        val throttler =
+            StreamThrottlerImpl<Int>(
+                scope = scope,
+                logger = mockk(relaxed = true),
+                policy = StreamThrottlePolicy.leadingAndTrailing(windowMs = 1_000),
+            )
+        throttler.onValue { delivered.add(it) }
+
+        (1..50).forEach { throttler.submit(it) }
+        testScheduler.runCurrent()
+
+        advanceTimeBy(1_001)
+        testScheduler.runCurrent()
+
+        assertEquals(listOf(1, 50), delivered)
     }
 }

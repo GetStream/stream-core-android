@@ -17,46 +17,99 @@
 package io.getstream.android.core.internal.processing
 
 import io.getstream.android.core.api.log.StreamLogger
+import io.getstream.android.core.api.processing.StreamThrottlePolicy
 import io.getstream.android.core.api.processing.StreamThrottler
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /**
- * Leading-edge throttler: delivers the first value immediately, drops all subsequent values until
- * [windowMs] has elapsed, then allows the next value through.
+ * Throttler implementation that supports [Leading][StreamThrottlePolicy.Leading],
+ * [Trailing][StreamThrottlePolicy.Trailing], and
+ * [LeadingAndTrailing][StreamThrottlePolicy.LeadingAndTrailing] strategies.
  */
 internal class StreamThrottlerImpl<T>(
     private val scope: CoroutineScope,
     private val logger: StreamLogger,
-    private val windowMs: Long,
+    private val policy: StreamThrottlePolicy,
 ) : StreamThrottler<T> {
 
     private val windowActive = AtomicBoolean(false)
     private val callbackRef = AtomicReference<suspend (T) -> Unit> {}
+    private val trailingValue = AtomicReference<T?>(null)
+    private val trailingJob = AtomicReference<Job?>(null)
 
     override fun onValue(callback: suspend (T) -> Unit) {
         callbackRef.set(callback)
     }
 
-    override fun submit(value: T): Boolean {
+    override fun submit(value: T): Boolean =
+        when (policy) {
+            is StreamThrottlePolicy.Leading -> submitLeading(value)
+            is StreamThrottlePolicy.Trailing -> submitTrailing(value)
+            is StreamThrottlePolicy.LeadingAndTrailing -> submitLeadingAndTrailing(value)
+        }
+
+    override fun reset() {
+        windowActive.set(false)
+        trailingValue.set(null)
+        trailingJob.getAndSet(null)?.cancel()
+    }
+
+    private fun submitLeading(value: T): Boolean {
         val accepted = windowActive.compareAndSet(false, true)
         if (!accepted) {
-            logger.v { "[throttle] Dropped value (window active): $value" }
+            logger.v { "[throttle:leading] Dropped: $value" }
         } else {
-            logger.v { "[throttle] Accepted value: $value" }
+            logger.v { "[throttle:leading] Accepted: $value" }
             scope.launch { callbackRef.get().invoke(value) }
             scope.launch {
-                delay(windowMs)
+                delay(policy.windowMs)
                 windowActive.set(false)
             }
         }
         return accepted
     }
 
-    override fun reset() {
-        windowActive.set(false)
+    private fun submitTrailing(value: T): Boolean {
+        trailingValue.set(value)
+        if (windowActive.compareAndSet(false, true)) {
+            logger.v { "[throttle:trailing] Window started, pending: $value" }
+            scheduleTrailingDelivery()
+        } else {
+            logger.v { "[throttle:trailing] Updated pending: $value" }
+        }
+        return true
+    }
+
+    private fun submitLeadingAndTrailing(value: T): Boolean {
+        val isLeading = windowActive.compareAndSet(false, true)
+        if (isLeading) {
+            logger.v { "[throttle:leading+trailing] Leading: $value" }
+            trailingValue.set(null)
+            scope.launch { callbackRef.get().invoke(value) }
+            scheduleTrailingDelivery()
+        } else {
+            logger.v { "[throttle:leading+trailing] Pending trailing: $value" }
+            trailingValue.set(value)
+        }
+        return true
+    }
+
+    private fun scheduleTrailingDelivery() {
+        val job =
+            scope.launch {
+                delay(policy.windowMs)
+                windowActive.set(false)
+                val pending = trailingValue.getAndSet(null)
+                if (pending != null) {
+                    logger.v { "[throttle] Trailing delivery: $pending" }
+                    callbackRef.get().invoke(pending)
+                }
+            }
+        trailingJob.getAndSet(job)?.cancel()
     }
 }

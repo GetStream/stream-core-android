@@ -24,31 +24,33 @@ import kotlinx.coroutines.CoroutineScope
 /**
  * Rate-limits a bursty stream of values so that at most **one** value is delivered per time window.
  *
- * The first value submitted is delivered immediately (leading edge). Subsequent values arriving
- * within the [windowMs] window are dropped. After the window expires, the next submission is
- * delivered immediately, starting a new window.
+ * Behaviour depends on the [StreamThrottlePolicy]:
+ * - **[Leading][StreamThrottlePolicy.Leading]:** First value delivered immediately, rest dropped
+ *   until window expires. Best for: typing indicators, presence updates.
+ * - **[Trailing][StreamThrottlePolicy.Trailing]:** Values collected during the window, only the
+ *   **last** value delivered when the window expires. Best for: position/progress updates where
+ *   latest state matters.
+ * - **[LeadingAndTrailing][StreamThrottlePolicy.LeadingAndTrailing]:** First value delivered
+ *   immediately, AND the last value delivered when the window expires (if different from the
+ *   leading value). Best for: scroll position tracking, where both responsiveness and final
+ *   accuracy matter.
  *
  * ### Semantics
- * - **Leading-edge:** The first value in each window is delivered immediately.
- * - **Drop excess:** Values arriving during an active window are silently dropped.
- * - **No trailing delivery:** Unlike [StreamDebouncer], there is no delayed trailing emission.
  * - **Thread-safety:** All functions are safe to call from multiple coroutines.
+ * - **Cancellation:** [reset] clears any pending trailing delivery and resets the window.
  *
  * ### Usage
- * - Typing indicators: Emit at most once per 3 seconds.
- * - Read receipts: Don't flood the server with mark-read calls.
- * - Notification delivery: Rate-limit push notification display.
  *
  * ```kotlin
- * val throttler = StreamThrottler<TypingEvent>(scope, logger, windowMs = 3_000)
+ * // Typing indicators — leading edge, fire immediately, suppress duplicates
+ * val throttler = StreamThrottler<TypingEvent>(scope, logger, policy = StreamThrottlePolicy.leading())
  * throttler.onValue { event -> api.sendTypingEvent(event) }
  *
- * // Rapid calls — only the first gets through per 3s window
- * throttler.submit(event1) // delivered immediately
- * throttler.submit(event2) // dropped (within window)
- * throttler.submit(event3) // dropped (within window)
- * // ... 3 seconds pass ...
- * throttler.submit(event4) // delivered immediately (new window)
+ * // Position updates — trailing edge, only latest state matters
+ * val throttler = StreamThrottler<Position>(scope, logger, policy = StreamThrottlePolicy.trailing())
+ *
+ * // Scroll tracking — both edges
+ * val throttler = StreamThrottler<Int>(scope, logger, policy = StreamThrottlePolicy.leadingAndTrailing())
  * ```
  */
 @StreamInternalApi
@@ -61,15 +63,15 @@ public interface StreamThrottler<T> {
     public fun onValue(callback: suspend (T) -> Unit)
 
     /**
-     * Submits a value. If no window is active, the value is delivered immediately and a new window
-     * starts. If a window is active, the value is dropped.
+     * Submits a value. Behaviour depends on the configured [StreamThrottlePolicy].
      *
      * @param value The value to throttle.
-     * @return `true` if the value was accepted (delivered), `false` if it was dropped.
+     * @return `true` if the value was accepted for delivery (immediate or pending), `false` if it
+     *   was dropped entirely.
      */
     public fun submit(value: T): Boolean
 
-    /** Resets the throttle window, allowing the next [submit] to pass through immediately. */
+    /** Resets the throttle window and discards any pending trailing delivery. */
     public fun reset()
 }
 
@@ -79,12 +81,13 @@ public interface StreamThrottler<T> {
  * @param T The type of value being throttled.
  * @param scope Coroutine scope for launching the delivery.
  * @param logger Logger for diagnostics.
- * @param windowMs Minimum time in milliseconds between accepted values. Defaults to 3000ms.
+ * @param policy The throttle strategy. Defaults to [StreamThrottlePolicy.leading] with 3000ms
+ *   window.
  * @return A new [StreamThrottler] instance.
  */
 @StreamInternalApi
 public fun <T> StreamThrottler(
     scope: CoroutineScope,
     logger: StreamLogger,
-    windowMs: Long = 3_000L,
-): StreamThrottler<T> = StreamThrottlerImpl(scope = scope, logger = logger, windowMs = windowMs)
+    policy: StreamThrottlePolicy = StreamThrottlePolicy.leading(),
+): StreamThrottler<T> = StreamThrottlerImpl(scope = scope, logger = logger, policy = policy)
