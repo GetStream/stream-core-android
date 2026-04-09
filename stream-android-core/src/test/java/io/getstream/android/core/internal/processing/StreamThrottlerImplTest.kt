@@ -20,6 +20,8 @@ package io.getstream.android.core.internal.processing
 
 import io.getstream.android.core.api.processing.StreamThrottlePolicy
 import io.mockk.mockk
+import kotlin.test.assertFailsWith
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.SupervisorJob
@@ -555,5 +557,171 @@ class StreamThrottlerImplTest {
         testScheduler.runCurrent()
 
         assertEquals(listOf(1, 50), delivered)
+    }
+
+    // ---- Edge cases ----
+
+    @Test
+    fun `policy rejects zero windowMs`() {
+        assertFailsWith<IllegalArgumentException> { StreamThrottlePolicy.leading(windowMs = 0) }
+        assertFailsWith<IllegalArgumentException> { StreamThrottlePolicy.trailing(windowMs = 0) }
+        assertFailsWith<IllegalArgumentException> {
+            StreamThrottlePolicy.leadingAndTrailing(windowMs = 0)
+        }
+    }
+
+    @Test
+    fun `policy rejects negative windowMs`() {
+        assertFailsWith<IllegalArgumentException> { StreamThrottlePolicy.leading(windowMs = -1) }
+    }
+
+    @Test
+    fun `leading - callback exception does not permanently lock throttler`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val handler = CoroutineExceptionHandler { _, _ -> /* swallow */ }
+        val scope = CoroutineScope(SupervisorJob() + dispatcher + handler)
+        val delivered = mutableListOf<String>()
+        var shouldThrow = true
+        val throttler =
+            StreamThrottlerImpl<String>(
+                scope = scope,
+                logger = mockk(relaxed = true),
+                policy = StreamThrottlePolicy.leading(windowMs = 500),
+            )
+        throttler.onValue {
+            if (shouldThrow) {
+                @Suppress("TooGenericExceptionThrown") throw RuntimeException("boom")
+            }
+            delivered.add(it)
+        }
+
+        // First submit — callback throws, but window timer still runs
+        throttler.submit("explode")
+        testScheduler.runCurrent()
+
+        // Wait for window to expire
+        advanceTimeBy(501)
+        testScheduler.runCurrent()
+
+        // Window should have expired, next submit should work
+        shouldThrow = false
+        assertTrue(throttler.submit("recover"))
+        testScheduler.runCurrent()
+
+        assertEquals(listOf("recover"), delivered)
+    }
+
+    @Test
+    fun `trailing - stale window expiry does not close new window after reset`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val scope = CoroutineScope(SupervisorJob() + dispatcher)
+        val delivered = mutableListOf<String>()
+        val throttler =
+            StreamThrottlerImpl<String>(
+                scope = scope,
+                logger = mockk(relaxed = true),
+                policy = StreamThrottlePolicy.trailing(windowMs = 1_000),
+            )
+        throttler.onValue { delivered.add(it) }
+
+        // t=0: submit A, starts window expiry at t=1000
+        throttler.submit("A")
+        testScheduler.runCurrent()
+
+        // t=300: reset cancels old window
+        advanceTimeBy(300)
+        throttler.reset()
+
+        // t=300: submit B, starts new window expiry at t=1300
+        throttler.submit("B")
+        testScheduler.runCurrent()
+
+        // t=1000: old delay would have fired — must NOT deliver A or close B's window
+        advanceTimeBy(700)
+        testScheduler.runCurrent()
+        assertTrue(delivered.isEmpty())
+
+        // t=1300: update to C while B's window is still active
+        throttler.submit("C")
+
+        // t=1301: B's window expires, delivers latest value (C)
+        advanceTimeBy(301)
+        testScheduler.runCurrent()
+
+        assertEquals(listOf("C"), delivered)
+    }
+
+    @Test
+    fun `leadingAndTrailing - trailing delivery allows new window to start`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val scope = CoroutineScope(SupervisorJob() + dispatcher)
+        val delivered = mutableListOf<String>()
+        val throttler =
+            StreamThrottlerImpl<String>(
+                scope = scope,
+                logger = mockk(relaxed = true),
+                policy = StreamThrottlePolicy.leadingAndTrailing(windowMs = 500),
+            )
+        throttler.onValue { delivered.add(it) }
+
+        // Window 1
+        throttler.submit("leading-1")
+        testScheduler.runCurrent()
+        throttler.submit("trailing-1")
+        advanceTimeBy(501)
+        testScheduler.runCurrent()
+
+        assertEquals(listOf("leading-1", "trailing-1"), delivered)
+
+        // Window 2 should start fresh
+        assertTrue(throttler.submit("leading-2"))
+        testScheduler.runCurrent()
+
+        assertEquals(listOf("leading-1", "trailing-1", "leading-2"), delivered)
+    }
+
+    @Test
+    fun `double reset does not crash`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val scope = CoroutineScope(SupervisorJob() + dispatcher)
+        val throttler =
+            StreamThrottlerImpl<String>(
+                scope = scope,
+                logger = mockk(relaxed = true),
+                policy = StreamThrottlePolicy.leading(windowMs = 1_000),
+            )
+
+        throttler.submit("a")
+        testScheduler.runCurrent()
+        throttler.reset()
+        throttler.reset()
+
+        assertTrue(throttler.submit("b"))
+    }
+
+    @Test
+    fun `submit after scope cancellation returns true but does not deliver`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val parentJob = SupervisorJob()
+        val scope = CoroutineScope(parentJob + dispatcher)
+        val delivered = mutableListOf<String>()
+        val throttler =
+            StreamThrottlerImpl<String>(
+                scope = scope,
+                logger = mockk(relaxed = true),
+                policy = StreamThrottlePolicy.leading(windowMs = 1_000),
+            )
+        throttler.onValue { delivered.add(it) }
+
+        // Cancel the scope
+        parentJob.cancel()
+        testScheduler.runCurrent()
+
+        // Submit returns true (CAS succeeds) but callback launch is dead
+        val result = throttler.submit("dead")
+        testScheduler.runCurrent()
+
+        assertTrue(result)
+        assertTrue(delivered.isEmpty())
     }
 }

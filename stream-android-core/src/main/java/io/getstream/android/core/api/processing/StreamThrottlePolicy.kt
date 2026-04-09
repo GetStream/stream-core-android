@@ -87,16 +87,21 @@ public sealed interface StreamThrottlePolicy {
         /** Default throttle window: 3 seconds. */
         public const val DEFAULT_WINDOW_MS: Long = 3_000L
 
-        /** Creates a [Leading] mode with the given [windowMs]. */
+        /** Creates a [Leading] policy with the given [windowMs]. */
         public fun leading(windowMs: Long = DEFAULT_WINDOW_MS): StreamThrottlePolicy =
-            Leading(windowMs)
+            Leading(windowMs).validate()
 
-        /** Creates a [Trailing] mode with the given [windowMs]. */
+        /** Creates a [Trailing] policy with the given [windowMs]. */
         public fun trailing(windowMs: Long = DEFAULT_WINDOW_MS): StreamThrottlePolicy =
-            Trailing(windowMs)
+            Trailing(windowMs).validate()
 
-        /** Creates a [LeadingAndTrailing] mode with the given [windowMs]. */
+        /** Creates a [LeadingAndTrailing] policy with the given [windowMs]. */
         public fun leadingAndTrailing(windowMs: Long = DEFAULT_WINDOW_MS): StreamThrottlePolicy =
-            LeadingAndTrailing(windowMs)
+            LeadingAndTrailing(windowMs).validate()
+
+        private fun <T : StreamThrottlePolicy> T.validate(): T {
+            require(windowMs > 0) { "windowMs must be > 0, was $windowMs" }
+            return this
+        }
     }
 }
