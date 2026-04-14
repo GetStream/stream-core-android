@@ -30,7 +30,6 @@ import io.getstream.android.core.api.components.StreamAndroidComponentsProvider
 import io.getstream.android.core.api.log.StreamLogger
 import io.getstream.android.core.api.log.StreamLoggerProvider
 import io.getstream.android.core.api.model.StreamUser
-import io.getstream.android.core.api.model.config.StreamClientConfig
 import io.getstream.android.core.api.model.config.StreamClientSerializationConfig
 import io.getstream.android.core.api.model.config.StreamComponentProvider
 import io.getstream.android.core.api.model.config.StreamSocketConfig
@@ -66,6 +65,7 @@ internal class StreamClientConfigFactoryTest {
     private val dispatcher = StandardTestDispatcher()
     private val testScope = TestScope(dispatcher)
     private val productSerializer = mockk<StreamEventSerialization<Any>>(relaxed = true)
+    private val serializationConfig = StreamClientSerializationConfig.default(productSerializer)
     private val logProvider =
         object : StreamLoggerProvider {
             override fun taggedLogger(tag: String): StreamLogger =
@@ -120,9 +120,11 @@ internal class StreamClientConfigFactoryTest {
 
     private fun buildClient(
         socketConfig: StreamSocketConfig = defaultSocketConfig,
-        config: StreamClientConfig = StreamClientConfig(logProvider = logProvider),
         components: StreamComponentProvider =
-            StreamComponentProvider(androidComponentsProvider = fakeAndroidComponents),
+            StreamComponentProvider(
+                logProvider = logProvider,
+                androidComponentsProvider = fakeAndroidComponents,
+            ),
     ): StreamClient =
         StreamClient(
             scope = testScope,
@@ -134,9 +136,8 @@ internal class StreamClientConfigFactoryTest {
                         StreamToken.fromString("token")
                 },
             products = listOf("feeds"),
-            productEventSerializer = productSerializer,
             socketConfig = socketConfig,
-            config = config,
+            serializationConfig = serializationConfig,
             components = components,
         )
 
@@ -210,22 +211,6 @@ internal class StreamClientConfigFactoryTest {
         batcher.assertFieldEquals("maxDelayMs", 500L)
     }
 
-    @Test
-    fun `factory wires custom serializationConfig from config`() {
-        val customSerializationConfig = StreamClientSerializationConfig.default(productSerializer)
-        val client =
-            buildClient(
-                config =
-                    StreamClientConfig(
-                        serializationConfig = customSerializationConfig,
-                        logProvider = logProvider,
-                    )
-            )
-
-        assertTrue(client is StreamClientImpl<*>)
-        assertTrue(client.connectionState.value is StreamConnectionState.Idle)
-    }
-
     // ── StreamComponentProvider overrides ────────────────────────────────────
 
     @Test
@@ -235,6 +220,7 @@ internal class StreamClientConfigFactoryTest {
             buildClient(
                 components =
                     StreamComponentProvider(
+                        logProvider = logProvider,
                         singleFlight = singleFlight,
                         androidComponentsProvider = fakeAndroidComponents,
                     )
@@ -250,6 +236,7 @@ internal class StreamClientConfigFactoryTest {
             buildClient(
                 components =
                     StreamComponentProvider(
+                        logProvider = logProvider,
                         serialQueue = serialQueue,
                         androidComponentsProvider = fakeAndroidComponents,
                     )
@@ -265,6 +252,7 @@ internal class StreamClientConfigFactoryTest {
             buildClient(
                 components =
                     StreamComponentProvider(
+                        logProvider = logProvider,
                         tokenManager = tokenManager,
                         androidComponentsProvider = fakeAndroidComponents,
                     )
@@ -280,6 +268,7 @@ internal class StreamClientConfigFactoryTest {
             buildClient(
                 components =
                     StreamComponentProvider(
+                        logProvider = logProvider,
                         connectionIdHolder = connectionIdHolder,
                         androidComponentsProvider = fakeAndroidComponents,
                     )
@@ -295,6 +284,7 @@ internal class StreamClientConfigFactoryTest {
             buildClient(
                 components =
                     StreamComponentProvider(
+                        logProvider = logProvider,
                         socketFactory = socketFactory,
                         androidComponentsProvider = fakeAndroidComponents,
                     )
@@ -315,6 +305,7 @@ internal class StreamClientConfigFactoryTest {
             buildClient(
                 components =
                     StreamComponentProvider(
+                        logProvider = logProvider,
                         healthMonitor = healthMonitor,
                         androidComponentsProvider = fakeAndroidComponents,
                     )
@@ -333,6 +324,7 @@ internal class StreamClientConfigFactoryTest {
             buildClient(
                 components =
                     StreamComponentProvider(
+                        logProvider = logProvider,
                         batcher = batcher,
                         androidComponentsProvider = fakeAndroidComponents,
                     )
@@ -352,6 +344,7 @@ internal class StreamClientConfigFactoryTest {
             buildClient(
                 components =
                     StreamComponentProvider(
+                        logProvider = logProvider,
                         clientSubscriptionManager = subscriptionManager,
                         androidComponentsProvider = fakeAndroidComponents,
                     )
@@ -368,7 +361,10 @@ internal class StreamClientConfigFactoryTest {
         val client =
             buildClient(
                 components =
-                    StreamComponentProvider(androidComponentsProvider = fakeAndroidComponents)
+                    StreamComponentProvider(
+                        logProvider = logProvider,
+                        androidComponentsProvider = fakeAndroidComponents,
+                    )
             )
 
         val impl = client as StreamClientImpl<*>
@@ -405,6 +401,7 @@ internal class StreamClientConfigFactoryTest {
                 socketConfig = customSocketConfig,
                 components =
                     StreamComponentProvider(
+                        logProvider = logProvider,
                         singleFlight = singleFlight,
                         healthMonitor = healthMonitor,
                         androidComponentsProvider = fakeAndroidComponents,

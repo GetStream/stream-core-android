@@ -23,6 +23,7 @@ import android.os.StrictMode
 import io.getstream.android.core.api.StreamClient
 import io.getstream.android.core.api.authentication.StreamTokenProvider
 import io.getstream.android.core.api.model.StreamUser
+import io.getstream.android.core.api.model.config.StreamClientSerializationConfig
 import io.getstream.android.core.api.model.config.StreamSocketConfig
 import io.getstream.android.core.api.model.value.StreamApiKey
 import io.getstream.android.core.api.model.value.StreamHttpClientInfoHeader
@@ -68,12 +69,15 @@ class SampleApp : Application() {
                             return token
                         }
                     },
-                productEventSerializer =
-                    object : StreamEventSerialization<Unit> {
-                        override fun serialize(data: Unit): Result<String> = Result.success("")
+                serializationConfig =
+                    StreamClientSerializationConfig.default(
+                        object : StreamEventSerialization<Unit> {
+                            override fun serialize(data: Unit): Result<String> = Result.success("")
 
-                        override fun deserialize(raw: String): Result<Unit> = Result.success(Unit)
-                    },
+                            override fun deserialize(raw: String): Result<Unit> =
+                                Result.success(Unit)
+                        }
+                    ),
                 socketConfig =
                     StreamSocketConfig.jwt(
                         url =

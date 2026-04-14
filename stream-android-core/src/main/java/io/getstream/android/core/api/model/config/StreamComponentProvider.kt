@@ -19,6 +19,7 @@ package io.getstream.android.core.api.model.config
 import io.getstream.android.core.annotations.StreamInternalApi
 import io.getstream.android.core.api.authentication.StreamTokenManager
 import io.getstream.android.core.api.components.StreamAndroidComponentsProvider
+import io.getstream.android.core.api.log.StreamLoggerProvider
 import io.getstream.android.core.api.observers.lifecycle.StreamLifecycleMonitor
 import io.getstream.android.core.api.observers.network.StreamNetworkMonitor
 import io.getstream.android.core.api.processing.StreamBatcher
@@ -55,6 +56,8 @@ import io.getstream.android.core.api.subscribe.StreamSubscriptionManager
  * val productApi = MyProductApi(singleFlight) // same instance
  * ```
  *
+ * @param logProvider Logger provider used to create tagged loggers for internal components.
+ *   Defaults to Android logcat.
  * @param singleFlight Request deduplication processor.
  * @param serialQueue Serial processing queue for ordered execution.
  * @param tokenManager Token lifecycle manager.
@@ -71,6 +74,7 @@ import io.getstream.android.core.api.subscribe.StreamSubscriptionManager
 @Suppress("LongParameterList")
 @StreamInternalApi
 public data class StreamComponentProvider(
+    val logProvider: StreamLoggerProvider = StreamLoggerProvider.defaultAndroidLogger(),
     val singleFlight: StreamSingleFlightProcessor? = null,
     val serialQueue: StreamSerialProcessingQueue? = null,
     val tokenManager: StreamTokenManager? = null,

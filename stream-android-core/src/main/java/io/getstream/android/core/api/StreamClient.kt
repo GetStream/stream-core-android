@@ -25,7 +25,6 @@ import io.getstream.android.core.api.components.StreamAndroidComponentsProvider
 import io.getstream.android.core.api.http.StreamOkHttpInterceptors
 import io.getstream.android.core.api.log.StreamLoggerProvider
 import io.getstream.android.core.api.model.StreamUser
-import io.getstream.android.core.api.model.config.StreamClientConfig
 import io.getstream.android.core.api.model.config.StreamClientSerializationConfig
 import io.getstream.android.core.api.model.config.StreamComponentProvider
 import io.getstream.android.core.api.model.config.StreamHttpConfig
@@ -144,8 +143,8 @@ public interface StreamClient : StreamObservable<StreamClientListener> {
  * Creates a [StreamClient] with mandatory identity parameters and optional configuration.
  *
  * This is the primary entry point for product SDKs to create a client. All internal components are
- * created with sensible defaults. Use [config] to tune behaviour (logging, HTTP) and [components]
- * to replace specific internal components (for sharing instances or custom implementations).
+ * created with sensible defaults. Use [components] to replace specific internal components (for
+ * sharing instances or custom implementations).
  *
  * ### Usage
  *
@@ -157,15 +156,15 @@ public interface StreamClient : StreamObservable<StreamClientListener> {
  *     user = user,
  *     tokenProvider = tokenProvider,
  *     products = listOf("chat"),
- *     productEventSerializer = chatEventSerializer,
  *     socketConfig = StreamSocketConfig.jwt(
  *         url = StreamWsUrl.fromString("wss://chat.stream-io-api.com/connect"),
  *         apiKey = apiKey,
  *         clientInfoHeader = clientInfoHeader,
  *     ),
+ *     serializationConfig = StreamClientSerializationConfig.default(chatEventSerializer),
  * )
  *
- * // With tuned socket, config, and component overrides
+ * // With tuned socket, custom logging, HTTP, and component overrides
  * val singleFlight = StreamSingleFlightProcessor(scope)
  * val client = StreamClient(
  *     scope = scope,
@@ -173,15 +172,18 @@ public interface StreamClient : StreamObservable<StreamClientListener> {
  *     user = user,
  *     tokenProvider = tokenProvider,
  *     products = listOf("feeds"),
- *     productEventSerializer = feedsEventSerializer,
  *     socketConfig = StreamSocketConfig.jwt(
  *         url = StreamWsUrl.fromString("wss://feeds.stream-io-api.com/connect"),
  *         apiKey = apiKey,
  *         clientInfoHeader = clientInfoHeader,
  *         healthCheckIntervalMs = 30_000,
  *     ),
- *     config = StreamClientConfig(logProvider = myLogProvider),
- *     components = StreamComponentProvider(singleFlight = singleFlight),
+ *     serializationConfig = StreamClientSerializationConfig.default(feedsEventSerializer),
+ *     httpConfig = StreamHttpConfig(httpBuilder),
+ *     components = StreamComponentProvider(
+ *         logProvider = myLogProvider,
+ *         singleFlight = singleFlight,
+ *     ),
  * )
  * ```
  *
@@ -191,10 +193,9 @@ public interface StreamClient : StreamObservable<StreamClientListener> {
  * @param user User identity.
  * @param tokenProvider Provides authentication tokens on demand.
  * @param products Stream product codes negotiated with the socket (e.g. "chat", "feeds", "video").
- * @param productEventSerializer Product-specific WebSocket event deserializer.
  * @param socketConfig WebSocket connection configuration (URL, auth, timing, batching).
- * @param config Optional tunables (logging, HTTP). Defaults to
- *   [StreamClientConfig()][StreamClientConfig].
+ * @param serializationConfig JSON and event serialization configuration.
+ * @param httpConfig Optional HTTP client customization (OkHttp builder, interceptors).
  * @param components Optional component overrides for DI. Defaults to
  *   [StreamComponentProvider()][StreamComponentProvider] (all defaults).
  */
@@ -207,16 +208,13 @@ public fun StreamClient(
     user: StreamUser,
     tokenProvider: StreamTokenProvider,
     products: List<String>,
-    productEventSerializer: StreamEventSerialization<*>,
     socketConfig: StreamSocketConfig,
-    config: StreamClientConfig = StreamClientConfig(),
+    serializationConfig: StreamClientSerializationConfig,
+    httpConfig: StreamHttpConfig? = null,
     components: StreamComponentProvider = StreamComponentProvider(),
 ): StreamClient {
-    val logProvider = config.logProvider
+    val logProvider = components.logProvider
     val singleFlight = components.singleFlight ?: StreamSingleFlightProcessor(scope)
-    val serializationConfig =
-        config.serializationConfig
-            ?: StreamClientSerializationConfig.default(productEventSerializer)
 
     return createStreamClientInternal(
         scope = scope,
@@ -226,7 +224,7 @@ public fun StreamClient(
         products = products,
         socketConfig = socketConfig,
         serializationConfig = serializationConfig,
-        httpConfig = config.httpConfig,
+        httpConfig = httpConfig,
         androidComponentsProvider =
             components.androidComponentsProvider
                 ?: StreamAndroidComponentsProvider(context.applicationContext),
