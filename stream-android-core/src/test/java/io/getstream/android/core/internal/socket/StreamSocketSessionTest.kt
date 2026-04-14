@@ -24,6 +24,7 @@ import io.getstream.android.core.api.model.connection.StreamConnectionState
 import io.getstream.android.core.api.model.event.StreamClientWsEvent
 import io.getstream.android.core.api.model.exceptions.StreamEndpointErrorData
 import io.getstream.android.core.api.model.exceptions.StreamEndpointException
+import io.getstream.android.core.api.model.value.StreamWsUrl
 import io.getstream.android.core.api.processing.StreamBatcher
 import io.getstream.android.core.api.serialization.StreamJsonSerialization
 import io.getstream.android.core.api.socket.StreamWebSocket
@@ -76,7 +77,7 @@ class StreamSocketSessionTest {
 
     private val config =
         StreamSocketConfig.jwt(
-            url = "wss://example.test/connect",
+            url = StreamWsUrl.fromString("wss://example.test/connect"),
             apiKey = mockk(relaxed = true),
             clientInfoHeader = mockk(relaxed = true),
         )

@@ -101,20 +101,25 @@ internal class StreamClientConfigFactoryTest {
                 }
         }
 
-    private val apiKey = StreamApiKey.fromString("key123")
-    private val user = StreamUser(id = StreamUserId.fromString("user-123"))
-    private val clientInfo =
-        StreamHttpClientInfoHeader.create(
-            product = "android",
-            productVersion = "1.0",
-            os = "android",
-            apiLevel = 33,
-            deviceModel = "Pixel",
-            app = "test-app",
-            appVersion = "1.0.0",
+    private val defaultSocketConfig =
+        StreamSocketConfig.jwt(
+            url = StreamWsUrl.fromString("wss://test.stream/connect"),
+            apiKey = StreamApiKey.fromString("key123"),
+            clientInfoHeader =
+                StreamHttpClientInfoHeader.create(
+                    product = "android",
+                    productVersion = "1.0",
+                    os = "android",
+                    apiLevel = 33,
+                    deviceModel = "Pixel",
+                    app = "test-app",
+                    appVersion = "1.0.0",
+                ),
         )
+    private val user = StreamUser(id = StreamUserId.fromString("user-123"))
 
     private fun buildClient(
+        socketConfig: StreamSocketConfig = defaultSocketConfig,
         config: StreamClientConfig = StreamClientConfig(logProvider = logProvider),
         components: StreamComponentProvider =
             StreamComponentProvider(androidComponentsProvider = fakeAndroidComponents),
@@ -122,7 +127,6 @@ internal class StreamClientConfigFactoryTest {
         StreamClient(
             scope = testScope,
             context = mockk(relaxed = true),
-            apiKey = apiKey,
             user = user,
             tokenProvider =
                 object : StreamTokenProvider {
@@ -130,13 +134,13 @@ internal class StreamClientConfigFactoryTest {
                         StreamToken.fromString("token")
                 },
             products = listOf("feeds"),
-            clientInfoHeader = clientInfo,
             productEventSerializer = productSerializer,
+            socketConfig = socketConfig,
             config = config,
             components = components,
         )
 
-    // ── StreamClientConfig tunables ─────────────────────────────────────────
+    // ── StreamSocketConfig tunables ─────────────────────────────────────────
 
     @Test
     fun `factory with default config creates client in Idle state`() {
@@ -147,41 +151,32 @@ internal class StreamClientConfigFactoryTest {
     }
 
     @Test
-    fun `factory wires custom wsUrl from config`() {
-        val customUrl = StreamWsUrl.fromString("wss://staging.getstream.io")
-        val client =
-            buildClient(config = StreamClientConfig(wsUrl = customUrl, logProvider = logProvider))
-
-        val socketSession =
-            (client as StreamClientImpl<*>).readPrivateField("socketSession")
-                as StreamSocketSession<*>
-        val socketConfig = socketSession.readPrivateField("config") as StreamSocketConfig
-        assertEquals(customUrl.rawValue, socketConfig.url)
-    }
-
-    @Test
-    fun `factory uses default wsUrl when config wsUrl is null`() {
-        val client =
-            buildClient(config = StreamClientConfig(wsUrl = null, logProvider = logProvider))
-
-        val socketSession =
-            (client as StreamClientImpl<*>).readPrivateField("socketSession")
-                as StreamSocketSession<*>
-        val socketConfig = socketSession.readPrivateField("config") as StreamSocketConfig
-        assertEquals("wss://chat.stream-io-api.com", socketConfig.url)
-    }
-
-    @Test
-    fun `factory wires custom health check timing from config`() {
-        val client =
-            buildClient(
-                config =
-                    StreamClientConfig(
-                        healthCheckIntervalMs = 5_000L,
-                        livenessThresholdMs = 15_000L,
-                        logProvider = logProvider,
-                    )
+    fun `factory wires socketConfig to socket session`() {
+        val customConfig =
+            StreamSocketConfig.jwt(
+                url = StreamWsUrl.fromString("wss://staging.getstream.io"),
+                apiKey = StreamApiKey.fromString("staging-key"),
+                clientInfoHeader = defaultSocketConfig.clientInfoHeader,
             )
+        val client = buildClient(socketConfig = customConfig)
+
+        val socketSession =
+            (client as StreamClientImpl<*>).readPrivateField("socketSession")
+                as StreamSocketSession<*>
+        socketSession.assertFieldEquals("config", customConfig)
+    }
+
+    @Test
+    fun `factory wires custom health check timing from socketConfig`() {
+        val customConfig =
+            StreamSocketConfig.jwt(
+                url = defaultSocketConfig.url,
+                apiKey = defaultSocketConfig.apiKey,
+                clientInfoHeader = defaultSocketConfig.clientInfoHeader,
+                healthCheckIntervalMs = 5_000L,
+                livenessThresholdMs = 15_000L,
+            )
+        val client = buildClient(socketConfig = customConfig)
 
         val socketSession =
             (client as StreamClientImpl<*>).readPrivateField("socketSession")
@@ -193,17 +188,17 @@ internal class StreamClientConfigFactoryTest {
     }
 
     @Test
-    fun `factory wires custom batch parameters from config`() {
-        val client =
-            buildClient(
-                config =
-                    StreamClientConfig(
-                        batchSize = 20,
-                        batchInitialDelayMs = 50L,
-                        batchMaxDelayMs = 500L,
-                        logProvider = logProvider,
-                    )
+    fun `factory wires custom batch parameters from socketConfig`() {
+        val customConfig =
+            StreamSocketConfig.jwt(
+                url = defaultSocketConfig.url,
+                apiKey = defaultSocketConfig.apiKey,
+                clientInfoHeader = defaultSocketConfig.clientInfoHeader,
+                batchSize = 20,
+                batchInitialDelayMs = 50L,
+                batchMaxDelayMs = 500L,
             )
+        val client = buildClient(socketConfig = customConfig)
 
         val socketSession =
             (client as StreamClientImpl<*>).readPrivateField("socketSession")
@@ -389,24 +384,25 @@ internal class StreamClientConfigFactoryTest {
         assertNotNull(socketSession.readPrivateField("internalSocket"))
     }
 
-    // ── Config + Components combined ────────────────────────────────────────
+    // ── SocketConfig + Components combined ──────────────────────────────────
 
     @Test
-    fun `factory applies both config tunables and component overrides`() {
-        val customUrl = StreamWsUrl.fromString("wss://custom.stream.io")
+    fun `factory applies both socketConfig tunables and component overrides`() {
         val singleFlight = mockk<StreamSingleFlightProcessor>(relaxed = true)
         val healthMonitor = mockk<StreamHealthMonitor>(relaxed = true)
+        val customSocketConfig =
+            StreamSocketConfig.jwt(
+                url = StreamWsUrl.fromString("wss://custom.stream.io"),
+                apiKey = defaultSocketConfig.apiKey,
+                clientInfoHeader = defaultSocketConfig.clientInfoHeader,
+                batchSize = 5,
+                batchInitialDelayMs = 25L,
+                batchMaxDelayMs = 250L,
+            )
 
         val client =
             buildClient(
-                config =
-                    StreamClientConfig(
-                        wsUrl = customUrl,
-                        batchSize = 5,
-                        batchInitialDelayMs = 25L,
-                        batchMaxDelayMs = 250L,
-                        logProvider = logProvider,
-                    ),
+                socketConfig = customSocketConfig,
                 components =
                     StreamComponentProvider(
                         singleFlight = singleFlight,
@@ -419,13 +415,12 @@ internal class StreamClientConfigFactoryTest {
         impl.assertFieldEquals("singleFlight", singleFlight)
 
         val socketSession = impl.readPrivateField("socketSession") as StreamSocketSession<*>
-        val socketConfig = socketSession.readPrivateField("config") as StreamSocketConfig
-        assertEquals(customUrl.rawValue, socketConfig.url)
+        socketSession.assertFieldEquals("config", customSocketConfig)
 
-        // Injected health monitor takes precedence over config timing
+        // Injected health monitor takes precedence over socketConfig timing
         socketSession.assertFieldEquals("healthMonitor", healthMonitor)
 
-        // Batcher still created from config since not injected
+        // Batcher still created from socketConfig since not injected
         val batcher = socketSession.readPrivateField("batcher") as StreamBatcher<*>
         batcher.assertFieldEquals("batchSize", 5)
         batcher.assertFieldEquals("initialDelayMs", 25L)

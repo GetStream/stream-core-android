@@ -19,80 +19,207 @@ package io.getstream.android.core.api.model.config
 import io.getstream.android.core.annotations.StreamInternalApi
 import io.getstream.android.core.api.model.value.StreamApiKey
 import io.getstream.android.core.api.model.value.StreamHttpClientInfoHeader
+import io.getstream.android.core.api.model.value.StreamWsUrl
 
 /**
- * Configuration for the Stream socket.
+ * Configuration for the Stream WebSocket connection.
  *
- * @param url The URL to connect to.
- * @param apiKey The API key for authentication.
- * @param authType The type of authentication used (e.g., "jwt").
- * @param clientInfoHeader The client info header.
+ * Holds both **identity** (URL, API key, auth type) and **operational** tunables (health check
+ * timing, batching, connection timeout). Products pass this to the [StreamClient] factory to
+ * describe their socket.
+ *
+ * ### Usage
+ *
+ * ```kotlin
+ * // Coordinator socket — standard timing
+ * val coordinatorSocket = StreamSocketConfig.jwt(
+ *     url = StreamWsUrl.fromString("wss://chat.stream-io-api.com/connect"),
+ *     apiKey = apiKey,
+ *     clientInfoHeader = clientInfo,
+ * )
+ *
+ * // SFU socket — aggressive timing, no batching
+ * val sfuSocket = StreamSocketConfig.jwt(
+ *     url = StreamWsUrl.fromString("wss://sfu.stream-io-api.com"),
+ *     apiKey = apiKey,
+ *     clientInfoHeader = clientInfo,
+ *     healthCheckIntervalMs = 5_000,
+ *     livenessThresholdMs = 15_000,
+ *     connectionTimeoutMs = 2_000,
+ *     batchSize = 1,
+ * )
+ * ```
+ *
+ * @param url WebSocket endpoint URL.
+ * @param apiKey Stream API key for authentication.
+ * @param authType Authentication type (e.g., "jwt", "anonymous").
+ * @param clientInfoHeader X-Stream-Client header value.
+ * @param healthCheckIntervalMs Interval between health check pings in milliseconds.
+ * @param livenessThresholdMs Time without a health check ack before the connection is considered
+ *   unhealthy in milliseconds.
+ * @param connectionTimeoutMs WebSocket connection timeout in milliseconds.
+ * @param batchSize Maximum number of WebSocket messages to batch before flushing.
+ * @param batchInitialDelayMs Initial debounce window for batching in milliseconds.
+ * @param batchMaxDelayMs Maximum debounce window for batching in milliseconds.
  */
+@Suppress("LongParameterList")
 @StreamInternalApi
 @ConsistentCopyVisibility
 public data class StreamSocketConfig
 private constructor(
-    val url: String,
+    val url: StreamWsUrl,
     val apiKey: StreamApiKey,
     val authType: String,
     val clientInfoHeader: StreamHttpClientInfoHeader,
+    val healthCheckIntervalMs: Long = DEFAULT_HEALTH_INTERVAL_MS,
+    val livenessThresholdMs: Long = DEFAULT_LIVENESS_MS,
+    val connectionTimeoutMs: Long = DEFAULT_CONNECTION_TIMEOUT_MS,
+    val batchSize: Int = DEFAULT_BATCH_SIZE,
+    val batchInitialDelayMs: Long = DEFAULT_BATCH_INIT_DELAY_MS,
+    val batchMaxDelayMs: Long = DEFAULT_BATCH_MAX_DELAY_MS,
 ) {
+    /** Default values for [StreamSocketConfig] fields. */
     public companion object {
         private const val JWT_AUTH_TYPE = "jwt"
         private const val ANONYMOUS_AUTH_TYPE = "anonymous"
 
+        /** Default health check ping interval: 25 seconds. */
+        public const val DEFAULT_HEALTH_INTERVAL_MS: Long = 25_000L
+
+        /** Default liveness threshold: 60 seconds without ack. */
+        public const val DEFAULT_LIVENESS_MS: Long = 60_000L
+
+        /** Default connection timeout: 10 seconds. */
+        public const val DEFAULT_CONNECTION_TIMEOUT_MS: Long = 10_000L
+
+        /** Default batch size: 10 messages. */
+        public const val DEFAULT_BATCH_SIZE: Int = 10
+
+        /** Default initial batch delay: 100ms. */
+        public const val DEFAULT_BATCH_INIT_DELAY_MS: Long = 100L
+
+        /** Default max batch delay: 1 second. */
+        public const val DEFAULT_BATCH_MAX_DELAY_MS: Long = 1_000L
+
         /**
          * Creates a JWT-based [StreamSocketConfig].
          *
-         * @param url The URL to connect to.
-         * @param apiKey The API key for authentication.
-         * @param clientInfoHeader The client info header.
+         * @param url WebSocket endpoint URL.
+         * @param apiKey Stream API key for authentication.
+         * @param clientInfoHeader X-Stream-Client header value.
+         * @param healthCheckIntervalMs Interval between health check pings in milliseconds.
+         * @param livenessThresholdMs Liveness threshold in milliseconds.
+         * @param connectionTimeoutMs WebSocket connection timeout in milliseconds.
+         * @param batchSize Maximum batch size before flush.
+         * @param batchInitialDelayMs Initial debounce window in milliseconds.
+         * @param batchMaxDelayMs Maximum debounce window in milliseconds.
          * @return A JWT-based [StreamSocketConfig].
          */
+        @Suppress("LongParameterList")
         public fun jwt(
-            url: String,
+            url: StreamWsUrl,
             apiKey: StreamApiKey,
             clientInfoHeader: StreamHttpClientInfoHeader,
-        ): StreamSocketConfig {
-            require(url.isNotBlank()) { "URL must not be blank" }
-            return StreamSocketConfig(url, apiKey, JWT_AUTH_TYPE, clientInfoHeader)
-        }
+            healthCheckIntervalMs: Long = DEFAULT_HEALTH_INTERVAL_MS,
+            livenessThresholdMs: Long = DEFAULT_LIVENESS_MS,
+            connectionTimeoutMs: Long = DEFAULT_CONNECTION_TIMEOUT_MS,
+            batchSize: Int = DEFAULT_BATCH_SIZE,
+            batchInitialDelayMs: Long = DEFAULT_BATCH_INIT_DELAY_MS,
+            batchMaxDelayMs: Long = DEFAULT_BATCH_MAX_DELAY_MS,
+        ): StreamSocketConfig =
+            StreamSocketConfig(
+                url = url,
+                apiKey = apiKey,
+                authType = JWT_AUTH_TYPE,
+                clientInfoHeader = clientInfoHeader,
+                healthCheckIntervalMs = healthCheckIntervalMs,
+                livenessThresholdMs = livenessThresholdMs,
+                connectionTimeoutMs = connectionTimeoutMs,
+                batchSize = batchSize,
+                batchInitialDelayMs = batchInitialDelayMs,
+                batchMaxDelayMs = batchMaxDelayMs,
+            )
 
         /**
          * Creates an anonymous [StreamSocketConfig].
          *
-         * @param url The URL to connect to.
-         * @param apiKey The API key for authentication.
-         * @param clientInfoHeader The client info header.
+         * @param url WebSocket endpoint URL.
+         * @param apiKey Stream API key for authentication.
+         * @param clientInfoHeader X-Stream-Client header value.
+         * @param healthCheckIntervalMs Interval between health check pings in milliseconds.
+         * @param livenessThresholdMs Liveness threshold in milliseconds.
+         * @param connectionTimeoutMs WebSocket connection timeout in milliseconds.
+         * @param batchSize Maximum batch size before flush.
+         * @param batchInitialDelayMs Initial debounce window in milliseconds.
+         * @param batchMaxDelayMs Maximum debounce window in milliseconds.
          * @return An anonymous [StreamSocketConfig].
          */
+        @Suppress("LongParameterList")
         public fun anonymous(
-            url: String,
+            url: StreamWsUrl,
             apiKey: StreamApiKey,
             clientInfoHeader: StreamHttpClientInfoHeader,
-        ): StreamSocketConfig {
-            require(url.isNotBlank()) { "URL must not be blank" }
-            return StreamSocketConfig(url, apiKey, ANONYMOUS_AUTH_TYPE, clientInfoHeader)
-        }
+            healthCheckIntervalMs: Long = DEFAULT_HEALTH_INTERVAL_MS,
+            livenessThresholdMs: Long = DEFAULT_LIVENESS_MS,
+            connectionTimeoutMs: Long = DEFAULT_CONNECTION_TIMEOUT_MS,
+            batchSize: Int = DEFAULT_BATCH_SIZE,
+            batchInitialDelayMs: Long = DEFAULT_BATCH_INIT_DELAY_MS,
+            batchMaxDelayMs: Long = DEFAULT_BATCH_MAX_DELAY_MS,
+        ): StreamSocketConfig =
+            StreamSocketConfig(
+                url = url,
+                apiKey = apiKey,
+                authType = ANONYMOUS_AUTH_TYPE,
+                clientInfoHeader = clientInfoHeader,
+                healthCheckIntervalMs = healthCheckIntervalMs,
+                livenessThresholdMs = livenessThresholdMs,
+                connectionTimeoutMs = connectionTimeoutMs,
+                batchSize = batchSize,
+                batchInitialDelayMs = batchInitialDelayMs,
+                batchMaxDelayMs = batchMaxDelayMs,
+            )
 
         /**
          * Creates a custom [StreamSocketConfig].
          *
-         * @param url The URL to connect to.
-         * @param apiKey The API key for authentication.
-         * @param authType The type of authentication used (e.g., "jwt").
-         * @param clientInfoHeader The client info header.
+         * @param url WebSocket endpoint URL.
+         * @param apiKey Stream API key for authentication.
+         * @param authType Authentication type (e.g., "jwt", "anonymous").
+         * @param clientInfoHeader X-Stream-Client header value.
+         * @param healthCheckIntervalMs Interval between health check pings in milliseconds.
+         * @param livenessThresholdMs Liveness threshold in milliseconds.
+         * @param connectionTimeoutMs WebSocket connection timeout in milliseconds.
+         * @param batchSize Maximum batch size before flush.
+         * @param batchInitialDelayMs Initial debounce window in milliseconds.
+         * @param batchMaxDelayMs Maximum debounce window in milliseconds.
          * @return A custom [StreamSocketConfig].
          */
+        @Suppress("LongParameterList")
         public fun custom(
-            url: String,
+            url: StreamWsUrl,
             apiKey: StreamApiKey,
             authType: String,
             clientInfoHeader: StreamHttpClientInfoHeader,
+            healthCheckIntervalMs: Long = DEFAULT_HEALTH_INTERVAL_MS,
+            livenessThresholdMs: Long = DEFAULT_LIVENESS_MS,
+            connectionTimeoutMs: Long = DEFAULT_CONNECTION_TIMEOUT_MS,
+            batchSize: Int = DEFAULT_BATCH_SIZE,
+            batchInitialDelayMs: Long = DEFAULT_BATCH_INIT_DELAY_MS,
+            batchMaxDelayMs: Long = DEFAULT_BATCH_MAX_DELAY_MS,
         ): StreamSocketConfig {
-            require(url.isNotBlank()) { "URL must not be blank" }
             require(authType.isNotBlank()) { "Auth type must not be blank" }
-            return StreamSocketConfig(url, apiKey, authType, clientInfoHeader)
+            return StreamSocketConfig(
+                url = url,
+                apiKey = apiKey,
+                authType = authType,
+                clientInfoHeader = clientInfoHeader,
+                healthCheckIntervalMs = healthCheckIntervalMs,
+                livenessThresholdMs = livenessThresholdMs,
+                connectionTimeoutMs = connectionTimeoutMs,
+                batchSize = batchSize,
+                batchInitialDelayMs = batchInitialDelayMs,
+                batchMaxDelayMs = batchMaxDelayMs,
+            )
         }
     }
 }

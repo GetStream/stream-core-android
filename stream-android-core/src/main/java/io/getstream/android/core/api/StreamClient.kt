@@ -34,9 +34,6 @@ import io.getstream.android.core.api.model.connection.StreamConnectedUser
 import io.getstream.android.core.api.model.connection.StreamConnectionState
 import io.getstream.android.core.api.model.connection.lifecycle.StreamLifecycleState
 import io.getstream.android.core.api.model.connection.network.StreamNetworkState
-import io.getstream.android.core.api.model.value.StreamApiKey
-import io.getstream.android.core.api.model.value.StreamHttpClientInfoHeader
-import io.getstream.android.core.api.model.value.StreamWsUrl
 import io.getstream.android.core.api.observers.lifecycle.StreamLifecycleMonitor
 import io.getstream.android.core.api.observers.network.StreamNetworkMonitor
 import io.getstream.android.core.api.processing.StreamBatcher
@@ -147,9 +144,8 @@ public interface StreamClient : StreamObservable<StreamClientListener> {
  * Creates a [StreamClient] with mandatory identity parameters and optional configuration.
  *
  * This is the primary entry point for product SDKs to create a client. All internal components are
- * created with sensible defaults. Use [config] to tune behaviour (timing, logging, endpoints) and
- * [components] to replace specific internal components (for sharing instances or custom
- * implementations).
+ * created with sensible defaults. Use [config] to tune behaviour (logging, HTTP) and [components]
+ * to replace specific internal components (for sharing instances or custom implementations).
  *
  * ### Usage
  *
@@ -158,45 +154,46 @@ public interface StreamClient : StreamObservable<StreamClientListener> {
  * val client = StreamClient(
  *     scope = scope,
  *     context = context,
- *     apiKey = StreamApiKey("my-api-key"),
- *     user = StreamUser(id = StreamUserId.fromString("user-1")),
- *     tokenProvider = StreamTokenProvider { userId -> fetchToken(userId) },
+ *     user = user,
+ *     tokenProvider = tokenProvider,
  *     products = listOf("chat"),
- *     clientInfoHeader = clientInfoHeader,
  *     productEventSerializer = chatEventSerializer,
+ *     socketConfig = StreamSocketConfig.jwt(
+ *         url = StreamWsUrl.fromString("wss://chat.stream-io-api.com/connect"),
+ *         apiKey = apiKey,
+ *         clientInfoHeader = clientInfoHeader,
+ *     ),
  * )
  *
- * // With config and component overrides
+ * // With tuned socket, config, and component overrides
  * val singleFlight = StreamSingleFlightProcessor(scope)
  * val client = StreamClient(
  *     scope = scope,
  *     context = context,
- *     apiKey = apiKey,
  *     user = user,
  *     tokenProvider = tokenProvider,
  *     products = listOf("feeds"),
- *     clientInfoHeader = clientInfoHeader,
  *     productEventSerializer = feedsEventSerializer,
- *     config = StreamClientConfig(
- *         wsUrl = StreamWsUrl.fromString("wss://staging.getstream.io"),
+ *     socketConfig = StreamSocketConfig.jwt(
+ *         url = StreamWsUrl.fromString("wss://feeds.stream-io-api.com/connect"),
+ *         apiKey = apiKey,
+ *         clientInfoHeader = clientInfoHeader,
  *         healthCheckIntervalMs = 30_000,
  *     ),
- *     components = StreamComponentProvider(
- *         singleFlight = singleFlight,
- *     ),
+ *     config = StreamClientConfig(logProvider = myLogProvider),
+ *     components = StreamComponentProvider(singleFlight = singleFlight),
  * )
  * ```
  *
  * @param scope Coroutine scope powering internal work. Recommended:
  *   `CoroutineScope(SupervisorJob() + Dispatchers.Default)`.
  * @param context Android application context.
- * @param apiKey Stream API key.
  * @param user User identity.
  * @param tokenProvider Provides authentication tokens on demand.
  * @param products Stream product codes negotiated with the socket (e.g. "chat", "feeds", "video").
- * @param clientInfoHeader X-Stream-Client header value.
  * @param productEventSerializer Product-specific WebSocket event deserializer.
- * @param config Optional tunables (endpoints, timing, logging). Defaults to
+ * @param socketConfig WebSocket connection configuration (URL, auth, timing, batching).
+ * @param config Optional tunables (logging, HTTP). Defaults to
  *   [StreamClientConfig()][StreamClientConfig].
  * @param components Optional component overrides for DI. Defaults to
  *   [StreamComponentProvider()][StreamComponentProvider] (all defaults).
@@ -207,12 +204,11 @@ public interface StreamClient : StreamObservable<StreamClientListener> {
 public fun StreamClient(
     scope: CoroutineScope,
     context: Context,
-    apiKey: StreamApiKey,
     user: StreamUser,
     tokenProvider: StreamTokenProvider,
     products: List<String>,
-    clientInfoHeader: StreamHttpClientInfoHeader,
     productEventSerializer: StreamEventSerialization<*>,
+    socketConfig: StreamSocketConfig,
     config: StreamClientConfig = StreamClientConfig(),
     components: StreamComponentProvider = StreamComponentProvider(),
 ): StreamClient {
@@ -225,12 +221,10 @@ public fun StreamClient(
     return createStreamClientInternal(
         scope = scope,
         context = context,
-        apiKey = apiKey,
         user = user,
-        wsUrl = config.wsUrl ?: StreamWsUrl.fromString("wss://chat.stream-io-api.com"),
-        products = products,
-        clientInfoHeader = clientInfoHeader,
         tokenProvider = tokenProvider,
+        products = products,
+        socketConfig = socketConfig,
         serializationConfig = serializationConfig,
         httpConfig = config.httpConfig,
         androidComponentsProvider =
@@ -261,17 +255,17 @@ public fun StreamClient(
             components.batcher
                 ?: StreamBatcher(
                     scope = scope,
-                    batchSize = config.batchSize,
-                    initialDelayMs = config.batchInitialDelayMs,
-                    maxDelayMs = config.batchMaxDelayMs,
+                    batchSize = socketConfig.batchSize,
+                    initialDelayMs = socketConfig.batchInitialDelayMs,
+                    maxDelayMs = socketConfig.batchMaxDelayMs,
                 ),
         healthMonitor =
             components.healthMonitor
                 ?: StreamHealthMonitor(
                     logger = logProvider.taggedLogger("SCHealthMonitor"),
                     scope = scope,
-                    interval = config.healthCheckIntervalMs,
-                    livenessThreshold = config.livenessThresholdMs,
+                    interval = socketConfig.healthCheckIntervalMs,
+                    livenessThreshold = socketConfig.livenessThresholdMs,
                 ),
         networkMonitor = components.networkMonitor,
         lifecycleMonitor = components.lifecycleMonitor,
@@ -292,12 +286,10 @@ internal fun createStreamClientInternal(
     context: Context,
 
     // Client config
-    apiKey: StreamApiKey,
     user: StreamUser,
-    wsUrl: StreamWsUrl,
-    products: List<String>,
-    clientInfoHeader: StreamHttpClientInfoHeader,
     tokenProvider: StreamTokenProvider,
+    products: List<String>,
+    socketConfig: StreamSocketConfig,
     serializationConfig: StreamClientSerializationConfig,
     httpConfig: StreamHttpConfig? = null,
 
@@ -331,11 +323,21 @@ internal fun createStreamClientInternal(
     socketFactory: StreamWebSocketFactory =
         StreamWebSocketFactory(logger = logProvider.taggedLogger("SCWebSocketFactory")),
     batcher: StreamBatcher<String> =
-        StreamBatcher(scope = scope, batchSize = 10, initialDelayMs = 100L, maxDelayMs = 1_000L),
+        StreamBatcher(
+            scope = scope,
+            batchSize = socketConfig.batchSize,
+            initialDelayMs = socketConfig.batchInitialDelayMs,
+            maxDelayMs = socketConfig.batchMaxDelayMs,
+        ),
 
     // Monitoring
     healthMonitor: StreamHealthMonitor =
-        StreamHealthMonitor(logger = logProvider.taggedLogger("SCHealthMonitor"), scope = scope),
+        StreamHealthMonitor(
+            logger = logProvider.taggedLogger("SCHealthMonitor"),
+            scope = scope,
+            interval = socketConfig.healthCheckIntervalMs,
+            livenessThreshold = socketConfig.livenessThresholdMs,
+        ),
     networkMonitor: StreamNetworkMonitor? = null,
     lifecycleMonitor: StreamLifecycleMonitor? = null,
     connectionRecoveryEvaluator: StreamConnectionRecoveryEvaluator? = null,
@@ -398,11 +400,15 @@ internal fun createStreamClientInternal(
     httpConfig?.apply {
         if (automaticInterceptors) {
             httpBuilder.apply {
-                addInterceptor(StreamOkHttpInterceptors.clientInfo(clientInfoHeader))
-                addInterceptor(StreamOkHttpInterceptors.apiKey(apiKey))
+                addInterceptor(StreamOkHttpInterceptors.clientInfo(socketConfig.clientInfoHeader))
+                addInterceptor(StreamOkHttpInterceptors.apiKey(socketConfig.apiKey))
                 addInterceptor(StreamOkHttpInterceptors.connectionId(connectionIdHolder))
                 addInterceptor(
-                    StreamOkHttpInterceptors.auth("jwt", tokenManager, compositeSerialization)
+                    StreamOkHttpInterceptors.auth(
+                        socketConfig.authType,
+                        tokenManager,
+                        compositeSerialization,
+                    )
                 )
                 addInterceptor(StreamOkHttpInterceptors.error(compositeSerialization))
             }
@@ -440,12 +446,7 @@ internal fun createStreamClientInternal(
             StreamSocketSession(
                 logger = logProvider.taggedLogger("SCSocketSession"),
                 products = products,
-                config =
-                    StreamSocketConfig.jwt(
-                        url = wsUrl.rawValue,
-                        apiKey = apiKey,
-                        clientInfoHeader = clientInfoHeader,
-                    ),
+                config = socketConfig,
                 jsonSerialization = compositeSerialization,
                 eventParser =
                     StreamCompositeEventSerializationImpl(

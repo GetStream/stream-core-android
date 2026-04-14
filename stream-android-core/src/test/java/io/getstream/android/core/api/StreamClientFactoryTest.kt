@@ -91,10 +91,8 @@ internal class StreamClientFactoryTest {
         }
 
     private data class Dependencies(
-        val apiKey: StreamApiKey,
+        val socketConfig: StreamSocketConfig,
         val user: StreamUser,
-        val wsUrl: StreamWsUrl,
-        val clientInfo: StreamHttpClientInfoHeader,
         val clientSubscriptionManager: StreamSubscriptionManager<StreamClientListener>,
         val tokenProvider: StreamTokenProvider,
         val tokenManager: StreamTokenManager,
@@ -111,19 +109,22 @@ internal class StreamClientFactoryTest {
 
     private fun createDependencies(): Dependencies =
         Dependencies(
-            apiKey = StreamApiKey.fromString("key123"),
-            user = StreamUser(id = StreamUserId.fromString("user-123")),
-            wsUrl = StreamWsUrl.fromString("wss://test.stream/video"),
-            clientInfo =
-                StreamHttpClientInfoHeader.create(
-                    product = "android",
-                    productVersion = "1.0",
-                    os = "android",
-                    apiLevel = 33,
-                    deviceModel = "Pixel",
-                    app = "test-app",
-                    appVersion = "1.0.0",
+            socketConfig =
+                StreamSocketConfig.jwt(
+                    url = StreamWsUrl.fromString("wss://test.stream/video"),
+                    apiKey = StreamApiKey.fromString("key123"),
+                    clientInfoHeader =
+                        StreamHttpClientInfoHeader.create(
+                            product = "android",
+                            productVersion = "1.0",
+                            os = "android",
+                            apiLevel = 33,
+                            deviceModel = "Pixel",
+                            app = "test-app",
+                            appVersion = "1.0.0",
+                        ),
                 ),
+            user = StreamUser(id = StreamUserId.fromString("user-123")),
             clientSubscriptionManager = mockk(relaxed = true),
             tokenProvider = mockk(relaxed = true),
             tokenManager = mockk(relaxed = true),
@@ -144,11 +145,9 @@ internal class StreamClientFactoryTest {
     ): StreamClient {
         return createStreamClientInternal(
             context = mockk(relaxed = true),
-            apiKey = deps.apiKey,
             user = deps.user,
-            wsUrl = deps.wsUrl,
             products = listOf("feeds"),
-            clientInfoHeader = deps.clientInfo,
+            socketConfig = deps.socketConfig,
             clientSubscriptionManager = deps.clientSubscriptionManager,
             tokenProvider = deps.tokenProvider,
             tokenManager = deps.tokenManager,
@@ -200,13 +199,7 @@ internal class StreamClientFactoryTest {
 
         // socket session wiring
         val socketSession = client.readPrivateField("socketSession") as StreamSocketSession<*>
-        val expectedConfig =
-            StreamSocketConfig.jwt(
-                url = deps.wsUrl.rawValue,
-                apiKey = deps.apiKey,
-                clientInfoHeader = deps.clientInfo,
-            )
-        socketSession.assertFieldEquals("config", expectedConfig)
+        socketSession.assertFieldEquals("config", deps.socketConfig)
         socketSession.assertFieldEquals("healthMonitor", deps.healthMonitor)
         socketSession.assertFieldEquals("batcher", deps.batcher)
         socketSession.assertFieldEquals("products", listOf("feeds"))
@@ -249,15 +242,15 @@ internal class StreamClientFactoryTest {
         val clientInfoInterceptor = interceptors[0] as StreamClientInfoInterceptor
         val storedClientInfo = clientInfoInterceptor.readPrivateField("clientInfo")
         when (storedClientInfo) {
-            is String -> assertEquals(deps.clientInfo.rawValue, storedClientInfo)
-            else -> assertEquals(deps.clientInfo, storedClientInfo)
+            is String -> assertEquals(deps.socketConfig.clientInfoHeader.rawValue, storedClientInfo)
+            else -> assertEquals(deps.socketConfig.clientInfoHeader, storedClientInfo)
         }
 
         val apiKeyInterceptor = interceptors[1] as StreamApiKeyInterceptor
         val storedApiKey = apiKeyInterceptor.readPrivateField("apiKey")
         when (storedApiKey) {
-            is String -> assertEquals(deps.apiKey.rawValue, storedApiKey)
-            else -> assertEquals(deps.apiKey, storedApiKey)
+            is String -> assertEquals(deps.socketConfig.apiKey.rawValue, storedApiKey)
+            else -> assertEquals(deps.socketConfig.apiKey, storedApiKey)
         }
 
         val connectionInterceptor = interceptors[2] as StreamConnectionIdInterceptor
@@ -337,19 +330,22 @@ internal class StreamClientFactoryTest {
             createStreamClientInternal(
                 scope = testScope,
                 context = context,
-                apiKey = StreamApiKey.fromString("key123"),
                 user = user,
-                wsUrl = StreamWsUrl.fromString("wss://test.stream/video"),
                 products = listOf("feeds"),
-                clientInfoHeader =
-                    StreamHttpClientInfoHeader.create(
-                        product = "android",
-                        productVersion = "1.0",
-                        os = "android",
-                        apiLevel = 33,
-                        deviceModel = "Pixel",
-                        app = "test-app",
-                        appVersion = "1.0.0",
+                socketConfig =
+                    StreamSocketConfig.jwt(
+                        url = StreamWsUrl.fromString("wss://test.stream/video"),
+                        apiKey = StreamApiKey.fromString("key123"),
+                        clientInfoHeader =
+                            StreamHttpClientInfoHeader.create(
+                                product = "android",
+                                productVersion = "1.0",
+                                os = "android",
+                                apiLevel = 33,
+                                deviceModel = "Pixel",
+                                app = "test-app",
+                                appVersion = "1.0.0",
+                            ),
                     ),
                 tokenProvider = tokenProvider,
                 serializationConfig = serializationConfig,
