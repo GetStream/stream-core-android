@@ -1,0 +1,434 @@
+/*
+ * Copyright (c) 2014-2025 Stream.io Inc. All rights reserved.
+ *
+ * Licensed under the Stream License;
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    https://github.com/GetStream/stream-core-android/blob/main/LICENSE
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+@file:OptIn(StreamInternalApi::class)
+
+package io.getstream.android.core.api
+
+import android.net.ConnectivityManager
+import android.net.wifi.WifiManager
+import android.telephony.TelephonyManager
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleObserver
+import io.getstream.android.core.annotations.StreamInternalApi
+import io.getstream.android.core.api.authentication.StreamTokenManager
+import io.getstream.android.core.api.authentication.StreamTokenProvider
+import io.getstream.android.core.api.components.StreamAndroidComponentsProvider
+import io.getstream.android.core.api.log.StreamLogger
+import io.getstream.android.core.api.log.StreamLoggerProvider
+import io.getstream.android.core.api.model.StreamUser
+import io.getstream.android.core.api.model.config.StreamClientConfig
+import io.getstream.android.core.api.model.config.StreamClientSerializationConfig
+import io.getstream.android.core.api.model.config.StreamComponentProvider
+import io.getstream.android.core.api.model.config.StreamSocketConfig
+import io.getstream.android.core.api.model.connection.StreamConnectionState
+import io.getstream.android.core.api.model.value.StreamApiKey
+import io.getstream.android.core.api.model.value.StreamHttpClientInfoHeader
+import io.getstream.android.core.api.model.value.StreamToken
+import io.getstream.android.core.api.model.value.StreamUserId
+import io.getstream.android.core.api.model.value.StreamWsUrl
+import io.getstream.android.core.api.processing.StreamBatcher
+import io.getstream.android.core.api.processing.StreamSerialProcessingQueue
+import io.getstream.android.core.api.processing.StreamSingleFlightProcessor
+import io.getstream.android.core.api.serialization.StreamEventSerialization
+import io.getstream.android.core.api.socket.StreamConnectionIdHolder
+import io.getstream.android.core.api.socket.StreamWebSocketFactory
+import io.getstream.android.core.api.socket.listeners.StreamClientListener
+import io.getstream.android.core.api.socket.monitor.StreamHealthMonitor
+import io.getstream.android.core.api.subscribe.StreamSubscriptionManager
+import io.getstream.android.core.internal.client.StreamClientImpl
+import io.getstream.android.core.internal.socket.StreamSocketSession
+import io.getstream.android.core.testutil.assertFieldEquals
+import io.getstream.android.core.testutil.readPrivateField
+import io.mockk.mockk
+import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
+import kotlin.test.assertTrue
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.TestScope
+import org.junit.Test
+
+internal class StreamClientConfigFactoryTest {
+
+    private val dispatcher = StandardTestDispatcher()
+    private val testScope = TestScope(dispatcher)
+    private val productSerializer = mockk<StreamEventSerialization<Any>>(relaxed = true)
+    private val logProvider =
+        object : StreamLoggerProvider {
+            override fun taggedLogger(tag: String): StreamLogger =
+                object : StreamLogger {
+                    override fun log(
+                        level: StreamLogger.LogLevel,
+                        throwable: Throwable?,
+                        message: () -> String,
+                    ) {
+                        // no-op for tests
+                    }
+                }
+        }
+
+    private val fakeAndroidComponents =
+        object : StreamAndroidComponentsProvider {
+            override fun connectivityManager(): Result<ConnectivityManager> =
+                Result.success(mockk(relaxed = true))
+
+            override fun wifiManager(): Result<WifiManager> = Result.success(mockk(relaxed = true))
+
+            override fun telephonyManager(): Result<TelephonyManager> =
+                Result.success(mockk(relaxed = true))
+
+            override fun lifecycle(): Lifecycle =
+                object : Lifecycle() {
+                    override fun addObserver(observer: LifecycleObserver) {}
+
+                    override fun removeObserver(observer: LifecycleObserver) {}
+
+                    override val currentState: State
+                        get() = State.CREATED
+                }
+        }
+
+    private val apiKey = StreamApiKey.fromString("key123")
+    private val user = StreamUser(id = StreamUserId.fromString("user-123"))
+    private val clientInfo =
+        StreamHttpClientInfoHeader.create(
+            product = "android",
+            productVersion = "1.0",
+            os = "android",
+            apiLevel = 33,
+            deviceModel = "Pixel",
+            app = "test-app",
+            appVersion = "1.0.0",
+        )
+
+    private fun buildClient(
+        config: StreamClientConfig = StreamClientConfig(logProvider = logProvider),
+        components: StreamComponentProvider =
+            StreamComponentProvider(androidComponentsProvider = fakeAndroidComponents),
+    ): StreamClient =
+        StreamClient(
+            scope = testScope,
+            context = mockk(relaxed = true),
+            apiKey = apiKey,
+            user = user,
+            tokenProvider =
+                object : StreamTokenProvider {
+                    override suspend fun loadToken(userId: StreamUserId): StreamToken =
+                        StreamToken.fromString("token")
+                },
+            products = listOf("feeds"),
+            clientInfoHeader = clientInfo,
+            productEventSerializer = productSerializer,
+            config = config,
+            components = components,
+        )
+
+    // ── StreamClientConfig tunables ─────────────────────────────────────────
+
+    @Test
+    fun `factory with default config creates client in Idle state`() {
+        val client = buildClient()
+
+        assertTrue(client is StreamClientImpl<*>)
+        assertTrue(client.connectionState.value is StreamConnectionState.Idle)
+    }
+
+    @Test
+    fun `factory wires custom wsUrl from config`() {
+        val customUrl = StreamWsUrl.fromString("wss://staging.getstream.io")
+        val client =
+            buildClient(config = StreamClientConfig(wsUrl = customUrl, logProvider = logProvider))
+
+        val socketSession =
+            (client as StreamClientImpl<*>).readPrivateField("socketSession")
+                as StreamSocketSession<*>
+        val socketConfig = socketSession.readPrivateField("config") as StreamSocketConfig
+        assertEquals(customUrl.rawValue, socketConfig.url)
+    }
+
+    @Test
+    fun `factory uses default wsUrl when config wsUrl is null`() {
+        val client =
+            buildClient(config = StreamClientConfig(wsUrl = null, logProvider = logProvider))
+
+        val socketSession =
+            (client as StreamClientImpl<*>).readPrivateField("socketSession")
+                as StreamSocketSession<*>
+        val socketConfig = socketSession.readPrivateField("config") as StreamSocketConfig
+        assertEquals("wss://chat.stream-io-api.com", socketConfig.url)
+    }
+
+    @Test
+    fun `factory wires custom health check timing from config`() {
+        val client =
+            buildClient(
+                config =
+                    StreamClientConfig(
+                        healthCheckIntervalMs = 5_000L,
+                        livenessThresholdMs = 15_000L,
+                        logProvider = logProvider,
+                    )
+            )
+
+        val socketSession =
+            (client as StreamClientImpl<*>).readPrivateField("socketSession")
+                as StreamSocketSession<*>
+        val healthMonitor = socketSession.readPrivateField("healthMonitor") as StreamHealthMonitor
+        assertNotNull(healthMonitor)
+        healthMonitor.assertFieldEquals("interval", 5_000L)
+        healthMonitor.assertFieldEquals("livenessThreshold", 15_000L)
+    }
+
+    @Test
+    fun `factory wires custom batch parameters from config`() {
+        val client =
+            buildClient(
+                config =
+                    StreamClientConfig(
+                        batchSize = 20,
+                        batchInitialDelayMs = 50L,
+                        batchMaxDelayMs = 500L,
+                        logProvider = logProvider,
+                    )
+            )
+
+        val socketSession =
+            (client as StreamClientImpl<*>).readPrivateField("socketSession")
+                as StreamSocketSession<*>
+        val batcher = socketSession.readPrivateField("batcher") as StreamBatcher<*>
+        assertNotNull(batcher)
+        batcher.assertFieldEquals("batchSize", 20)
+        batcher.assertFieldEquals("initialDelayMs", 50L)
+        batcher.assertFieldEquals("maxDelayMs", 500L)
+    }
+
+    @Test
+    fun `factory wires custom serializationConfig from config`() {
+        val customSerializationConfig = StreamClientSerializationConfig.default(productSerializer)
+        val client =
+            buildClient(
+                config =
+                    StreamClientConfig(
+                        serializationConfig = customSerializationConfig,
+                        logProvider = logProvider,
+                    )
+            )
+
+        assertTrue(client is StreamClientImpl<*>)
+        assertTrue(client.connectionState.value is StreamConnectionState.Idle)
+    }
+
+    // ── StreamComponentProvider overrides ────────────────────────────────────
+
+    @Test
+    fun `factory wires injected singleFlight from components`() {
+        val singleFlight = mockk<StreamSingleFlightProcessor>(relaxed = true)
+        val client =
+            buildClient(
+                components =
+                    StreamComponentProvider(
+                        singleFlight = singleFlight,
+                        androidComponentsProvider = fakeAndroidComponents,
+                    )
+            )
+
+        (client as StreamClientImpl<*>).assertFieldEquals("singleFlight", singleFlight)
+    }
+
+    @Test
+    fun `factory wires injected serialQueue from components`() {
+        val serialQueue = mockk<StreamSerialProcessingQueue>(relaxed = true)
+        val client =
+            buildClient(
+                components =
+                    StreamComponentProvider(
+                        serialQueue = serialQueue,
+                        androidComponentsProvider = fakeAndroidComponents,
+                    )
+            )
+
+        (client as StreamClientImpl<*>).assertFieldEquals("serialQueue", serialQueue)
+    }
+
+    @Test
+    fun `factory wires injected tokenManager from components`() {
+        val tokenManager = mockk<StreamTokenManager>(relaxed = true)
+        val client =
+            buildClient(
+                components =
+                    StreamComponentProvider(
+                        tokenManager = tokenManager,
+                        androidComponentsProvider = fakeAndroidComponents,
+                    )
+            )
+
+        (client as StreamClientImpl<*>).assertFieldEquals("tokenManager", tokenManager)
+    }
+
+    @Test
+    fun `factory wires injected connectionIdHolder from components`() {
+        val connectionIdHolder = StreamConnectionIdHolder()
+        val client =
+            buildClient(
+                components =
+                    StreamComponentProvider(
+                        connectionIdHolder = connectionIdHolder,
+                        androidComponentsProvider = fakeAndroidComponents,
+                    )
+            )
+
+        (client as StreamClientImpl<*>).assertFieldEquals("connectionIdHolder", connectionIdHolder)
+    }
+
+    @Test
+    fun `factory wires injected socketFactory from components`() {
+        val socketFactory = mockk<StreamWebSocketFactory>(relaxed = true)
+        val client =
+            buildClient(
+                components =
+                    StreamComponentProvider(
+                        socketFactory = socketFactory,
+                        androidComponentsProvider = fakeAndroidComponents,
+                    )
+            )
+
+        val socketSession =
+            (client as StreamClientImpl<*>).readPrivateField("socketSession")
+                as StreamSocketSession<*>
+        val internalSocket = socketSession.readPrivateField("internalSocket")
+        val wiredFactory = internalSocket?.readPrivateField("socketFactory")
+        assertEquals(socketFactory, wiredFactory)
+    }
+
+    @Test
+    fun `factory wires injected healthMonitor from components`() {
+        val healthMonitor = mockk<StreamHealthMonitor>(relaxed = true)
+        val client =
+            buildClient(
+                components =
+                    StreamComponentProvider(
+                        healthMonitor = healthMonitor,
+                        androidComponentsProvider = fakeAndroidComponents,
+                    )
+            )
+
+        val socketSession =
+            (client as StreamClientImpl<*>).readPrivateField("socketSession")
+                as StreamSocketSession<*>
+        socketSession.assertFieldEquals("healthMonitor", healthMonitor)
+    }
+
+    @Test
+    fun `factory wires injected batcher from components`() {
+        val batcher = mockk<StreamBatcher<String>>(relaxed = true)
+        val client =
+            buildClient(
+                components =
+                    StreamComponentProvider(
+                        batcher = batcher,
+                        androidComponentsProvider = fakeAndroidComponents,
+                    )
+            )
+
+        val socketSession =
+            (client as StreamClientImpl<*>).readPrivateField("socketSession")
+                as StreamSocketSession<*>
+        socketSession.assertFieldEquals("batcher", batcher)
+    }
+
+    @Test
+    fun `factory wires injected clientSubscriptionManager from components`() {
+        val subscriptionManager =
+            mockk<StreamSubscriptionManager<StreamClientListener>>(relaxed = true)
+        val client =
+            buildClient(
+                components =
+                    StreamComponentProvider(
+                        clientSubscriptionManager = subscriptionManager,
+                        androidComponentsProvider = fakeAndroidComponents,
+                    )
+            )
+
+        (client as StreamClientImpl<*>).assertFieldEquals(
+            "subscriptionManager",
+            subscriptionManager,
+        )
+    }
+
+    @Test
+    fun `factory creates default components when provider fields are null`() {
+        val client =
+            buildClient(
+                components =
+                    StreamComponentProvider(androidComponentsProvider = fakeAndroidComponents)
+            )
+
+        val impl = client as StreamClientImpl<*>
+        assertNotNull(impl.readPrivateField("singleFlight"))
+        assertNotNull(impl.readPrivateField("serialQueue"))
+        assertNotNull(impl.readPrivateField("tokenManager"))
+        assertNotNull(impl.readPrivateField("connectionIdHolder"))
+        assertNotNull(impl.readPrivateField("subscriptionManager"))
+
+        val socketSession = impl.readPrivateField("socketSession") as StreamSocketSession<*>
+        assertNotNull(socketSession.readPrivateField("healthMonitor"))
+        assertNotNull(socketSession.readPrivateField("batcher"))
+        assertNotNull(socketSession.readPrivateField("internalSocket"))
+    }
+
+    // ── Config + Components combined ────────────────────────────────────────
+
+    @Test
+    fun `factory applies both config tunables and component overrides`() {
+        val customUrl = StreamWsUrl.fromString("wss://custom.stream.io")
+        val singleFlight = mockk<StreamSingleFlightProcessor>(relaxed = true)
+        val healthMonitor = mockk<StreamHealthMonitor>(relaxed = true)
+
+        val client =
+            buildClient(
+                config =
+                    StreamClientConfig(
+                        wsUrl = customUrl,
+                        batchSize = 5,
+                        batchInitialDelayMs = 25L,
+                        batchMaxDelayMs = 250L,
+                        logProvider = logProvider,
+                    ),
+                components =
+                    StreamComponentProvider(
+                        singleFlight = singleFlight,
+                        healthMonitor = healthMonitor,
+                        androidComponentsProvider = fakeAndroidComponents,
+                    ),
+            )
+
+        val impl = client as StreamClientImpl<*>
+        impl.assertFieldEquals("singleFlight", singleFlight)
+
+        val socketSession = impl.readPrivateField("socketSession") as StreamSocketSession<*>
+        val socketConfig = socketSession.readPrivateField("config") as StreamSocketConfig
+        assertEquals(customUrl.rawValue, socketConfig.url)
+
+        // Injected health monitor takes precedence over config timing
+        socketSession.assertFieldEquals("healthMonitor", healthMonitor)
+
+        // Batcher still created from config since not injected
+        val batcher = socketSession.readPrivateField("batcher") as StreamBatcher<*>
+        batcher.assertFieldEquals("batchSize", 5)
+        batcher.assertFieldEquals("initialDelayMs", 25L)
+        batcher.assertFieldEquals("maxDelayMs", 250L)
+    }
+}
