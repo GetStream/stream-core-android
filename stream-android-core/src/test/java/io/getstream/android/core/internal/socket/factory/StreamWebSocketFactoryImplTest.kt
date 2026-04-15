@@ -20,6 +20,7 @@ import io.getstream.android.core.api.log.StreamLogger
 import io.getstream.android.core.api.model.config.StreamSocketConfig
 import io.getstream.android.core.api.model.value.StreamApiKey
 import io.getstream.android.core.api.model.value.StreamHttpClientInfoHeader
+import io.getstream.android.core.api.model.value.StreamWsUrl
 import io.mockk.*
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -52,7 +53,7 @@ class StreamWebSocketFactoryImplTest {
 
     private val config =
         StreamSocketConfig.jwt(
-            url = "wss://example.com/connect",
+            url = StreamWsUrl.fromString("wss://example.com/connect"),
             apiKey = StreamApiKey.fromString("test-key"),
             clientInfoHeader = clientInfoHeader,
         )

@@ -39,7 +39,7 @@ internal class StreamWebSocketFactoryImpl(
     ): Result<WebSocket> = runCatching {
         logger.v { "[createSocket] config: $streamSocketConfig" }
         val url =
-            "${streamSocketConfig.url}?" +
+            "${streamSocketConfig.url.rawValue}?" +
                 "api_key=${streamSocketConfig.apiKey.rawValue}" +
                 "&stream-auth-type=${streamSocketConfig.authType}" +
                 "&X-Stream-Client=${streamSocketConfig.clientInfoHeader.rawValue}"

@@ -24,6 +24,7 @@ import io.getstream.android.core.api.StreamClient
 import io.getstream.android.core.api.authentication.StreamTokenProvider
 import io.getstream.android.core.api.model.StreamUser
 import io.getstream.android.core.api.model.config.StreamClientSerializationConfig
+import io.getstream.android.core.api.model.config.StreamSocketConfig
 import io.getstream.android.core.api.model.value.StreamApiKey
 import io.getstream.android.core.api.model.value.StreamHttpClientInfoHeader
 import io.getstream.android.core.api.model.value.StreamToken
@@ -60,23 +61,8 @@ class SampleApp : Application() {
             StreamClient(
                 context = this.applicationContext,
                 scope = coroutinesScope,
-                apiKey = StreamApiKey.fromString("pd67s34fzpgw"),
                 user = user,
                 products = listOf("feeds", "chat", "video"),
-                wsUrl =
-                    StreamWsUrl.fromString(
-                        "wss://chat-edge-frankfurt-ce1.stream-io-api.com/api/v2/connect"
-                    ),
-                clientInfoHeader =
-                    StreamHttpClientInfoHeader.create(
-                        product = "android-core",
-                        productVersion = "1.1.0",
-                        os = "Android",
-                        apiLevel = Build.VERSION.SDK_INT,
-                        deviceModel = "Pixel 7 Pro",
-                        app = "Stream Android Core Sample",
-                        appVersion = "1.0.0",
-                    ),
                 tokenProvider =
                     object : StreamTokenProvider {
                         override suspend fun loadToken(userId: StreamUserId): StreamToken {
@@ -91,6 +77,24 @@ class SampleApp : Application() {
                             override fun deserialize(raw: String): Result<Unit> =
                                 Result.success(Unit)
                         }
+                    ),
+                socketConfig =
+                    StreamSocketConfig.jwt(
+                        url =
+                            StreamWsUrl.fromString(
+                                "wss://chat-edge-frankfurt-ce1.stream-io-api.com/api/v2/connect"
+                            ),
+                        apiKey = StreamApiKey.fromString("pd67s34fzpgw"),
+                        clientInfoHeader =
+                            StreamHttpClientInfoHeader.create(
+                                product = "android-core",
+                                productVersion = "1.1.0",
+                                os = "Android",
+                                apiLevel = Build.VERSION.SDK_INT,
+                                deviceModel = "Pixel 7 Pro",
+                                app = "Stream Android Core Sample",
+                                appVersion = "1.0.0",
+                            ),
                     ),
             )
     }

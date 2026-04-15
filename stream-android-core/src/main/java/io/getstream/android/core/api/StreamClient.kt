@@ -26,19 +26,16 @@ import io.getstream.android.core.api.http.StreamOkHttpInterceptors
 import io.getstream.android.core.api.log.StreamLoggerProvider
 import io.getstream.android.core.api.model.StreamUser
 import io.getstream.android.core.api.model.config.StreamClientSerializationConfig
+import io.getstream.android.core.api.model.config.StreamComponentProvider
 import io.getstream.android.core.api.model.config.StreamHttpConfig
 import io.getstream.android.core.api.model.config.StreamSocketConfig
 import io.getstream.android.core.api.model.connection.StreamConnectedUser
 import io.getstream.android.core.api.model.connection.StreamConnectionState
 import io.getstream.android.core.api.model.connection.lifecycle.StreamLifecycleState
 import io.getstream.android.core.api.model.connection.network.StreamNetworkState
-import io.getstream.android.core.api.model.value.StreamApiKey
-import io.getstream.android.core.api.model.value.StreamHttpClientInfoHeader
-import io.getstream.android.core.api.model.value.StreamWsUrl
 import io.getstream.android.core.api.observers.lifecycle.StreamLifecycleMonitor
 import io.getstream.android.core.api.observers.network.StreamNetworkMonitor
 import io.getstream.android.core.api.processing.StreamBatcher
-import io.getstream.android.core.api.processing.StreamRetryProcessor
 import io.getstream.android.core.api.processing.StreamSerialProcessingQueue
 import io.getstream.android.core.api.processing.StreamSingleFlightProcessor
 import io.getstream.android.core.api.recovery.StreamConnectionRecoveryEvaluator
@@ -143,83 +140,154 @@ public interface StreamClient : StreamObservable<StreamClientListener> {
 }
 
 /**
- * ### Overview
+ * Creates a [StreamClient] with mandatory identity parameters and optional configuration.
  *
- * Creates a [StreamClient] with the given [apiKey], [user], [tokenProvider] and [scope]. The client
- * is created in a disconnected state. You must call `connect()` to establish a connection. The
- * client is automatically disconnected when the [scope] is cancelled.
- *
- * **Important**: The client instance **must be kept alive for the duration of the connection**. Do
- * not create a new client for every operation.
- *
- * **Token provider:**
- * - The [tokenProvider] is used to fetch tokens on demand. The first token is cached internally.
- *   When the first request needs to be made, the token is fetched from the provider. If you already
- *   have a token, you can cache it in your provider and return it as a valid token in `loadToken`.
- *   See [StreamTokenProvider] for more details.
- *
- * **Scope:**
- * - The [scope] is used to launch the client's internal coroutines. It is recommended to use a
- *   `CoroutineScope(SupervisorJob() + Dispatchers.Default)` for this purpose.
- *
- * ### Security
- * - The [tokenProvider] is used to fetch tokens on demand. The first token is cached internally.
- *   When the token expires, the provider is called again to fetch a new one.
- * - The expiration is determined by a `401` response from the server at which point the request is
- *   retried with the new token.
- *
- * ### Performance
- * - The client uses a single-flight pattern to deduplicate concurrent requests.
- * - The client uses a serial processing queue to ensure that requests are executed in order.
- * - The client uses a message batcher to coalesce high-frequency events.
+ * This is the primary entry point for product SDKs to create a client. All internal components are
+ * created with sensible defaults. Use [components] to replace specific internal components (for
+ * sharing instances or custom implementations).
  *
  * ### Usage
  *
  * ```kotlin
+ * // Minimal — all defaults
  * val client = StreamClient(
- *     apiKey = "my-api-key",
- *     userId = "my-user-id",
- *     tokenProvider = MyTokenProvider(),
- *     scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+ *     scope = scope,
+ *     context = context,
+ *     user = user,
+ *     tokenProvider = tokenProvider,
+ *     products = listOf("chat"),
+ *     socketConfig = StreamSocketConfig.jwt(
+ *         url = StreamWsUrl.fromString("wss://chat.stream-io-api.com/connect"),
+ *         apiKey = apiKey,
+ *         clientInfoHeader = clientInfoHeader,
+ *     ),
+ *     serializationConfig = StreamClientSerializationConfig.default(chatEventSerializer),
+ * )
+ *
+ * // With tuned socket, custom logging, HTTP, and component overrides
+ * val singleFlight = StreamSingleFlightProcessor(scope)
+ * val client = StreamClient(
+ *     scope = scope,
+ *     context = context,
+ *     user = user,
+ *     tokenProvider = tokenProvider,
+ *     products = listOf("feeds"),
+ *     socketConfig = StreamSocketConfig.jwt(
+ *         url = StreamWsUrl.fromString("wss://feeds.stream-io-api.com/connect"),
+ *         apiKey = apiKey,
+ *         clientInfoHeader = clientInfoHeader,
+ *         healthCheckIntervalMs = 30_000,
+ *     ),
+ *     serializationConfig = StreamClientSerializationConfig.default(feedsEventSerializer),
+ *     httpConfig = StreamHttpConfig(httpBuilder),
+ *     components = StreamComponentProvider(
+ *         logProvider = myLogProvider,
+ *         singleFlight = singleFlight,
+ *     ),
  * )
  * ```
  *
- * @param apiKey The API key.
- * @param user The user ID.
- * @param wsUrl The WebSocket URL.
- * @param products Stream product codes (for feature gates / telemetry) negotiated with the socket.
- * @param clientInfoHeader The client info header.
- * @param clientSubscriptionManager Manages socket-level listeners registered via [StreamClient].
- * @param tokenProvider The token provider.
- * @param tokenManager The token manager.
- * @param singleFlight The single-flight processor.
- * @param serialQueue The serial processing queue.
- * @param retryProcessor The retry processor.
- * @param scope The coroutine scope powering internal work (usually `SupervisorJob + Dispatcher`).
- * @param connectionIdHolder The connection ID holder.
- * @param socketFactory The WebSocket factory.
- * @param batcher The WebSocket event batcher.
- * @param healthMonitor The health monitor.
- * @param networkMonitor Tracks device connectivity and feeds connection recovery.
- * @param httpConfig Optional HTTP client customization.
- * @param serializationConfig Composite JSON / event serialization configuration.
- * @param logProvider The logger provider.
+ * @param scope Coroutine scope powering internal work. Recommended:
+ *   `CoroutineScope(SupervisorJob() + Dispatchers.Default)`.
+ * @param context Android application context.
+ * @param user User identity.
+ * @param tokenProvider Provides authentication tokens on demand.
+ * @param products Stream product codes negotiated with the socket (e.g. "chat", "feeds", "video").
+ * @param socketConfig WebSocket connection configuration (URL, auth, timing, batching).
+ * @param serializationConfig JSON and event serialization configuration.
+ * @param httpConfig Optional HTTP client customization (OkHttp builder, interceptors).
+ * @param components Optional component overrides for DI. Defaults to
+ *   [StreamComponentProvider()][StreamComponentProvider] (all defaults).
  */
+@Suppress("LongParameterList", "CyclomaticComplexMethod")
 @SuppressLint("ExposeAsStateFlow")
 @StreamInternalApi
 public fun StreamClient(
+    scope: CoroutineScope,
+    context: Context,
+    user: StreamUser,
+    tokenProvider: StreamTokenProvider,
+    products: List<String>,
+    socketConfig: StreamSocketConfig,
+    serializationConfig: StreamClientSerializationConfig,
+    httpConfig: StreamHttpConfig? = null,
+    components: StreamComponentProvider = StreamComponentProvider(),
+): StreamClient {
+    val logProvider = components.logProvider
+    val singleFlight = components.singleFlight ?: StreamSingleFlightProcessor(scope)
+
+    return createStreamClientInternal(
+        scope = scope,
+        context = context,
+        user = user,
+        tokenProvider = tokenProvider,
+        products = products,
+        socketConfig = socketConfig,
+        serializationConfig = serializationConfig,
+        httpConfig = httpConfig,
+        androidComponentsProvider =
+            components.androidComponentsProvider
+                ?: StreamAndroidComponentsProvider(context.applicationContext),
+        logProvider = logProvider,
+        clientSubscriptionManager =
+            components.clientSubscriptionManager
+                ?: StreamSubscriptionManager(
+                    logger = logProvider.taggedLogger("SCClientSubscriptions"),
+                    maxStrongSubscriptions = 250,
+                    maxWeakSubscriptions = 250,
+                ),
+        singleFlight = singleFlight,
+        serialQueue =
+            components.serialQueue
+                ?: StreamSerialProcessingQueue(
+                    logger = logProvider.taggedLogger("SCSerialProcessing"),
+                    scope = scope,
+                ),
+        tokenManager =
+            components.tokenManager ?: StreamTokenManager(user.id, tokenProvider, singleFlight),
+        connectionIdHolder = components.connectionIdHolder ?: StreamConnectionIdHolder(),
+        socketFactory =
+            components.socketFactory
+                ?: StreamWebSocketFactory(logger = logProvider.taggedLogger("SCWebSocketFactory")),
+        batcher =
+            components.batcher
+                ?: StreamBatcher(
+                    scope = scope,
+                    batchSize = socketConfig.batchSize,
+                    initialDelayMs = socketConfig.batchInitialDelayMs,
+                    maxDelayMs = socketConfig.batchMaxDelayMs,
+                ),
+        healthMonitor =
+            components.healthMonitor
+                ?: StreamHealthMonitor(
+                    logger = logProvider.taggedLogger("SCHealthMonitor"),
+                    scope = scope,
+                    interval = socketConfig.healthCheckIntervalMs,
+                    livenessThreshold = socketConfig.livenessThresholdMs,
+                ),
+        networkMonitor = components.networkMonitor,
+        lifecycleMonitor = components.lifecycleMonitor,
+        connectionRecoveryEvaluator = components.connectionRecoveryEvaluator,
+    )
+}
+
+/**
+ * Internal full-parameter factory. Used by the simplified [StreamClient] factory above and
+ * available for tests requiring full DI control.
+ */
+@Suppress("LongParameterList", "LongMethod")
+@SuppressLint("ExposeAsStateFlow")
+internal fun createStreamClientInternal(
 
     // Android
     scope: CoroutineScope,
     context: Context,
 
     // Client config
-    apiKey: StreamApiKey,
     user: StreamUser,
-    wsUrl: StreamWsUrl,
-    products: List<String>,
-    clientInfoHeader: StreamHttpClientInfoHeader,
     tokenProvider: StreamTokenProvider,
+    products: List<String>,
+    socketConfig: StreamSocketConfig,
     serializationConfig: StreamClientSerializationConfig,
     httpConfig: StreamHttpConfig? = null,
 
@@ -245,9 +313,6 @@ public fun StreamClient(
             logger = logProvider.taggedLogger("SCSerialProcessing"),
             scope = scope,
         ),
-    retryProcessor: StreamRetryProcessor =
-        StreamRetryProcessor(logger = logProvider.taggedLogger("SCRetryProcessor")),
-
     // Token
     tokenManager: StreamTokenManager = StreamTokenManager(user.id, tokenProvider, singleFlight),
 
@@ -256,38 +321,54 @@ public fun StreamClient(
     socketFactory: StreamWebSocketFactory =
         StreamWebSocketFactory(logger = logProvider.taggedLogger("SCWebSocketFactory")),
     batcher: StreamBatcher<String> =
-        StreamBatcher(scope = scope, batchSize = 10, initialDelayMs = 100L, maxDelayMs = 1_000L),
+        StreamBatcher(
+            scope = scope,
+            batchSize = socketConfig.batchSize,
+            initialDelayMs = socketConfig.batchInitialDelayMs,
+            maxDelayMs = socketConfig.batchMaxDelayMs,
+        ),
 
     // Monitoring
     healthMonitor: StreamHealthMonitor =
-        StreamHealthMonitor(logger = logProvider.taggedLogger("SCHealthMonitor"), scope = scope),
-    networkMonitor: StreamNetworkMonitor =
-        StreamNetworkMonitor(
-            logger = logProvider.taggedLogger("SCNetworkMonitor"),
+        StreamHealthMonitor(
+            logger = logProvider.taggedLogger("SCHealthMonitor"),
             scope = scope,
-            connectivityManager = androidComponentsProvider.connectivityManager().getOrThrow(),
-            wifiManager = androidComponentsProvider.wifiManager().getOrThrow(),
-            telephonyManager = androidComponentsProvider.telephonyManager().getOrThrow(),
-            subscriptionManager =
-                StreamSubscriptionManager(
-                    logger = logProvider.taggedLogger("SCNetworkMonitorSubscriptions")
-                ),
+            interval = socketConfig.healthCheckIntervalMs,
+            livenessThreshold = socketConfig.livenessThresholdMs,
         ),
-    lifecycleMonitor: StreamLifecycleMonitor =
-        StreamLifecycleMonitor(
-            logger = logProvider.taggedLogger("SCLifecycleMonitor"),
-            subscriptionManager =
-                StreamSubscriptionManager(
-                    logger = logProvider.taggedLogger("SCLifecycleMonitorSubscriptions")
-                ),
-            lifecycle = androidComponentsProvider.lifecycle(),
-        ),
-    connectionRecoveryEvaluator: StreamConnectionRecoveryEvaluator =
-        StreamConnectionRecoveryEvaluator(
-            logger = logProvider.taggedLogger("SCConnectionRecoveryEvaluator"),
-            singleFlightProcessor = singleFlight,
-        ),
+    networkMonitor: StreamNetworkMonitor? = null,
+    lifecycleMonitor: StreamLifecycleMonitor? = null,
+    connectionRecoveryEvaluator: StreamConnectionRecoveryEvaluator? = null,
 ): StreamClient {
+    val resolvedNetworkMonitor =
+        networkMonitor
+            ?: StreamNetworkMonitor(
+                logger = logProvider.taggedLogger("SCNetworkMonitor"),
+                scope = scope,
+                connectivityManager = androidComponentsProvider.connectivityManager().getOrThrow(),
+                wifiManager = androidComponentsProvider.wifiManager().getOrThrow(),
+                telephonyManager = androidComponentsProvider.telephonyManager().getOrThrow(),
+                subscriptionManager =
+                    StreamSubscriptionManager(
+                        logger = logProvider.taggedLogger("SCNetworkMonitorSubscriptions")
+                    ),
+            )
+    val resolvedLifecycleMonitor =
+        lifecycleMonitor
+            ?: StreamLifecycleMonitor(
+                logger = logProvider.taggedLogger("SCLifecycleMonitor"),
+                subscriptionManager =
+                    StreamSubscriptionManager(
+                        logger = logProvider.taggedLogger("SCLifecycleMonitorSubscriptions")
+                    ),
+                lifecycle = androidComponentsProvider.lifecycle(),
+            )
+    val resolvedRecoveryEvaluator =
+        connectionRecoveryEvaluator
+            ?: StreamConnectionRecoveryEvaluator(
+                logger = logProvider.taggedLogger("SCConnectionRecoveryEvaluator"),
+                singleFlightProcessor = singleFlight,
+            )
     val clientLogger = logProvider.taggedLogger(tag = "SCClient")
     val parent = scope.coroutineContext[Job]
     val supervisorJob =
@@ -317,11 +398,15 @@ public fun StreamClient(
     httpConfig?.apply {
         if (automaticInterceptors) {
             httpBuilder.apply {
-                addInterceptor(StreamOkHttpInterceptors.clientInfo(clientInfoHeader))
-                addInterceptor(StreamOkHttpInterceptors.apiKey(apiKey))
+                addInterceptor(StreamOkHttpInterceptors.clientInfo(socketConfig.clientInfoHeader))
+                addInterceptor(StreamOkHttpInterceptors.apiKey(socketConfig.apiKey))
                 addInterceptor(StreamOkHttpInterceptors.connectionId(connectionIdHolder))
                 addInterceptor(
-                    StreamOkHttpInterceptors.auth("jwt", tokenManager, compositeSerialization)
+                    StreamOkHttpInterceptors.auth(
+                        socketConfig.authType,
+                        tokenManager,
+                        compositeSerialization,
+                    )
                 )
                 addInterceptor(StreamOkHttpInterceptors.error(compositeSerialization))
             }
@@ -332,8 +417,8 @@ public fun StreamClient(
     val networkAndLifeCycleMonitor =
         StreamNetworkAndLifeCycleMonitor(
             logger = logProvider.taggedLogger("SCNetworkAndLifecycleMonitor"),
-            networkMonitor = networkMonitor,
-            lifecycleMonitor = lifecycleMonitor,
+            networkMonitor = resolvedNetworkMonitor,
+            lifecycleMonitor = resolvedLifecycleMonitor,
             mutableNetworkState = MutableStateFlow(StreamNetworkState.Unknown),
             mutableLifecycleState = MutableStateFlow(StreamLifecycleState.Unknown),
             subscriptionManager =
@@ -354,17 +439,12 @@ public fun StreamClient(
         mutableConnectionState = mutableConnectionState,
         subscriptionManager = clientSubscriptionManager,
         networkAndLifeCycleMonitor = networkAndLifeCycleMonitor,
-        connectionRecoveryEvaluator = connectionRecoveryEvaluator,
+        connectionRecoveryEvaluator = resolvedRecoveryEvaluator,
         socketSession =
             StreamSocketSession(
                 logger = logProvider.taggedLogger("SCSocketSession"),
                 products = products,
-                config =
-                    StreamSocketConfig.jwt(
-                        url = wsUrl.rawValue,
-                        apiKey = apiKey,
-                        clientInfoHeader = clientInfoHeader,
-                    ),
+                config = socketConfig,
                 jsonSerialization = compositeSerialization,
                 eventParser =
                     StreamCompositeEventSerializationImpl(
