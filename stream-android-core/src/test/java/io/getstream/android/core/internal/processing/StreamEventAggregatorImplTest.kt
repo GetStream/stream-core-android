@@ -51,6 +51,70 @@ class StreamEventAggregatorImplTest {
 
     private fun testScope() = CoroutineScope(SupervisorJob() + StandardTestDispatcher())
 
+    // ── Factory validation ───────────────────────────────────────────────────
+
+    @Test(expected = IllegalArgumentException::class)
+    fun `factory rejects aggregationThreshold = 0`() {
+        StreamEventAggregator<TestEvent>(
+            scope = testScope(),
+            typeExtractor = typeExtractor,
+            deserializer = deserializer,
+            aggregationThreshold = 0,
+        )
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun `factory rejects negative aggregationThreshold`() {
+        StreamEventAggregator<TestEvent>(
+            scope = testScope(),
+            typeExtractor = typeExtractor,
+            deserializer = deserializer,
+            aggregationThreshold = -1,
+        )
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun `factory rejects maxWindowMs = 0`() {
+        StreamEventAggregator<TestEvent>(
+            scope = testScope(),
+            typeExtractor = typeExtractor,
+            deserializer = deserializer,
+            maxWindowMs = 0,
+        )
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun `factory rejects negative maxWindowMs`() {
+        StreamEventAggregator<TestEvent>(
+            scope = testScope(),
+            typeExtractor = typeExtractor,
+            deserializer = deserializer,
+            maxWindowMs = -100,
+        )
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun `factory rejects dispatchQueueCapacity = 0`() {
+        StreamEventAggregator<TestEvent>(
+            scope = testScope(),
+            typeExtractor = typeExtractor,
+            deserializer = deserializer,
+            dispatchQueueCapacity = 0,
+        )
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun `factory rejects negative dispatchQueueCapacity`() {
+        StreamEventAggregator<TestEvent>(
+            scope = testScope(),
+            typeExtractor = typeExtractor,
+            deserializer = deserializer,
+            dispatchQueueCapacity = -1,
+        )
+    }
+
+    // ── Behavior tests ───────────────────────────────────────────────────────
+
     @Test
     fun `low traffic events are dispatched individually`() = runTest {
         val scope = CoroutineScope(SupervisorJob() + StandardTestDispatcher(testScheduler))
