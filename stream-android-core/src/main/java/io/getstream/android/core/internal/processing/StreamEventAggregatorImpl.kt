@@ -20,6 +20,7 @@ import io.getstream.android.core.api.log.StreamLogger
 import io.getstream.android.core.api.processing.StreamAggregatedEvent
 import io.getstream.android.core.api.processing.StreamEventAggregator
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicReference
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -53,22 +54,25 @@ internal class StreamEventAggregatorImpl<T>(
     private val inbox = Channel<String>(inboxCapacity)
     private val dispatchQueue = Channel<DispatchItem<T>>(dispatchQueueCapacity)
     private val started = AtomicBoolean(false)
+    private val closed = AtomicBoolean(false)
     private var collectorJob: Job? = null
     private var dispatcherJob: Job? = null
 
-    private var eventHandler: suspend (Any) -> Unit = { /* no-op until set */ }
+    private val eventHandler = AtomicReference<suspend (Any) -> Unit> { /* no-op until set */ }
 
     override fun onEvent(handler: suspend (Any) -> Unit) {
-        eventHandler = handler
+        eventHandler.set(handler)
     }
 
     override fun start(): Result<Unit> = runCatching {
+        check(!closed.get()) { "StreamEventAggregator has already been stopped" }
         if (!started.compareAndSet(false, true)) return Result.success(Unit)
         collectorJob = scope.launch { runCollector() }
         dispatcherJob = scope.launch { runDispatcher() }
     }
 
     override fun offer(raw: String): Boolean {
+        if (closed.get()) return false
         if (!started.get()) {
             // Auto-start on first offer
             start()
@@ -77,7 +81,8 @@ internal class StreamEventAggregatorImpl<T>(
     }
 
     override fun stop(): Result<Unit> = runCatching {
-        if (!started.compareAndSet(true, false)) return Result.success(Unit)
+        if (!closed.compareAndSet(false, true)) return Result.success(Unit)
+        started.set(false)
         collectorJob?.cancel()
         dispatcherJob?.cancel()
         collectorJob = null
@@ -186,7 +191,7 @@ internal class StreamEventAggregatorImpl<T>(
                     is DispatchItem.Individual -> {
                         for (event in item.events) {
                             try {
-                                eventHandler(event.parsed as Any)
+                                eventHandler.get().invoke(event.parsed as Any)
                             } catch (ce: CancellationException) {
                                 throw ce
                             } catch (e: Throwable) {
@@ -199,7 +204,7 @@ internal class StreamEventAggregatorImpl<T>(
 
                     is DispatchItem.Aggregated -> {
                         try {
-                            eventHandler(item.aggregated)
+                            eventHandler.get().invoke(item.aggregated)
                         } catch (ce: CancellationException) {
                             throw ce
                         } catch (e: Throwable) {

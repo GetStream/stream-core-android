@@ -89,9 +89,11 @@ internal class StreamSocketSession<T>(
                 if (!accepted) {
                     val error =
                         IllegalStateException(
-                            "Failed to offer message to event aggregator. Message dropped: $text"
+                            "Failed to offer message to event aggregator. Message dropped (${text.length} bytes)"
                         )
-                    logger.e(error) { "[onMessage] Message dropped: $text" }
+                    logger.e(error) {
+                        "[onMessage] Message dropped by event aggregator (${text.length} bytes)"
+                    }
                     disconnect(error)
                 } else {
                     logger.v { "[onMessage] Message accepted: $text" }
@@ -242,6 +244,11 @@ internal class StreamSocketSession<T>(
                         handleSingleCompositeEvent(event as StreamCompositeSerializationEvent<T>)
                     }
                 }
+            }
+
+            aggregator.start().onFailure { throwable ->
+                completeFailure(throwable)
+                return@suspendCancellableCoroutine
             }
 
             // Success/Failure continuations
@@ -471,11 +478,13 @@ internal class StreamSocketSession<T>(
                 )
             )
         }
-        subscriptionManager.forEach { listener ->
-            coreEvent?.takeUnless { it is StreamHealthCheckEvent }?.let { listener.onEvent(it) }
+        subscriptionManager
+            .forEach { listener ->
+                coreEvent?.takeUnless { it is StreamHealthCheckEvent }?.let { listener.onEvent(it) }
 
-            productEvent?.let { listener.onEvent(it) }
-        }
+                productEvent?.let { listener.onEvent(it) }
+            }
+            .onFailure { e -> logger.e(e) { "[onEvent] Listener dispatch failed. ${e.message}" } }
     }
 
     /**
@@ -506,7 +515,11 @@ internal class StreamSocketSession<T>(
                 coreEvent
                     ?.takeUnless { it is StreamHealthCheckEvent }
                     ?.let { core ->
-                        subscriptionManager.forEach { listener -> listener.onEvent(core) }
+                        subscriptionManager
+                            .forEach { listener -> listener.onEvent(core) }
+                            .onFailure { e ->
+                                logger.e(e) { "[onEvent] Listener dispatch failed. ${e.message}" }
+                            }
                     }
 
                 // Collect product events for aggregated dispatch
@@ -523,7 +536,11 @@ internal class StreamSocketSession<T>(
                     "${productEvents.values.sumOf { it.size }} total events"
             }
             val productAggregated = StreamAggregatedEvent(productEvents.toMap())
-            subscriptionManager.forEach { listener -> listener.onEvent(productAggregated) }
+            subscriptionManager
+                .forEach { listener -> listener.onEvent(productAggregated) }
+                .onFailure { e ->
+                    logger.e(e) { "[onEvent] Listener dispatch failed. ${e.message}" }
+                }
         }
     }
 
@@ -533,7 +550,11 @@ internal class StreamSocketSession<T>(
         }
         logger.d { "[cleanup] Cleaning up socket" }
         healthMonitor.stop()
-        aggregator.stop()
+        aggregator.stop().onFailure { throwable ->
+            logger.e(throwable) {
+                "[cleanup] Failed to stop event aggregator. ${throwable.message}"
+            }
+        }
         socketSubscription?.cancel()
         socketSubscription = null
         streamClientConnectedEvent = null

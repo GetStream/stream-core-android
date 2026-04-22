@@ -49,4 +49,7 @@ import io.getstream.android.core.annotations.StreamInternalApi
  * @param T The type of the individual events.
  * @property events Events grouped by type string. Each list preserves arrival order.
  */
-@StreamInternalApi public class StreamAggregatedEvent<T>(public val events: Map<String, List<T>>)
+@StreamInternalApi
+public class StreamAggregatedEvent<T>(events: Map<String, List<T>>) {
+    public val events: Map<String, List<T>> = events.mapValues { (_, v) -> v.toList() }
+}

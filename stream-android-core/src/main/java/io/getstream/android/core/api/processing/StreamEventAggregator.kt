@@ -38,8 +38,8 @@ import kotlinx.coroutines.channels.Channel
  * ### Adaptive behavior
  * - **Low traffic:** When the collector drains the channel and finds few events (below
  *   [aggregationThreshold]), each event is dispatched individually via the handler.
- * - **Spike:** When accumulated events exceed [aggregationThreshold], they are grouped by type into
- *   a [StreamAggregatedEvent] and dispatched as a single call.
+ * - **Spike:** When accumulated events reach or exceed [aggregationThreshold], they are grouped by
+ *   type into a [StreamAggregatedEvent] and dispatched as a single call.
  *
  * ### Backpressure
  * - Natural: While the dispatcher is busy, events accumulate in the inbox channel. The next
@@ -114,8 +114,12 @@ public fun <T> StreamEventAggregator(
     maxWindowMs: Long = 500L,
     dispatchQueueCapacity: Int = 16,
     inboxCapacity: Int = Channel.UNLIMITED,
-): StreamEventAggregator<T> =
-    StreamEventAggregatorImpl(
+): StreamEventAggregator<T> {
+    require(aggregationThreshold > 0) { "aggregationThreshold must be > 0" }
+    require(maxWindowMs > 0) { "maxWindowMs must be > 0" }
+    require(dispatchQueueCapacity > 0) { "dispatchQueueCapacity must be > 0" }
+
+    return StreamEventAggregatorImpl(
         scope = scope,
         typeExtractor = typeExtractor,
         deserializer = deserializer,
@@ -124,3 +128,4 @@ public fun <T> StreamEventAggregator(
         dispatchQueueCapacity = dispatchQueueCapacity,
         inboxCapacity = inboxCapacity,
     )
+}
