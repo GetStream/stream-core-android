@@ -96,41 +96,26 @@ public interface StreamEventAggregator<T> {
  *
  * @param T The deserialized event type.
  * @param scope Coroutine scope for the collector and dispatcher coroutines.
- * @param typeExtractor Extracts the event type string from a raw JSON message. Returning `null`
- *   means the type could not be determined — the event is grouped under an empty key.
- * @param deserializer Deserializes a raw JSON string into `T`. Returns `Result.failure` on parse
- *   errors.
- * @param aggregationThreshold Number of accumulated events that triggers aggregated delivery
- *   instead of individual dispatch.
- * @param maxWindowMs Maximum time (milliseconds) the collector will wait before packaging and
- *   delivering whatever has accumulated. This is the latency ceiling.
- * @param dispatchQueueCapacity Bounded capacity of the dispatch queue between collector and
- *   dispatcher. When full, the collector logs a warning.
+ * @param policy Aggregation policy defining type extraction, deserialization, and tuning
+ *   (thresholds, windows, queue capacity). Validated at construction — once you have a policy, it
+ *   is guaranteed valid.
  * @param inboxCapacity Capacity of the raw event inbox channel.
+ * @param logger Optional tagged logger for diagnostics.
  */
 @StreamInternalApi
 public fun <T> StreamEventAggregator(
     scope: CoroutineScope,
-    typeExtractor: (String) -> String?,
-    deserializer: (String) -> Result<T>,
-    aggregationThreshold: Int = 50,
-    maxWindowMs: Long = 500L,
-    dispatchQueueCapacity: Int = 16,
+    policy: StreamEventAggregationPolicy<T>,
     inboxCapacity: Int = Channel.UNLIMITED,
     logger: StreamLogger? = null,
-): StreamEventAggregator<T> {
-    require(aggregationThreshold > 0) { "aggregationThreshold must be > 0" }
-    require(maxWindowMs > 0) { "maxWindowMs must be > 0" }
-    require(dispatchQueueCapacity > 0) { "dispatchQueueCapacity must be > 0" }
-
-    return StreamEventAggregatorImpl(
+): StreamEventAggregator<T> =
+    StreamEventAggregatorImpl(
         scope = scope,
-        typeExtractor = typeExtractor,
-        deserializer = deserializer,
-        aggregationThreshold = aggregationThreshold,
-        maxWindowMs = maxWindowMs,
-        dispatchQueueCapacity = dispatchQueueCapacity,
+        typeExtractor = policy.extractType,
+        deserializer = policy.deserialize,
+        aggregationThreshold = policy.aggregationThreshold,
+        maxWindowMs = policy.maxWindowMs,
+        dispatchQueueCapacity = policy.dispatchQueueCapacity,
         inboxCapacity = inboxCapacity,
         logger = logger,
     )
-}

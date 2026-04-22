@@ -20,6 +20,7 @@ package io.getstream.android.core.internal.processing
 
 import io.getstream.android.core.api.log.StreamLogger
 import io.getstream.android.core.api.processing.StreamAggregatedEvent
+import io.getstream.android.core.api.processing.StreamEventAggregationPolicy
 import io.getstream.android.core.api.processing.StreamEventAggregator
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlinx.coroutines.CoroutineScope
@@ -55,8 +56,7 @@ class StreamEventAggregatorImplTest {
 
     @Test(expected = IllegalArgumentException::class)
     fun `factory rejects aggregationThreshold = 0`() {
-        StreamEventAggregator<TestEvent>(
-            scope = testScope(),
+        StreamEventAggregationPolicy.from<TestEvent>(
             typeExtractor = typeExtractor,
             deserializer = deserializer,
             aggregationThreshold = 0,
@@ -65,8 +65,7 @@ class StreamEventAggregatorImplTest {
 
     @Test(expected = IllegalArgumentException::class)
     fun `factory rejects negative aggregationThreshold`() {
-        StreamEventAggregator<TestEvent>(
-            scope = testScope(),
+        StreamEventAggregationPolicy.from<TestEvent>(
             typeExtractor = typeExtractor,
             deserializer = deserializer,
             aggregationThreshold = -1,
@@ -75,8 +74,7 @@ class StreamEventAggregatorImplTest {
 
     @Test(expected = IllegalArgumentException::class)
     fun `factory rejects maxWindowMs = 0`() {
-        StreamEventAggregator<TestEvent>(
-            scope = testScope(),
+        StreamEventAggregationPolicy.from<TestEvent>(
             typeExtractor = typeExtractor,
             deserializer = deserializer,
             maxWindowMs = 0,
@@ -85,8 +83,7 @@ class StreamEventAggregatorImplTest {
 
     @Test(expected = IllegalArgumentException::class)
     fun `factory rejects negative maxWindowMs`() {
-        StreamEventAggregator<TestEvent>(
-            scope = testScope(),
+        StreamEventAggregationPolicy.from<TestEvent>(
             typeExtractor = typeExtractor,
             deserializer = deserializer,
             maxWindowMs = -100,
@@ -95,8 +92,7 @@ class StreamEventAggregatorImplTest {
 
     @Test(expected = IllegalArgumentException::class)
     fun `factory rejects dispatchQueueCapacity = 0`() {
-        StreamEventAggregator<TestEvent>(
-            scope = testScope(),
+        StreamEventAggregationPolicy.from<TestEvent>(
             typeExtractor = typeExtractor,
             deserializer = deserializer,
             dispatchQueueCapacity = 0,
@@ -105,8 +101,7 @@ class StreamEventAggregatorImplTest {
 
     @Test(expected = IllegalArgumentException::class)
     fun `factory rejects negative dispatchQueueCapacity`() {
-        StreamEventAggregator<TestEvent>(
-            scope = testScope(),
+        StreamEventAggregationPolicy.from<TestEvent>(
             typeExtractor = typeExtractor,
             deserializer = deserializer,
             dispatchQueueCapacity = -1,
@@ -123,10 +118,13 @@ class StreamEventAggregatorImplTest {
         val aggregator =
             StreamEventAggregator<TestEvent>(
                 scope = scope,
-                typeExtractor = typeExtractor,
-                deserializer = deserializer,
-                aggregationThreshold = 50,
-                maxWindowMs = 200,
+                policy =
+                    StreamEventAggregationPolicy.from(
+                        typeExtractor = typeExtractor,
+                        deserializer = deserializer,
+                        aggregationThreshold = 50,
+                        maxWindowMs = 200,
+                    ),
             )
         aggregator.onEvent { received += it }
         aggregator.start()
@@ -159,10 +157,13 @@ class StreamEventAggregatorImplTest {
         val aggregator =
             StreamEventAggregator<TestEvent>(
                 scope = scope,
-                typeExtractor = typeExtractor,
-                deserializer = deserializer,
-                aggregationThreshold = 5, // low threshold for testing
-                maxWindowMs = 500,
+                policy =
+                    StreamEventAggregationPolicy.from(
+                        typeExtractor = typeExtractor,
+                        deserializer = deserializer,
+                        aggregationThreshold = 5, // low threshold for testing
+                        maxWindowMs = 500,
+                    ),
             )
         aggregator.onEvent { event ->
             received += event
@@ -232,10 +233,13 @@ class StreamEventAggregatorImplTest {
         val aggregator =
             StreamEventAggregator<TestEvent>(
                 scope = scope,
-                typeExtractor = typeExtractor,
-                deserializer = deserializer,
-                aggregationThreshold = 1000, // high threshold — won't be reached
-                maxWindowMs = 100, // short window
+                policy =
+                    StreamEventAggregationPolicy.from(
+                        typeExtractor = typeExtractor,
+                        deserializer = deserializer,
+                        aggregationThreshold = 1000, // high threshold — won't be reached
+                        maxWindowMs = 100, // short window
+                    ),
             )
         aggregator.onEvent { received += it }
         aggregator.start()
@@ -261,10 +265,13 @@ class StreamEventAggregatorImplTest {
         val aggregator =
             StreamEventAggregator<TestEvent>(
                 scope = scope,
-                typeExtractor = typeExtractor,
-                deserializer = deserializer,
-                aggregationThreshold = 50,
-                maxWindowMs = 200,
+                policy =
+                    StreamEventAggregationPolicy.from(
+                        typeExtractor = typeExtractor,
+                        deserializer = deserializer,
+                        aggregationThreshold = 50,
+                        maxWindowMs = 200,
+                    ),
             )
         aggregator.onEvent { received += it }
         aggregator.start()
@@ -290,8 +297,11 @@ class StreamEventAggregatorImplTest {
         val aggregator =
             StreamEventAggregator<TestEvent>(
                 scope = scope,
-                typeExtractor = typeExtractor,
-                deserializer = deserializer,
+                policy =
+                    StreamEventAggregationPolicy.from(
+                        typeExtractor = typeExtractor,
+                        deserializer = deserializer,
+                    ),
             )
         aggregator.onEvent {}
         aggregator.start()
@@ -311,10 +321,13 @@ class StreamEventAggregatorImplTest {
         val aggregator =
             StreamEventAggregator<TestEvent>(
                 scope = scope,
-                typeExtractor = typeExtractor,
-                deserializer = deserializer,
-                aggregationThreshold = 50,
-                maxWindowMs = 200,
+                policy =
+                    StreamEventAggregationPolicy.from(
+                        typeExtractor = typeExtractor,
+                        deserializer = deserializer,
+                        aggregationThreshold = 50,
+                        maxWindowMs = 200,
+                    ),
             )
         aggregator.onEvent { received += it }
         aggregator.start()
@@ -347,10 +360,13 @@ class StreamEventAggregatorImplTest {
         val aggregator =
             StreamEventAggregator<TestEvent>(
                 scope = scope,
-                typeExtractor = typeExtractor,
-                deserializer = deserializer,
-                aggregationThreshold = 5,
-                maxWindowMs = 100,
+                policy =
+                    StreamEventAggregationPolicy.from(
+                        typeExtractor = typeExtractor,
+                        deserializer = deserializer,
+                        aggregationThreshold = 5,
+                        maxWindowMs = 100,
+                    ),
             )
         aggregator.onEvent { event -> received += event }
         aggregator.start()
@@ -384,10 +400,13 @@ class StreamEventAggregatorImplTest {
         val aggregator =
             StreamEventAggregator<TestEvent>(
                 scope = scope,
-                typeExtractor = { null }, // always returns null
-                deserializer = deserializer,
-                aggregationThreshold = 3,
-                maxWindowMs = 200,
+                policy =
+                    StreamEventAggregationPolicy.from(
+                        typeExtractor = { null }, // always returns null
+                        deserializer = deserializer,
+                        aggregationThreshold = 3,
+                        maxWindowMs = 200,
+                    ),
             )
         aggregator.onEvent { received += it }
         aggregator.start()
@@ -422,10 +441,13 @@ class StreamEventAggregatorImplTest {
         val aggregator =
             StreamEventAggregator<TestEvent>(
                 scope = scope,
-                typeExtractor = throwingExtractor,
-                deserializer = deserializer,
-                aggregationThreshold = 3,
-                maxWindowMs = 200,
+                policy =
+                    StreamEventAggregationPolicy.from(
+                        typeExtractor = throwingExtractor,
+                        deserializer = deserializer,
+                        aggregationThreshold = 3,
+                        maxWindowMs = 200,
+                    ),
             )
         aggregator.onEvent { received += it }
         aggregator.start()
@@ -462,10 +484,13 @@ class StreamEventAggregatorImplTest {
         val aggregator =
             StreamEventAggregator<TestEvent>(
                 scope = scope,
-                typeExtractor = typeExtractor,
-                deserializer = throwingDeserializer,
-                aggregationThreshold = 50,
-                maxWindowMs = 200,
+                policy =
+                    StreamEventAggregationPolicy.from(
+                        typeExtractor = typeExtractor,
+                        deserializer = throwingDeserializer,
+                        aggregationThreshold = 50,
+                        maxWindowMs = 200,
+                    ),
             )
         aggregator.onEvent { received += it }
         aggregator.start()
@@ -499,10 +524,13 @@ class StreamEventAggregatorImplTest {
         val aggregator =
             StreamEventAggregator<TestEvent>(
                 scope = scope,
-                typeExtractor = typeExtractor,
-                deserializer = deserializer,
-                aggregationThreshold = 50,
-                maxWindowMs = 100,
+                policy =
+                    StreamEventAggregationPolicy.from(
+                        typeExtractor = typeExtractor,
+                        deserializer = deserializer,
+                        aggregationThreshold = 50,
+                        maxWindowMs = 100,
+                    ),
             )
         aggregator.onEvent { event ->
             if (event is TestEvent && event.raw.contains("EXPLODE")) {
@@ -542,10 +570,13 @@ class StreamEventAggregatorImplTest {
         val aggregator =
             StreamEventAggregator<TestEvent>(
                 scope = scope,
-                typeExtractor = typeExtractor,
-                deserializer = deserializer,
-                aggregationThreshold = 5,
-                maxWindowMs = 500,
+                policy =
+                    StreamEventAggregationPolicy.from(
+                        typeExtractor = typeExtractor,
+                        deserializer = deserializer,
+                        aggregationThreshold = 5,
+                        maxWindowMs = 500,
+                    ),
             )
         aggregator.onEvent { event ->
             received += event
@@ -589,10 +620,13 @@ class StreamEventAggregatorImplTest {
         val aggregator =
             StreamEventAggregator<TestEvent>(
                 scope = scope,
-                typeExtractor = typeExtractor,
-                deserializer = { Result.failure(IllegalStateException("always fails")) },
-                aggregationThreshold = 50,
-                maxWindowMs = 200,
+                policy =
+                    StreamEventAggregationPolicy.from(
+                        typeExtractor = typeExtractor,
+                        deserializer = { Result.failure(IllegalStateException("always fails")) },
+                        aggregationThreshold = 50,
+                        maxWindowMs = 200,
+                    ),
             )
         aggregator.onEvent { received += it }
         aggregator.start()
@@ -633,11 +667,14 @@ class StreamEventAggregatorImplTest {
         val aggregator =
             StreamEventAggregator<TestEvent>(
                 scope = scope,
-                typeExtractor = typeExtractor,
-                deserializer = deserializer,
-                aggregationThreshold = 50,
-                maxWindowMs = 50,
-                dispatchQueueCapacity = 1, // tiny queue
+                policy =
+                    StreamEventAggregationPolicy.from(
+                        typeExtractor = typeExtractor,
+                        deserializer = deserializer,
+                        aggregationThreshold = 50,
+                        maxWindowMs = 50,
+                        dispatchQueueCapacity = 1, // tiny queue
+                    ),
             )
         (aggregator as StreamEventAggregatorImpl<*>).logger = testLogger
         aggregator.onEvent { event ->
@@ -693,10 +730,13 @@ class StreamEventAggregatorImplTest {
         val aggregator =
             StreamEventAggregator<TestEvent>(
                 scope = scope,
-                typeExtractor = typeExtractor,
-                deserializer = deserializer,
-                aggregationThreshold = threshold,
-                maxWindowMs = 500,
+                policy =
+                    StreamEventAggregationPolicy.from(
+                        typeExtractor = typeExtractor,
+                        deserializer = deserializer,
+                        aggregationThreshold = threshold,
+                        maxWindowMs = 500,
+                    ),
             )
 
         val deliveredCount = java.util.concurrent.atomic.AtomicInteger(0)
