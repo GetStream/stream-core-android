@@ -19,13 +19,12 @@ package io.getstream.android.core.internal.processing
 import io.getstream.android.core.api.log.StreamLogger
 import io.getstream.android.core.api.processing.StreamAggregatedEvent
 import io.getstream.android.core.api.processing.StreamEventAggregator
+import io.getstream.android.core.api.utils.runCatchingCancellable
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
@@ -93,32 +92,29 @@ internal class StreamEventAggregatorImpl<T>(
     }
 
     private suspend fun runCollector() {
-        try {
-            while (scope.isActive) {
-                // Wait for the first event — suspends until something arrives
-                val first = inbox.receive()
-                val buffer = mutableListOf(first)
+        runCatchingCancellable {
+                while (scope.isActive) {
+                    // Wait for the first event — suspends until something arrives
+                    val first = inbox.receive()
+                    val buffer = mutableListOf(first)
 
-                // Collect more until threshold or maxWindow
-                collectWindow(buffer)
+                    // Collect more until threshold or maxWindow
+                    collectWindow(buffer)
 
-                // Package and send to dispatch queue
-                val item = packageForDispatch(buffer)
-                if (item != null) {
-                    val sent = dispatchQueue.trySend(item)
-                    if (sent.isFailure) {
-                        logger?.w {
-                            "[collector] Dispatch queue full (capacity=$dispatchQueueCapacity). " +
-                                "Dropping ${buffer.size} events. Dispatcher may be too slow."
+                    // Package and send to dispatch queue
+                    val item = packageForDispatch(buffer)
+                    if (item != null) {
+                        val sent = dispatchQueue.trySend(item)
+                        if (sent.isFailure) {
+                            logger?.w {
+                                "[collector] Dispatch queue full (capacity=$dispatchQueueCapacity). " +
+                                    "Dropping ${buffer.size} events. Dispatcher may be too slow."
+                            }
                         }
                     }
                 }
             }
-        } catch (_: ClosedReceiveChannelException) {
-            // Inbox closed — clean shutdown
-        } catch (_: CancellationException) {
-            // Scope cancelled
-        }
+            .onFailure { e -> logger?.d { "[collector] Stopped. ${e.message}" } }
     }
 
     /**
@@ -163,66 +159,51 @@ internal class StreamEventAggregatorImpl<T>(
 
     /** Calls [deserializer], catching both Result.failure and thrown exceptions. */
     private fun safeDeserialize(raw: String): T? =
-        try {
-            deserializer(raw)
-                .onFailure { e ->
-                    logger?.e(e) { "[collector] Failed to deserialize event. ${e.message}" }
-                }
-                .getOrNull()
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: Throwable) {
-            logger?.e(e) { "[collector] Deserializer threw. ${e.message}" }
-            null
-        }
+        runCatchingCancellable {
+                deserializer(raw)
+                    .onFailure { e ->
+                        logger?.e(e) { "[collector] Failed to deserialize event. ${e.message}" }
+                    }
+                    .getOrNull()
+            }
+            .onFailure { e -> logger?.e(e) { "[collector] Deserializer threw. ${e.message}" } }
+            .getOrNull()
 
     /** Calls [typeExtractor], catching thrown exceptions. Returns empty string on failure. */
     private fun safeExtractType(raw: String): String =
-        try {
-            typeExtractor(raw) ?: ""
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: Throwable) {
-            logger?.e(e) { "[collector] Type extractor threw. ${e.message}" }
-            ""
-        }
+        runCatchingCancellable { typeExtractor(raw) ?: "" }
+            .onFailure { e -> logger?.e(e) { "[collector] Type extractor threw. ${e.message}" } }
+            .getOrDefault("")
 
     private suspend fun runDispatcher() {
-        try {
-            for (item in dispatchQueue) {
-                when (item) {
-                    is DispatchItem.Individual -> {
-                        for (event in item.events) {
-                            try {
-                                eventHandler.get().invoke(event.parsed as Any)
-                            } catch (ce: CancellationException) {
-                                throw ce
-                            } catch (e: Throwable) {
-                                logger?.e(e) {
-                                    "[dispatcher] Handler threw on individual event. ${e.message}"
-                                }
+        runCatchingCancellable {
+                for (item in dispatchQueue) {
+                    when (item) {
+                        is DispatchItem.Individual -> {
+                            for (event in item.events) {
+                                runCatchingCancellable {
+                                        eventHandler.get().invoke(event.parsed as Any)
+                                    }
+                                    .onFailure { e ->
+                                        logger?.e(e) {
+                                            "[dispatcher] Handler threw on individual event. ${e.message}"
+                                        }
+                                    }
                             }
                         }
-                    }
 
-                    is DispatchItem.Aggregated -> {
-                        try {
-                            eventHandler.get().invoke(item.aggregated)
-                        } catch (ce: CancellationException) {
-                            throw ce
-                        } catch (e: Throwable) {
-                            logger?.e(e) {
-                                "[dispatcher] Handler threw on aggregated event. ${e.message}"
-                            }
+                        is DispatchItem.Aggregated -> {
+                            runCatchingCancellable { eventHandler.get().invoke(item.aggregated) }
+                                .onFailure { e ->
+                                    logger?.e(e) {
+                                        "[dispatcher] Handler threw on aggregated event. ${e.message}"
+                                    }
+                                }
                         }
                     }
                 }
             }
-        } catch (_: ClosedReceiveChannelException) {
-            // Dispatch queue closed
-        } catch (_: CancellationException) {
-            // Scope cancelled
-        }
+            .onFailure { e -> logger?.d { "[dispatcher] Stopped. ${e.message}" } }
     }
 
     /** A single deserialized event with its raw source preserved for logging. */
