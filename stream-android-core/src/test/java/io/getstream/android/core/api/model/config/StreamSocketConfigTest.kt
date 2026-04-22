@@ -66,9 +66,9 @@ class StreamSocketConfigTest {
         assertEquals(StreamSocketConfig.DEFAULT_HEALTH_INTERVAL_MS, config.healthCheckIntervalMs)
         assertEquals(StreamSocketConfig.DEFAULT_LIVENESS_MS, config.livenessThresholdMs)
         assertEquals(StreamSocketConfig.DEFAULT_CONNECTION_TIMEOUT_MS, config.connectionTimeoutMs)
-        assertEquals(StreamSocketConfig.DEFAULT_BATCH_SIZE, config.batchSize)
-        assertEquals(StreamSocketConfig.DEFAULT_BATCH_INIT_DELAY_MS, config.batchInitialDelayMs)
-        assertEquals(StreamSocketConfig.DEFAULT_BATCH_MAX_DELAY_MS, config.batchMaxDelayMs)
+        assertEquals(StreamSocketConfig.DEFAULT_AGGREGATION_THRESHOLD, config.aggregationThreshold)
+        assertEquals(StreamSocketConfig.DEFAULT_AGGREGATION_MAX_WINDOW_MS, config.aggregationMaxWindowMs)
+        assertEquals(StreamSocketConfig.DEFAULT_AGGREGATION_DISPATCH_QUEUE_CAPACITY, config.aggregationDispatchQueueCapacity)
     }
 
     @Test
@@ -81,16 +81,16 @@ class StreamSocketConfigTest {
                 healthCheckIntervalMs = 5_000L,
                 livenessThresholdMs = 15_000L,
                 connectionTimeoutMs = 2_000L,
-                batchSize = 1,
-                batchInitialDelayMs = 0L,
-                batchMaxDelayMs = 0L,
+                aggregationThreshold = 10,
+                aggregationMaxWindowMs = 200L,
+                aggregationDispatchQueueCapacity = 8,
             )
 
         assertEquals(5_000L, config.healthCheckIntervalMs)
         assertEquals(15_000L, config.livenessThresholdMs)
         assertEquals(2_000L, config.connectionTimeoutMs)
-        assertEquals(1, config.batchSize)
-        assertEquals(0L, config.batchInitialDelayMs)
-        assertEquals(0L, config.batchMaxDelayMs)
+        assertEquals(10, config.aggregationThreshold)
+        assertEquals(200L, config.aggregationMaxWindowMs)
+        assertEquals(8, config.aggregationDispatchQueueCapacity)
     }
 }

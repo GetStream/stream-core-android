@@ -37,7 +37,7 @@ import io.getstream.android.core.api.model.value.StreamUserId
 import io.getstream.android.core.api.model.value.StreamWsUrl
 import io.getstream.android.core.api.observers.lifecycle.StreamLifecycleMonitor
 import io.getstream.android.core.api.observers.network.StreamNetworkMonitor
-import io.getstream.android.core.api.processing.StreamBatcher
+import io.getstream.android.core.api.processing.StreamEventAggregator
 import io.getstream.android.core.api.processing.StreamSerialProcessingQueue
 import io.getstream.android.core.api.processing.StreamSingleFlightProcessor
 import io.getstream.android.core.api.recovery.StreamConnectionRecoveryEvaluator
@@ -101,7 +101,7 @@ internal class StreamClientFactoryTest {
         val connectionIdHolder: StreamConnectionIdHolder,
         val socketFactory: StreamWebSocketFactory,
         val healthMonitor: StreamHealthMonitor,
-        val batcher: StreamBatcher<String>,
+        val eventAggregator: StreamEventAggregator<Any>,
         val lifecycleMonitor: StreamLifecycleMonitor,
         val networkMonitor: StreamNetworkMonitor,
         val connectionRecoveryEvaluator: StreamConnectionRecoveryEvaluator,
@@ -133,7 +133,7 @@ internal class StreamClientFactoryTest {
             connectionIdHolder = mockk(relaxed = true),
             socketFactory = mockk(relaxed = true),
             healthMonitor = mockk(relaxed = true),
-            batcher = mockk(relaxed = true),
+            eventAggregator = mockk(relaxed = true),
             lifecycleMonitor = mockk(relaxed = true),
             networkMonitor = mockk(relaxed = true),
             connectionRecoveryEvaluator = mockk(relaxed = true),
@@ -157,7 +157,7 @@ internal class StreamClientFactoryTest {
             connectionIdHolder = deps.connectionIdHolder,
             socketFactory = deps.socketFactory,
             healthMonitor = deps.healthMonitor,
-            batcher = deps.batcher,
+            eventAggregator = deps.eventAggregator,
             httpConfig = httpConfig,
             serializationConfig = serializationConfig,
             logProvider = logProvider,
@@ -201,7 +201,7 @@ internal class StreamClientFactoryTest {
         val socketSession = client.readPrivateField("socketSession") as StreamSocketSession<*>
         socketSession.assertFieldEquals("config", deps.socketConfig)
         socketSession.assertFieldEquals("healthMonitor", deps.healthMonitor)
-        socketSession.assertFieldEquals("batcher", deps.batcher)
+        socketSession.assertFieldEquals("aggregator", deps.eventAggregator)
         socketSession.assertFieldEquals("products", listOf("feeds"))
 
         val internalSocket = socketSession.readPrivateField("internalSocket")

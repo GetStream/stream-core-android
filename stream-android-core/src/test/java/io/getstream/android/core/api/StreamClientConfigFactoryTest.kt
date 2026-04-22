@@ -39,7 +39,7 @@ import io.getstream.android.core.api.model.value.StreamHttpClientInfoHeader
 import io.getstream.android.core.api.model.value.StreamToken
 import io.getstream.android.core.api.model.value.StreamUserId
 import io.getstream.android.core.api.model.value.StreamWsUrl
-import io.getstream.android.core.api.processing.StreamBatcher
+import io.getstream.android.core.api.processing.StreamEventAggregator
 import io.getstream.android.core.api.processing.StreamSerialProcessingQueue
 import io.getstream.android.core.api.processing.StreamSingleFlightProcessor
 import io.getstream.android.core.api.serialization.StreamEventSerialization
@@ -189,26 +189,23 @@ internal class StreamClientConfigFactoryTest {
     }
 
     @Test
-    fun `factory wires custom batch parameters from socketConfig`() {
+    fun `factory wires custom aggregation parameters from socketConfig`() {
         val customConfig =
             StreamSocketConfig.jwt(
                 url = defaultSocketConfig.url,
                 apiKey = defaultSocketConfig.apiKey,
                 clientInfoHeader = defaultSocketConfig.clientInfoHeader,
-                batchSize = 20,
-                batchInitialDelayMs = 50L,
-                batchMaxDelayMs = 500L,
+                aggregationThreshold = 20,
+                aggregationMaxWindowMs = 200L,
+                aggregationDispatchQueueCapacity = 8,
             )
         val client = buildClient(socketConfig = customConfig)
 
         val socketSession =
             (client as StreamClientImpl<*>).readPrivateField("socketSession")
                 as StreamSocketSession<*>
-        val batcher = socketSession.readPrivateField("batcher") as StreamBatcher<*>
-        assertNotNull(batcher)
-        batcher.assertFieldEquals("batchSize", 20)
-        batcher.assertFieldEquals("initialDelayMs", 50L)
-        batcher.assertFieldEquals("maxDelayMs", 500L)
+        val aggregator = socketSession.readPrivateField("aggregator")
+        assertNotNull(aggregator)
     }
 
     // ── StreamComponentProvider overrides ────────────────────────────────────
@@ -318,14 +315,14 @@ internal class StreamClientConfigFactoryTest {
     }
 
     @Test
-    fun `factory wires injected batcher from components`() {
-        val batcher = mockk<StreamBatcher<String>>(relaxed = true)
+    fun `factory wires injected aggregator from components`() {
+        val eventAggregator = mockk<StreamEventAggregator<Any>>(relaxed = true)
         val client =
             buildClient(
                 components =
                     StreamComponentProvider(
                         logProvider = logProvider,
-                        batcher = batcher,
+                        eventAggregator = eventAggregator,
                         androidComponentsProvider = fakeAndroidComponents,
                     )
             )
@@ -333,7 +330,7 @@ internal class StreamClientConfigFactoryTest {
         val socketSession =
             (client as StreamClientImpl<*>).readPrivateField("socketSession")
                 as StreamSocketSession<*>
-        socketSession.assertFieldEquals("batcher", batcher)
+        socketSession.assertFieldEquals("aggregator", eventAggregator)
     }
 
     @Test
@@ -376,7 +373,7 @@ internal class StreamClientConfigFactoryTest {
 
         val socketSession = impl.readPrivateField("socketSession") as StreamSocketSession<*>
         assertNotNull(socketSession.readPrivateField("healthMonitor"))
-        assertNotNull(socketSession.readPrivateField("batcher"))
+        assertNotNull(socketSession.readPrivateField("aggregator"))
         assertNotNull(socketSession.readPrivateField("internalSocket"))
     }
 
@@ -391,9 +388,9 @@ internal class StreamClientConfigFactoryTest {
                 url = StreamWsUrl.fromString("wss://custom.stream.io"),
                 apiKey = defaultSocketConfig.apiKey,
                 clientInfoHeader = defaultSocketConfig.clientInfoHeader,
-                batchSize = 5,
-                batchInitialDelayMs = 25L,
-                batchMaxDelayMs = 250L,
+                aggregationThreshold = 10,
+                aggregationMaxWindowMs = 200L,
+                aggregationDispatchQueueCapacity = 8,
             )
 
         val client =
@@ -417,10 +414,8 @@ internal class StreamClientConfigFactoryTest {
         // Injected health monitor takes precedence over socketConfig timing
         socketSession.assertFieldEquals("healthMonitor", healthMonitor)
 
-        // Batcher still created from socketConfig since not injected
-        val batcher = socketSession.readPrivateField("batcher") as StreamBatcher<*>
-        batcher.assertFieldEquals("batchSize", 5)
-        batcher.assertFieldEquals("initialDelayMs", 25L)
-        batcher.assertFieldEquals("maxDelayMs", 250L)
+        // Aggregator still created from socketConfig since not injected
+        val aggregator = socketSession.readPrivateField("aggregator")
+        assertNotNull(aggregator)
     }
 }

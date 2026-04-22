@@ -25,7 +25,8 @@ import io.getstream.android.core.api.model.event.StreamClientWsEvent
 import io.getstream.android.core.api.model.exceptions.StreamEndpointErrorData
 import io.getstream.android.core.api.model.exceptions.StreamEndpointException
 import io.getstream.android.core.api.model.value.StreamWsUrl
-import io.getstream.android.core.api.processing.StreamBatcher
+import io.getstream.android.core.api.processing.StreamAggregatedEvent
+import io.getstream.android.core.api.processing.StreamEventAggregator
 import io.getstream.android.core.api.serialization.StreamJsonSerialization
 import io.getstream.android.core.api.socket.StreamWebSocket
 import io.getstream.android.core.api.socket.listeners.StreamClientListener
@@ -70,7 +71,7 @@ class StreamSocketSessionTest {
     private lateinit var json: StreamJsonSerialization
     private lateinit var parser: StreamCompositeEventSerializationImpl<Unit>
     private lateinit var health: StreamHealthMonitor
-    private lateinit var debounce: StreamBatcher<String>
+    private lateinit var aggregator: StreamEventAggregator<Any>
     private lateinit var subs: StreamSubscriptionManager<StreamClientListener>
 
     private lateinit var session: StreamSocketSession<Unit>
@@ -91,7 +92,7 @@ class StreamSocketSessionTest {
         json = mockk(relaxed = true)
         parser = mockk(relaxed = true)
         health = mockk(relaxed = true)
-        debounce = mockk(relaxed = true)
+        aggregator = mockk(relaxed = true)
         subs = mockk(relaxed = true)
 
         // default: route notifications to a listener so we can assert state
@@ -104,7 +105,7 @@ class StreamSocketSessionTest {
             }
 
         every { socket.close(any(), any()) } returns Result.success(Unit)
-        every { debounce.stop() } returns Result.success(Unit)
+        every { aggregator.stop() } returns Result.success(Unit)
         every { health.stop() } returns Result.success(Unit)
 
         session =
@@ -115,7 +116,7 @@ class StreamSocketSessionTest {
                 jsonSerialization = json,
                 eventParser = parser,
                 healthMonitor = health,
-                batcher = debounce,
+                aggregator = aggregator,
                 subscriptionManager = subs,
                 products = listOf("feeds"),
             )
@@ -140,7 +141,7 @@ class StreamSocketSessionTest {
         verify {
             socket.close(SocketConstants.CLOSE_SOCKET_CODE, SocketConstants.CLOSE_SOCKET_REASON)
         }
-        verify { debounce.stop() }
+        verify { aggregator.stop() }
         verify { health.stop() }
     }
 
@@ -164,7 +165,7 @@ class StreamSocketSessionTest {
         verify {
             socket.close(SocketConstants.CLOSE_SOCKET_CODE, SocketConstants.CLOSE_SOCKET_REASON)
         }
-        verify { debounce.stop() }
+        verify { aggregator.stop() }
         verify { health.stop() }
     }
 
@@ -177,7 +178,7 @@ class StreamSocketSessionTest {
 
         assertTrue(result.isSuccess)
         verify { socket.close(customCode, customReason) }
-        verify { debounce.stop() }
+        verify { aggregator.stop() }
         verify { health.stop() }
     }
 
@@ -199,7 +200,7 @@ class StreamSocketSessionTest {
             verify(exactly = 2) {
                 socket.close(SocketConstants.CLOSE_SOCKET_CODE, SocketConstants.CLOSE_SOCKET_REASON)
             }
-            verify(atLeast = 1) { debounce.stop() }
+            verify(atLeast = 1) { aggregator.stop() }
             verify(atLeast = 1) { health.stop() }
         }
 
@@ -212,7 +213,7 @@ class StreamSocketSessionTest {
 
         assertTrue(res.isSuccess)
         verify { socket.close(any(), any()) }
-        verify { debounce.stop() }
+        verify { aggregator.stop() }
         verify { health.stop() }
         verify { logger.e(notifyFailure, any()) }
     }
@@ -238,7 +239,7 @@ class StreamSocketSessionTest {
 
             verify { clientListener.onState(StreamConnectionState.Disconnected()) }
             verify { health.stop() }
-            verify { debounce.stop() }
+            verify { aggregator.stop() }
         }
 
     @Test
@@ -261,7 +262,7 @@ class StreamSocketSessionTest {
 
         verify { client.onState(StreamConnectionState.Disconnected()) }
         verify { health.stop() }
-        verify { debounce.stop() }
+        verify { aggregator.stop() }
     }
 
     @Test
@@ -273,7 +274,7 @@ class StreamSocketSessionTest {
                 Result.success(Unit)
             }
 
-        every { debounce.offer(any()) } returns false
+        every { aggregator.offer(any()) } returns false
         every { socket.close(any(), any()) } returns Result.success(Unit)
 
         val f =
@@ -287,7 +288,7 @@ class StreamSocketSessionTest {
         verify { health.acknowledgeHeartbeat() }
         verify { client.onState(match { it is StreamConnectionState.Disconnected }) }
         verify { health.stop() }
-        verify { debounce.stop() }
+        verify { aggregator.stop() }
         verify { socket.close(any(), any()) }
     }
 
@@ -299,7 +300,7 @@ class StreamSocketSessionTest {
                 firstArg<(StreamClientListener) -> Unit>().invoke(client)
                 Result.success(Unit)
             }
-        every { debounce.offer(any()) } returns true
+        every { aggregator.offer(any()) } returns true
         every { socket.close(any(), any()) } returns Result.success(Unit)
 
         val f =
@@ -323,7 +324,7 @@ class StreamSocketSessionTest {
                 firstArg<(StreamClientListener) -> Unit>().invoke(client)
                 Result.success(Unit)
             }
-        every { debounce.offer(any()) } returns false
+        every { aggregator.offer(any()) } returns false
         every { socket.close(any(), any()) } returns Result.success(Unit)
 
         val f =
@@ -337,7 +338,7 @@ class StreamSocketSessionTest {
         verify { socket.close(any(), any()) }
         verify { client.onState(any<StreamConnectionState.Disconnected>()) }
         verify { health.stop() }
-        verify { debounce.stop() }
+        verify { aggregator.stop() }
     }
 
     @Test
@@ -360,7 +361,7 @@ class StreamSocketSessionTest {
 
         verify { client.onState(StreamConnectionState.Disconnected()) }
         verify { health.stop() }
-        verify { debounce.stop() }
+        verify { aggregator.stop() }
     }
 
     @Test
@@ -382,7 +383,7 @@ class StreamSocketSessionTest {
 
         verify { client.onState(ofType<StreamConnectionState.Disconnected>()) }
         verify { health.stop() }
-        verify { debounce.stop() }
+        verify { aggregator.stop() }
     }
 
     @Test
@@ -410,7 +411,7 @@ class StreamSocketSessionTest {
 
         verify(exactly = 0) { client.onState(any()) }
         verify { health.stop() }
-        verify { debounce.stop() }
+        verify { aggregator.stop() }
     }
 
     @Test
@@ -430,7 +431,7 @@ class StreamSocketSessionTest {
         verify { client.onState(ofType<StreamConnectionState.Disconnected>()) }
         verify { socket.close(any(), any()) }
         verify { health.stop() }
-        verify { debounce.stop() }
+        verify { aggregator.stop() }
     }
 
     @Test
@@ -448,7 +449,7 @@ class StreamSocketSessionTest {
         assertTrue(res.isFailure)
         verify { client.onState(StreamConnectionState.Disconnected()) }
         verify { health.stop() }
-        verify { debounce.stop() }
+        verify { aggregator.stop() }
     }
 
     @Test
@@ -616,7 +617,7 @@ class StreamSocketSessionTest {
             verify(atLeast = 1) { sub.cancel() }
             verify { socket.close(any(), any()) }
             verify { health.stop() }
-            verify { debounce.stop() }
+            verify { aggregator.stop() }
         }
 
     @Test
@@ -763,17 +764,17 @@ class StreamSocketSessionTest {
             verify(exactly = 1) { socket.close(any(), any()) }
             verify(exactly = 2) { hsSub.cancel() }
             verify(exactly = 1) { health.stop() }
-            verify(exactly = 1) { debounce.stop() }
+            verify(exactly = 1) { aggregator.stop() }
             assertTrue(emittedStates.any { it is StreamConnectionState.Disconnected })
 
             job.cancelAndJoin()
         }
 
     @Test
-    fun `onBatch forwards non-health events, ignores health, and emits Disconnected_Error on connection error`() =
+    fun `onEvent forwards non-health events, ignores health, and emits Disconnected_Error on connection error`() =
         runTest {
-            var onBatchCb: (suspend (List<String>, Long, Int) -> Unit)? = null
-            every { debounce.onBatch(any()) } answers { onBatchCb = arg(0) }
+            var onEventCb: (suspend (Any) -> Unit)? = null
+            every { aggregator.onEvent(any()) } answers { onEventCb = arg(0) }
             every { health.onHeartbeat(any()) } just Runs
             every { health.onUnhealthy(any()) } just Runs
 
@@ -809,12 +810,6 @@ class StreamSocketSessionTest {
                 mockk<StreamClientConnectionErrorEvent>(relaxed = true).also {
                     every { it.error } returns mockk(relaxed = true)
                 }
-            every { parser.deserialize("E1") } returns
-                Result.success(StreamCompositeSerializationEvent.internal(normalEvent))
-            every { parser.deserialize("H") } returns
-                Result.success(StreamCompositeSerializationEvent.internal(healthEvent))
-            every { parser.deserialize("ERR") } returns
-                Result.success(StreamCompositeSerializationEvent.internal(errorEvent))
 
             val job = async {
                 session.connect(
@@ -831,10 +826,14 @@ class StreamSocketSessionTest {
             }
             advanceUntilIdle()
 
-            val cb = requireNotNull(onBatchCb) { "onBatch not registered" }
-            cb.invoke(listOf("E1", "H", "ERR"), 100L, 3)
+            val cb = requireNotNull(onEventCb) { "onEvent not registered" }
+            // Simulate individual event delivery (low traffic path)
+            cb.invoke(StreamCompositeSerializationEvent.internal<Unit>(normalEvent))
+            cb.invoke(StreamCompositeSerializationEvent.internal<Unit>(healthEvent))
+            cb.invoke(StreamCompositeSerializationEvent.internal<Unit>(errorEvent))
             advanceUntilIdle()
 
+            // normalEvent + errorEvent dispatched; healthEvent filtered
             assertEquals(2, seenEvents.size)
             assertTrue(seenEvents.contains(normalEvent))
             assertTrue(seenEvents.contains(errorEvent))
@@ -844,15 +843,15 @@ class StreamSocketSessionTest {
         }
 
     @Test
-    fun `onBatch - deserialize fails then fallback parses api error and emits Disconnected_Error`() =
+    fun `onEvent aggregated - core events handled individually, product events grouped`() =
         runTest {
-            var onBatchCb: (suspend (List<String>, Long, Int) -> Unit)? = null
-            every { debounce.onBatch(any()) } answers { onBatchCb = arg(0) }
+            var onEventCb: (suspend (Any) -> Unit)? = null
+            every { aggregator.onEvent(any()) } answers { onEventCb = arg(0) }
             every { health.onHeartbeat(any()) } just Runs
             every { health.onUnhealthy(any()) } just Runs
 
-            val seenStates = mutableListOf<StreamConnectionState>()
             val seenEvents = mutableListOf<Any>()
+            val seenStates = mutableListOf<StreamConnectionState>()
             every { subs.forEach(any()) } answers
                 {
                     val consumer = arg<(StreamClientListener) -> Unit>(0)
@@ -877,17 +876,16 @@ class StreamSocketSessionTest {
             every { socket.open(config) } returns Result.success(Unit)
             every { socket.close(any(), any()) } returns Result.success(Unit)
 
-            val apiError = mockk<StreamEndpointErrorData>(relaxed = true)
-            every { parser.deserialize("BAD_JSON") } returns
-                Result.failure(IllegalStateException("boom"))
-            every { json.fromJson("BAD_JSON", StreamEndpointErrorData::class.java) } returns
-                Result.success(apiError)
+            val errorEvent =
+                mockk<StreamClientConnectionErrorEvent>(relaxed = true).also {
+                    every { it.error } returns mockk(relaxed = true)
+                }
 
             val job = async {
                 session.connect(
                     ConnectUserData(
-                        userId = "u",
-                        token = "t",
+                        userId = "user-1",
+                        token = "tok",
                         image = null,
                         invisible = false,
                         language = null,
@@ -898,13 +896,30 @@ class StreamSocketSessionTest {
             }
             advanceUntilIdle()
 
-            val cb = requireNotNull(onBatchCb) { "onBatch not registered" }
-            cb.invoke(listOf("BAD_JSON"), 100L, 1)
+            val cb = requireNotNull(onEventCb) { "onEvent not registered" }
+            // Simulate aggregated event delivery (spike path)
+            val aggregatedEvent =
+                StreamAggregatedEvent(
+                    mapOf(
+                        "connection.error" to
+                            listOf(
+                                StreamCompositeSerializationEvent.internal<Unit>(errorEvent)
+                            ),
+                        "channel.updated" to
+                            listOf(
+                                StreamCompositeSerializationEvent.external("product1"),
+                                StreamCompositeSerializationEvent.external("product2"),
+                            ),
+                    )
+                )
+            cb.invoke(aggregatedEvent)
             advanceUntilIdle()
 
-            assertTrue(seenEvents.isEmpty())
+            // Connection error causes Disconnected state
             assertTrue(seenStates.any { it is StreamConnectionState.Disconnected })
-            verify { json.fromJson("BAD_JSON", StreamEndpointErrorData::class.java) }
+            // Core error event dispatched individually + product aggregated event dispatched
+            assertTrue(seenEvents.any { it is StreamClientConnectionErrorEvent })
+            assertTrue(seenEvents.any { it is StreamAggregatedEvent<*> })
 
             job.cancelAndJoin()
         }
@@ -1423,7 +1438,7 @@ class StreamSocketSessionTest {
     fun `handshake buffers non-auth message and replays it exactly once after eventListener installed`() =
         runTest {
             val offeredMessages = mutableListOf<String>()
-            every { debounce.offer(any()) } answers
+            every { aggregator.offer(any()) } answers
                 {
                     offeredMessages.add(firstArg())
                     true
@@ -1431,7 +1446,7 @@ class StreamSocketSessionTest {
 
             every { health.onHeartbeat(any()) } just Runs
             every { health.onUnhealthy(any()) } just Runs
-            every { debounce.onBatch(any()) } just Runs
+            every { aggregator.onEvent(any()) } just Runs
 
             val hsSub = mockk<StreamSubscription>(relaxed = true)
             val eventSub = mockk<StreamSubscription>(relaxed = true)
@@ -1500,7 +1515,7 @@ class StreamSocketSessionTest {
     fun `handshake acknowledges heartbeat for all messages including non-auth`() = runTest {
         every { health.onHeartbeat(any()) } just Runs
         every { health.onUnhealthy(any()) } just Runs
-        every { debounce.onBatch(any()) } just Runs
+        every { aggregator.onEvent(any()) } just Runs
 
         var hsListener: StreamWebSocketListener? = null
         every { socket.subscribe(any<StreamWebSocketListener>(), any()) } answers
@@ -1532,7 +1547,7 @@ class StreamSocketSessionTest {
     fun `connect fails when eventListener subscribe fails after handshake`() = runTest {
         every { health.onHeartbeat(any()) } just Runs
         every { health.onUnhealthy(any()) } just Runs
-        every { debounce.onBatch(any()) } just Runs
+        every { aggregator.onEvent(any()) } just Runs
 
         val hsSub = mockk<StreamSubscription>(relaxed = true)
         var hsListener: StreamWebSocketListener? = null
@@ -1572,8 +1587,8 @@ class StreamSocketSessionTest {
     fun `connect fails when buffered message replay fails`() = runTest {
         every { health.onHeartbeat(any()) } just Runs
         every { health.onUnhealthy(any()) } just Runs
-        every { debounce.onBatch(any()) } just Runs
-        every { debounce.offer(any()) } returns false // replay will fail
+        every { aggregator.onEvent(any()) } just Runs
+        every { aggregator.offer(any()) } returns false // replay will fail
 
         val hsSub = mockk<StreamSubscription>(relaxed = true)
         val eventSub = mockk<StreamSubscription>(relaxed = true)
