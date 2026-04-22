@@ -417,8 +417,7 @@ internal fun createStreamClientInternal(
     val eventParser =
         StreamCompositeEventSerializationImpl(
             internal =
-                serializationConfig.eventParser
-                    ?: StreamEventSerialization(compositeSerialization),
+                serializationConfig.eventParser ?: StreamEventSerialization(compositeSerialization),
             external = serializationConfig.productEventSerializers,
         )
 

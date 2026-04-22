@@ -239,9 +239,7 @@ internal class StreamSocketSession<T>(
                     is StreamAggregatedEvent<*> -> handleAggregatedEvent(event)
                     is StreamCompositeSerializationEvent<*> -> {
                         @Suppress("UNCHECKED_CAST")
-                        handleSingleCompositeEvent(
-                            event as StreamCompositeSerializationEvent<T>,
-                        )
+                        handleSingleCompositeEvent(event as StreamCompositeSerializationEvent<T>)
                     }
                 }
             }
@@ -460,9 +458,7 @@ internal class StreamSocketSession<T>(
             }
         }
 
-    /**
-     * Handles a single deserialized composite event (individual dispatch path — low traffic).
-     */
+    /** Handles a single deserialized composite event (individual dispatch path — low traffic). */
     private fun handleSingleCompositeEvent(event: StreamCompositeSerializationEvent<T>) {
         logger.v { "[onEvent] Individual event: $event" }
         val coreEvent = event.core
@@ -476,9 +472,7 @@ internal class StreamSocketSession<T>(
             )
         }
         subscriptionManager.forEach { listener ->
-            coreEvent
-                ?.takeUnless { it is StreamHealthCheckEvent }
-                ?.let { listener.onEvent(it) }
+            coreEvent?.takeUnless { it is StreamHealthCheckEvent }?.let { listener.onEvent(it) }
 
             productEvent?.let { listener.onEvent(it) }
         }
@@ -529,9 +523,7 @@ internal class StreamSocketSession<T>(
                     "${productEvents.values.sumOf { it.size }} total events"
             }
             val productAggregated = StreamAggregatedEvent(productEvents.toMap())
-            subscriptionManager.forEach { listener ->
-                listener.onEvent(productAggregated)
-            }
+            subscriptionManager.forEach { listener -> listener.onEvent(productAggregated) }
         }
     }
 

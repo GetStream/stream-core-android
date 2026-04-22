@@ -136,15 +136,8 @@ internal class StreamEventAggregatorImpl<T>(
             // Low traffic — deserialize and dispatch individually
             val events = mutableListOf<DeserializedEvent<T>>()
             for (raw in rawMessages) {
-                val parsed =
-                    deserializer(raw)
-                        .onFailure { e ->
-                            logger?.e(e) { "[collector] Failed to deserialize event. ${e.message}" }
-                        }
-                        .getOrNull()
-                if (parsed != null) {
-                    events += DeserializedEvent(raw, parsed)
-                }
+                val parsed = safeDeserialize(raw) ?: continue
+                events += DeserializedEvent(raw, parsed)
             }
             return if (events.isEmpty()) null else DispatchItem.Individual(events)
         }
@@ -152,20 +145,39 @@ internal class StreamEventAggregatorImpl<T>(
         // Spike — group by type
         val grouped = LinkedHashMap<String, MutableList<T>>()
         for (raw in rawMessages) {
-            val type = typeExtractor(raw) ?: ""
-            val event =
-                deserializer(raw)
-                    .onFailure { e ->
-                        logger?.e(e) {
-                            "[collector] Failed to deserialize event (type=$type). ${e.message}"
-                        }
-                    }
-                    .getOrNull() ?: continue
+            val type = safeExtractType(raw)
+            val event = safeDeserialize(raw) ?: continue
             grouped.getOrPut(type) { mutableListOf() }.add(event)
         }
         return if (grouped.isEmpty()) null
         else DispatchItem.Aggregated(StreamAggregatedEvent(grouped))
     }
+
+    /** Calls [deserializer], catching both Result.failure and thrown exceptions. */
+    private fun safeDeserialize(raw: String): T? =
+        try {
+            deserializer(raw)
+                .onFailure { e ->
+                    logger?.e(e) { "[collector] Failed to deserialize event. ${e.message}" }
+                }
+                .getOrNull()
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Throwable) {
+            logger?.e(e) { "[collector] Deserializer threw. ${e.message}" }
+            null
+        }
+
+    /** Calls [typeExtractor], catching thrown exceptions. Returns empty string on failure. */
+    private fun safeExtractType(raw: String): String =
+        try {
+            typeExtractor(raw) ?: ""
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Throwable) {
+            logger?.e(e) { "[collector] Type extractor threw. ${e.message}" }
+            ""
+        }
 
     private suspend fun runDispatcher() {
         try {

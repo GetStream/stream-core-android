@@ -61,8 +61,8 @@ import io.getstream.android.core.api.model.value.StreamWsUrl
  * @param connectionTimeoutMs WebSocket connection timeout in milliseconds.
  * @param aggregationThreshold Number of accumulated events that triggers aggregated delivery
  *   instead of individual dispatch.
- * @param aggregationMaxWindowMs Maximum time the aggregator collects events before delivering.
- *   This is the latency ceiling in milliseconds.
+ * @param aggregationMaxWindowMs Maximum time the aggregator collects events before delivering. This
+ *   is the latency ceiling in milliseconds.
  * @param aggregationDispatchQueueCapacity Bounded capacity of the dispatch queue between the
  *   aggregator's collector and dispatcher coroutines.
  */

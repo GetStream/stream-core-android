@@ -67,8 +67,14 @@ class StreamSocketConfigTest {
         assertEquals(StreamSocketConfig.DEFAULT_LIVENESS_MS, config.livenessThresholdMs)
         assertEquals(StreamSocketConfig.DEFAULT_CONNECTION_TIMEOUT_MS, config.connectionTimeoutMs)
         assertEquals(StreamSocketConfig.DEFAULT_AGGREGATION_THRESHOLD, config.aggregationThreshold)
-        assertEquals(StreamSocketConfig.DEFAULT_AGGREGATION_MAX_WINDOW_MS, config.aggregationMaxWindowMs)
-        assertEquals(StreamSocketConfig.DEFAULT_AGGREGATION_DISPATCH_QUEUE_CAPACITY, config.aggregationDispatchQueueCapacity)
+        assertEquals(
+            StreamSocketConfig.DEFAULT_AGGREGATION_MAX_WINDOW_MS,
+            config.aggregationMaxWindowMs,
+        )
+        assertEquals(
+            StreamSocketConfig.DEFAULT_AGGREGATION_DISPATCH_QUEUE_CAPACITY,
+            config.aggregationDispatchQueueCapacity,
+        )
     }
 
     @Test

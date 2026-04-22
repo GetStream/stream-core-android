@@ -902,9 +902,7 @@ class StreamSocketSessionTest {
                 StreamAggregatedEvent(
                     mapOf(
                         "connection.error" to
-                            listOf(
-                                StreamCompositeSerializationEvent.internal<Unit>(errorEvent)
-                            ),
+                            listOf(StreamCompositeSerializationEvent.internal<Unit>(errorEvent)),
                         "channel.updated" to
                             listOf(
                                 StreamCompositeSerializationEvent.external("product1"),
