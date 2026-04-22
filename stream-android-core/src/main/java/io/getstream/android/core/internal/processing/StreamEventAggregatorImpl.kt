@@ -18,6 +18,7 @@ package io.getstream.android.core.internal.processing
 
 import io.getstream.android.core.api.log.StreamLogger
 import io.getstream.android.core.api.processing.StreamAggregatedEvent
+import io.getstream.android.core.api.processing.StreamEventAggregationPolicy
 import io.getstream.android.core.api.processing.StreamEventAggregator
 import io.getstream.android.core.api.utils.runCatchingCancellable
 import java.util.concurrent.atomic.AtomicBoolean
@@ -36,23 +37,20 @@ import kotlinx.coroutines.launch
  * - **Collector:** Drains [inbox], groups by type, packages into [dispatchQueue].
  * - **Dispatcher:** Takes from [dispatchQueue], calls the registered handler.
  *
- * Collection stops when [aggregationThreshold] items accumulate or [maxWindowMs] elapses. The
- * dispatch queue is bounded by [dispatchQueueCapacity] — if full, the collector drops the delivery
- * and logs a warning.
+ * Collection stops when [policy.aggregationThreshold] items accumulate or [policy.maxWindowMs]
+ * elapses. The dispatch queue is bounded by [dispatchQueueCapacity] — if full, the collector drops
+ * the delivery and logs a warning.
  */
 internal class StreamEventAggregatorImpl<T>(
     private val scope: CoroutineScope,
-    private val typeExtractor: (String) -> String?,
-    private val deserializer: (String) -> Result<T>,
-    private val aggregationThreshold: Int = 50,
-    private val maxWindowMs: Long = 500L,
-    private val dispatchQueueCapacity: Int = 16,
+    private val policy: StreamEventAggregationPolicy<T>,
     inboxCapacity: Int = Channel.UNLIMITED,
     internal var logger: StreamLogger? = null,
 ) : StreamEventAggregator<T> {
 
     private val inbox = StreamRestartableChannel<String>(inboxCapacity)
-    private val dispatchQueue = StreamRestartableChannel<DispatchItem<T>>(dispatchQueueCapacity)
+    private val dispatchQueue =
+        StreamRestartableChannel<DispatchItem<T>>(policy.dispatchQueueCapacity)
     private val started = AtomicBoolean(false)
     private var collectorJob: Job? = null
     private var dispatcherJob: Job? = null
@@ -108,7 +106,7 @@ internal class StreamEventAggregatorImpl<T>(
                     val sent = dispatchQueue.trySend(item)
                     if (sent.isFailure) {
                         logger?.w {
-                            "[collector] Dispatch queue full (capacity=$dispatchQueueCapacity). " +
+                            "[collector] Dispatch queue full (capacity=$policy.dispatchQueueCapacity). " +
                                 "Dropping ${buffer.size} events. Dispatcher may be too slow."
                         }
                     }
@@ -120,13 +118,13 @@ internal class StreamEventAggregatorImpl<T>(
     }
 
     /**
-     * Collects events from the inbox until [aggregationThreshold] is reached or [maxWindowMs]
-     * elapses. Uses [kotlinx.coroutines.withTimeoutOrNull] so virtual-time test dispatchers can
-     * advance the clock correctly.
+     * Collects events from the inbox until [policy.aggregationThreshold] is reached or
+     * [policy.maxWindowMs] elapses. Uses [kotlinx.coroutines.withTimeoutOrNull] so virtual-time
+     * test dispatchers can advance the clock correctly.
      */
     private suspend fun collectWindow(buffer: MutableList<String>) {
-        kotlinx.coroutines.withTimeoutOrNull(maxWindowMs) {
-            while (buffer.size < aggregationThreshold) {
+        kotlinx.coroutines.withTimeoutOrNull(policy.maxWindowMs) {
+            while (buffer.size < policy.aggregationThreshold) {
                 buffer += inbox.receive()
             }
         }
@@ -138,7 +136,7 @@ internal class StreamEventAggregatorImpl<T>(
             return null
         }
 
-        if (rawMessages.size < aggregationThreshold) {
+        if (rawMessages.size < policy.aggregationThreshold) {
             // Low traffic — deserialize and dispatch individually
             val events = mutableListOf<DeserializedEvent<T>>()
             for (raw in rawMessages) {
@@ -162,7 +160,8 @@ internal class StreamEventAggregatorImpl<T>(
     /** Calls [deserializer], catching both Result.failure and thrown exceptions. */
     private fun safeDeserialize(raw: String): T? =
         runCatchingCancellable {
-                deserializer(raw)
+                policy
+                    .deserialize(raw)
                     .onFailure { e ->
                         logger?.e(e) { "[collector] Failed to deserialize event. ${e.message}" }
                     }
@@ -173,7 +172,7 @@ internal class StreamEventAggregatorImpl<T>(
 
     /** Calls [typeExtractor], catching thrown exceptions. Returns empty string on failure. */
     private fun safeExtractType(raw: String): String =
-        runCatchingCancellable { typeExtractor(raw) ?: "" }
+        runCatchingCancellable { policy.extractType(raw) ?: "" }
             .onFailure { e -> logger?.e(e) { "[collector] Type extractor threw. ${e.message}" } }
             .getOrDefault("")
 

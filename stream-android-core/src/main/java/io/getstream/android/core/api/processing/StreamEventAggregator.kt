@@ -111,11 +111,7 @@ public fun <T> StreamEventAggregator(
 ): StreamEventAggregator<T> =
     StreamEventAggregatorImpl(
         scope = scope,
-        typeExtractor = policy.extractType,
-        deserializer = policy.deserialize,
-        aggregationThreshold = policy.aggregationThreshold,
-        maxWindowMs = policy.maxWindowMs,
-        dispatchQueueCapacity = policy.dispatchQueueCapacity,
+        policy = policy,
         inboxCapacity = inboxCapacity,
         logger = logger,
     )
