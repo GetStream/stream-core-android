@@ -606,12 +606,13 @@ class StreamEventAggregatorImplTest {
                 "typing.start",
             )
 
+        val threshold = 50
         val aggregator =
             StreamEventAggregator<TestEvent>(
                 scope = scope,
                 typeExtractor = typeExtractor,
                 deserializer = deserializer,
-                aggregationThreshold = 50,
+                aggregationThreshold = threshold,
                 maxWindowMs = 500,
             )
 
@@ -671,12 +672,23 @@ class StreamEventAggregatorImplTest {
         println("Elapsed time:            ${elapsedMs}ms")
         println("====================================")
 
+        // Guarantee 1: all events delivered
         assertEquals("All events must be delivered", totalEvents, totalDelivered)
 
-        // With 10K events and threshold=50, we expect significantly fewer handler calls
-        // than 10K (the whole point of the aggregator)
+        // Guarantee 2: each aggregated batch has at most `threshold` events
+        for ((i, item) in received.withIndex()) {
+            if (item is StreamAggregatedEvent<*>) {
+                val batchSize = item.events.values.sumOf { it.size }
+                assertTrue(
+                    "Batch $i has $batchSize events, exceeds threshold $threshold",
+                    batchSize <= threshold,
+                )
+            }
+        }
+
+        // Guarantee 3: fewer handler calls than raw events (aggregation happened)
         assertTrue(
-            "Expected fewer handler calls (${ received.size}) than raw events ($totalEvents)",
+            "Expected fewer handler calls (${received.size}) than raw events ($totalEvents)",
             received.size < totalEvents,
         )
 
