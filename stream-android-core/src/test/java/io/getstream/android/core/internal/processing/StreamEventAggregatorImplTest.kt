@@ -239,23 +239,39 @@ class StreamEventAggregatorImplTest {
     }
 
     @Test
-    fun `offer returns false after stop`() = runTest {
+    fun `stop then start resumes processing (restartable)`() = runTest {
         val scope = CoroutineScope(SupervisorJob() + StandardTestDispatcher(testScheduler))
+        val received = CopyOnWriteArrayList<Any>()
 
         val aggregator =
             StreamEventAggregator<TestEvent>(
                 scope = scope,
                 typeExtractor = typeExtractor,
                 deserializer = deserializer,
+                aggregationThreshold = 50,
+                maxWindowMs = 200,
             )
-        aggregator.onEvent {}
+        aggregator.onEvent { received += it }
         aggregator.start()
+
+        aggregator.offer("type:a first")
+        advanceTimeBy(500)
+        advanceUntilIdle()
+        assertEquals(1, received.size)
+
+        // Stop and restart
+        aggregator.stop()
+        aggregator.start()
+
+        aggregator.offer("type:a second")
+        advanceTimeBy(500)
         advanceUntilIdle()
 
-        aggregator.stop()
+        // Second event delivered after restart
+        assertEquals(2, received.size)
+        assertEquals("type:a second", (received[1] as TestEvent).raw)
 
-        val accepted = aggregator.offer("type:a test")
-        assertTrue("offer should fail after stop", !accepted)
+        aggregator.stop()
     }
 
     @Test
@@ -568,6 +584,101 @@ class StreamEventAggregatorImplTest {
         // Some events were delivered, some may have been dropped (queue full)
         // The key assertion: no crash, aggregator survived
         assertTrue("At least one event delivered", received.isNotEmpty())
+
+        aggregator.stop()
+        scope.cancel()
+    }
+
+    // ── Stress test ──────────────────────────────────────────────────────────
+
+    @Test
+    fun `stress - 10K events with realistic type distribution`() {
+        val scope = CoroutineScope(SupervisorJob() + kotlinx.coroutines.Dispatchers.Default)
+        val totalEvents = 10_000
+        val received = CopyOnWriteArrayList<Any>()
+        val latch = java.util.concurrent.CountDownLatch(1)
+        val eventTypes =
+            listOf(
+                "channel.updated",
+                "message.new",
+                "user.watching.start",
+                "user.presence_changed",
+                "typing.start",
+            )
+
+        val aggregator =
+            StreamEventAggregator<TestEvent>(
+                scope = scope,
+                typeExtractor = typeExtractor,
+                deserializer = deserializer,
+                aggregationThreshold = 50,
+                maxWindowMs = 500,
+            )
+
+        val deliveredCount = java.util.concurrent.atomic.AtomicInteger(0)
+        aggregator.onEvent { event ->
+            received += event
+            val count =
+                when (event) {
+                    is StreamAggregatedEvent<*> -> event.events.values.sumOf { it.size }
+                    is TestEvent -> 1
+                    else -> 0
+                }
+            if (deliveredCount.addAndGet(count) >= totalEvents) {
+                latch.countDown()
+            }
+        }
+
+        val startNs = System.nanoTime()
+        aggregator.start()
+        Thread.sleep(20) // let collector suspend on receive
+
+        // Flood 10K events with realistic type distribution
+        repeat(totalEvents) { i ->
+            val type = eventTypes[i % eventTypes.size]
+            aggregator.offer("type:$type event$i")
+        }
+
+        assertTrue(
+            "10K events not delivered in time",
+            latch.await(30, java.util.concurrent.TimeUnit.SECONDS),
+        )
+        val elapsedMs = (System.nanoTime() - startNs) / 1_000_000L
+
+        // Count batches and individual events
+        var individualCount = 0
+        var aggregatedBatches = 0
+        var aggregatedEventCount = 0
+        for (item in received) {
+            when (item) {
+                is StreamAggregatedEvent<*> -> {
+                    aggregatedBatches++
+                    aggregatedEventCount += item.events.values.sumOf { it.size }
+                }
+                is TestEvent -> individualCount++
+            }
+        }
+        val totalDelivered = individualCount + aggregatedEventCount
+
+        // Print results for visibility
+        println("=== 10K Event Stress Test Results ===")
+        println("Total events offered:    $totalEvents")
+        println("Total events delivered:  $totalDelivered")
+        println("Individual dispatches:   $individualCount")
+        println("Aggregated batches:      $aggregatedBatches")
+        println("Events in aggregated:    $aggregatedEventCount")
+        println("Total handler calls:     ${received.size}")
+        println("Elapsed time:            ${elapsedMs}ms")
+        println("====================================")
+
+        assertEquals("All events must be delivered", totalEvents, totalDelivered)
+
+        // With 10K events and threshold=50, we expect significantly fewer handler calls
+        // than 10K (the whole point of the aggregator)
+        assertTrue(
+            "Expected fewer handler calls (${ received.size}) than raw events ($totalEvents)",
+            received.size < totalEvents,
+        )
 
         aggregator.stop()
         scope.cancel()

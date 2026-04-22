@@ -62,8 +62,10 @@ public interface StreamEventAggregator<T> {
     /**
      * Enqueues a raw event for processing. Non-suspending, suitable for WebSocket callbacks.
      *
+     * Returns `false` if the aggregator has not been [start]ed or if the inbox is full/closed.
+     *
      * @param raw The raw event (typically a JSON string from the WebSocket).
-     * @return `true` if accepted into the inbox, `false` if the inbox is full or closed.
+     * @return `true` if accepted into the inbox, `false` otherwise.
      */
     public fun offer(raw: String): Boolean
 

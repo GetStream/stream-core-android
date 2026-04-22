@@ -51,10 +51,9 @@ internal class StreamEventAggregatorImpl<T>(
     internal var logger: StreamLogger? = null,
 ) : StreamEventAggregator<T> {
 
-    private val inbox = Channel<String>(inboxCapacity)
-    private val dispatchQueue = Channel<DispatchItem<T>>(dispatchQueueCapacity)
+    private val inbox = StreamRestartableChannel<String>(inboxCapacity)
+    private val dispatchQueue = StreamRestartableChannel<DispatchItem<T>>(dispatchQueueCapacity)
     private val started = AtomicBoolean(false)
-    private val closed = AtomicBoolean(false)
     private var collectorJob: Job? = null
     private var dispatcherJob: Job? = null
 
@@ -65,24 +64,26 @@ internal class StreamEventAggregatorImpl<T>(
     }
 
     override fun start(): Result<Unit> = runCatching {
-        check(!closed.get()) { "StreamEventAggregator has already been stopped" }
-        if (!started.compareAndSet(false, true)) return Result.success(Unit)
+        if (!started.compareAndSet(false, true)) {
+            return Result.success(Unit)
+        }
+        inbox.start()
+        dispatchQueue.start()
         collectorJob = scope.launch { runCollector() }
         dispatcherJob = scope.launch { runDispatcher() }
     }
 
     override fun offer(raw: String): Boolean {
-        if (closed.get()) return false
         if (!started.get()) {
-            // Auto-start on first offer
-            start()
+            return false
         }
         return inbox.trySend(raw).isSuccess
     }
 
     override fun stop(): Result<Unit> = runCatching {
-        if (!closed.compareAndSet(false, true)) return Result.success(Unit)
-        started.set(false)
+        if (!started.compareAndSet(true, false)) {
+            return Result.success(Unit)
+        }
         collectorJob?.cancel()
         dispatcherJob?.cancel()
         collectorJob = null
@@ -135,7 +136,9 @@ internal class StreamEventAggregatorImpl<T>(
 
     /** Deserializes raw messages and decides: individual dispatch or aggregated. */
     private fun packageForDispatch(rawMessages: List<String>): DispatchItem<T>? {
-        if (rawMessages.isEmpty()) return null
+        if (rawMessages.isEmpty()) {
+            return null
+        }
 
         if (rawMessages.size < aggregationThreshold) {
             // Low traffic — deserialize and dispatch individually
