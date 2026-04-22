@@ -17,6 +17,7 @@
 package io.getstream.android.core.api.processing
 
 import io.getstream.android.core.annotations.StreamInternalApi
+import io.getstream.android.core.api.log.StreamLogger
 import io.getstream.android.core.internal.processing.StreamEventAggregatorImpl
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
@@ -116,6 +117,7 @@ public fun <T> StreamEventAggregator(
     maxWindowMs: Long = 500L,
     dispatchQueueCapacity: Int = 16,
     inboxCapacity: Int = Channel.UNLIMITED,
+    logger: StreamLogger? = null,
 ): StreamEventAggregator<T> {
     require(aggregationThreshold > 0) { "aggregationThreshold must be > 0" }
     require(maxWindowMs > 0) { "maxWindowMs must be > 0" }
@@ -129,5 +131,6 @@ public fun <T> StreamEventAggregator(
         maxWindowMs = maxWindowMs,
         dispatchQueueCapacity = dispatchQueueCapacity,
         inboxCapacity = inboxCapacity,
+        logger = logger,
     )
 }

@@ -430,6 +430,7 @@ internal fun createStreamClientInternal(
                 aggregationThreshold = socketConfig.aggregationThreshold,
                 maxWindowMs = socketConfig.aggregationMaxWindowMs,
                 dispatchQueueCapacity = socketConfig.aggregationDispatchQueueCapacity,
+                logger = logProvider.taggedLogger("SCEventAggregator"),
             )
 
     val mutableConnectionState = MutableStateFlow<StreamConnectionState>(StreamConnectionState.Idle)

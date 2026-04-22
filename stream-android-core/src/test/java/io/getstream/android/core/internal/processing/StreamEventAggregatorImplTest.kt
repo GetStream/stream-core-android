@@ -18,6 +18,7 @@
 
 package io.getstream.android.core.internal.processing
 
+import io.getstream.android.core.api.log.StreamLogger
 import io.getstream.android.core.api.processing.StreamAggregatedEvent
 import io.getstream.android.core.api.processing.StreamEventAggregator
 import java.util.concurrent.CopyOnWriteArrayList
@@ -551,6 +552,20 @@ class StreamEventAggregatorImplTest {
         val received = CopyOnWriteArrayList<Any>()
         val latch = java.util.concurrent.CountDownLatch(1)
 
+        val warnings = CopyOnWriteArrayList<String>()
+        val testLogger =
+            object : StreamLogger {
+                override fun log(
+                    level: StreamLogger.LogLevel,
+                    throwable: Throwable?,
+                    message: () -> String,
+                ) {
+                    if (level is StreamLogger.LogLevel.Warning) {
+                        warnings.add(message())
+                    }
+                }
+            }
+
         val aggregator =
             StreamEventAggregator<TestEvent>(
                 scope = scope,
@@ -560,6 +575,7 @@ class StreamEventAggregatorImplTest {
                 maxWindowMs = 50,
                 dispatchQueueCapacity = 1, // tiny queue
             )
+        (aggregator as StreamEventAggregatorImpl<*>).logger = testLogger
         aggregator.onEvent { event ->
             // Slow handler — holds dispatch queue slot
             Thread.sleep(200)
@@ -584,6 +600,9 @@ class StreamEventAggregatorImplTest {
         // Some events were delivered, some may have been dropped (queue full)
         // The key assertion: no crash, aggregator survived
         assertTrue("At least one event delivered", received.isNotEmpty())
+
+        // Verify that a warning was logged when the dispatch queue was full
+        assertTrue("Expected warning about full dispatch queue", warnings.isNotEmpty())
 
         aggregator.stop()
         scope.cancel()

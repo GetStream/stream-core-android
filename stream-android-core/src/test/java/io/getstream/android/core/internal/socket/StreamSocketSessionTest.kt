@@ -917,7 +917,13 @@ class StreamSocketSessionTest {
             assertTrue(seenStates.any { it is StreamConnectionState.Disconnected })
             // Core error event dispatched individually + product aggregated event dispatched
             assertTrue(seenEvents.any { it is StreamClientConnectionErrorEvent })
-            assertTrue(seenEvents.any { it is StreamAggregatedEvent<*> })
+            val forwardedAggregate =
+                seenEvents.filterIsInstance<StreamAggregatedEvent<*>>().single()
+            assertFalse(forwardedAggregate.events.containsKey("connection.error"))
+            assertEquals(
+                listOf("product1", "product2"),
+                forwardedAggregate.events["channel.updated"],
+            )
 
             job.cancelAndJoin()
         }
