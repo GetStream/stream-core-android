@@ -16,6 +16,7 @@
 
 package io.getstream.android.core.api.model.retry
 
+import androidx.annotation.IntRange
 import io.getstream.android.core.annotations.StreamInternalApi
 
 /**
@@ -49,11 +50,11 @@ import io.getstream.android.core.annotations.StreamInternalApi
 @ConsistentCopyVisibility
 public data class StreamRetryPolicy
 private constructor(
-    val minRetries: Int,
-    val maxRetries: Int,
-    val minBackoffMills: Long,
-    val maxBackoffMills: Long,
-    val initialDelayMillis: Long,
+    @IntRange(from = 1) val minRetries: Int,
+    @IntRange(from = 1) val maxRetries: Int,
+    @IntRange(from = 0) val minBackoffMills: Long,
+    @IntRange(from = 0) val maxBackoffMills: Long,
+    @IntRange(from = 0) val initialDelayMillis: Long,
     val giveUpFunction: (retry: Int, cause: Throwable) -> Boolean,
     val nextBackOffDelayFunction: (retry: Int, previousDelay: Long) -> Long,
 ) {
@@ -85,11 +86,11 @@ private constructor(
          * @param giveUp Custom predicate to override the default “> maxRetries”.
          */
         public fun exponential(
-            minRetries: Int = 1,
-            maxRetries: Int = 5,
-            backoffStepMillis: Long = 250,
-            maxBackoffMillis: Long = 15_000,
-            initialDelayMillis: Long = 0,
+            @IntRange(from = 1) minRetries: Int = 1,
+            @IntRange(from = 1) maxRetries: Int = 5,
+            @IntRange(from = 0) backoffStepMillis: Long = 250,
+            @IntRange(from = 0) maxBackoffMillis: Long = 15_000,
+            @IntRange(from = 0) initialDelayMillis: Long = 0,
             giveUp: (Int, Throwable) -> Boolean = { retry, _ -> retry > maxRetries },
         ): StreamRetryPolicy =
             StreamRetryPolicy(
@@ -105,7 +106,7 @@ private constructor(
                             .coerceIn(backoffStepMillis, maxBackoffMillis)
                     },
                 )
-                .validate()
+                .also { it.requireValid() }
 
         /**
          * Creates a **linear back-off** policy.
@@ -125,11 +126,11 @@ private constructor(
          * Parameter semantics match [exponential].
          */
         public fun linear(
-            minRetries: Int = 1,
-            maxRetries: Int = 5,
-            backoffStepMillis: Long = 250,
-            maxBackoffMillis: Long = 15_000,
-            initialDelayMillis: Long = 0,
+            @IntRange(from = 1) minRetries: Int = 1,
+            @IntRange(from = 1) maxRetries: Int = 5,
+            @IntRange(from = 0) backoffStepMillis: Long = 250,
+            @IntRange(from = 0) maxBackoffMillis: Long = 15_000,
+            @IntRange(from = 0) initialDelayMillis: Long = 0,
             giveUp: (Int, Throwable) -> Boolean = { retry, _ -> retry > maxRetries },
         ): StreamRetryPolicy =
             StreamRetryPolicy(
@@ -143,7 +144,7 @@ private constructor(
                         (prev + backoffStepMillis).coerceAtMost(maxBackoffMillis)
                     },
                 )
-                .validate()
+                .also { it.requireValid() }
 
         /**
          * **Fixed-delay back-off**: every retry waits exactly [delayMillis], clamped to
@@ -157,11 +158,11 @@ private constructor(
          * ```
          */
         public fun fixed(
-            minRetries: Int = 1,
-            maxRetries: Int = 5,
-            delayMillis: Long = 500,
-            maxBackoffMillis: Long = 15_000,
-            initialDelayMillis: Long = 0,
+            @IntRange(from = 1) minRetries: Int = 1,
+            @IntRange(from = 1) maxRetries: Int = 5,
+            @IntRange(from = 0) delayMillis: Long = 500,
+            @IntRange(from = 0) maxBackoffMillis: Long = 15_000,
+            @IntRange(from = 0) initialDelayMillis: Long = 0,
             giveUp: (Int, Throwable) -> Boolean = { retry, _ -> retry > maxRetries },
         ): StreamRetryPolicy =
             StreamRetryPolicy(
@@ -175,7 +176,7 @@ private constructor(
                         delayMillis.coerceAtMost(maxBackoffMillis)
                     },
                 )
-                .validate()
+                .also { it.requireValid() }
 
         /**
          * **Custom builder** – explicitly specify every parameter while still benefiting from the
@@ -221,17 +222,26 @@ private constructor(
                         nextDelay(attempt, prev).coerceIn(minBackoffMills, maxBackoffMills)
                     },
                 )
-                .validate()
+                .also { it.requireValid() }
+    }
 
-        private fun StreamRetryPolicy.validate(): StreamRetryPolicy {
-            require(minRetries > 0) { "minRetries must be ≥ 0" }
-            require(maxRetries >= minRetries) { "maxRetries must be ≥ minRetries" }
-            require(minBackoffMills >= 0) { "minBackoffMills must be ≥ 0" }
-            require(maxBackoffMills >= minBackoffMills) {
-                "maxBackoffMills must be ≥ minBackoffMills"
-            }
-            require(initialDelayMillis >= 0) { "initialDelayMillis must be ≥ 0" }
-            return this
+    /**
+     * Validates this policy's invariants. Called by factory methods at creation time and by the
+     * retry processor at execution time (defense-in-depth).
+     *
+     * @throws IllegalArgumentException if any invariant is violated.
+     */
+    internal fun requireValid() {
+        require(minRetries > 0) { "minRetries must be > 0, got $minRetries" }
+        require(maxRetries >= minRetries) {
+            "maxRetries must be ≥ minRetries, got $maxRetries < $minRetries"
+        }
+        require(minBackoffMills >= 0) { "minBackoffMills must be ≥ 0, got $minBackoffMills" }
+        require(maxBackoffMills >= minBackoffMills) {
+            "maxBackoffMills must be ≥ minBackoffMills, got $maxBackoffMills < $minBackoffMills"
+        }
+        require(initialDelayMillis >= 0) {
+            "initialDelayMillis must be ≥ 0, got $initialDelayMillis"
         }
     }
 }

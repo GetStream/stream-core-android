@@ -174,8 +174,8 @@ class StreamRetryProcessorImplTest {
 
         val err = res.exceptionOrNull()
         assertTrue(res.isFailure)
-        assertEquals(IllegalStateException::class.java, err!!::class.java)
-        assertTrue(err.message!!.contains("Check your policy"))
+        assertEquals(IllegalArgumentException::class.java, err!!::class.java)
+        assertTrue(err.message!!.contains("maxRetries must be"))
     }
 
     @Test
