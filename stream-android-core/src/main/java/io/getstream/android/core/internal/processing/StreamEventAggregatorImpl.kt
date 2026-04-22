@@ -25,6 +25,7 @@ import java.util.concurrent.atomic.AtomicReference
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
@@ -92,29 +93,30 @@ internal class StreamEventAggregatorImpl<T>(
     }
 
     private suspend fun runCollector() {
-        runCatchingCancellable {
-                while (scope.isActive) {
-                    // Wait for the first event — suspends until something arrives
-                    val first = inbox.receive()
-                    val buffer = mutableListOf(first)
+        try {
+            while (scope.isActive) {
+                // Wait for the first event — suspends until something arrives
+                val first = inbox.receive()
+                val buffer = mutableListOf(first)
 
-                    // Collect more until threshold or maxWindow
-                    collectWindow(buffer)
+                // Collect more until threshold or maxWindow
+                collectWindow(buffer)
 
-                    // Package and send to dispatch queue
-                    val item = packageForDispatch(buffer)
-                    if (item != null) {
-                        val sent = dispatchQueue.trySend(item)
-                        if (sent.isFailure) {
-                            logger?.w {
-                                "[collector] Dispatch queue full (capacity=$dispatchQueueCapacity). " +
-                                    "Dropping ${buffer.size} events. Dispatcher may be too slow."
-                            }
+                // Package and send to dispatch queue
+                val item = packageForDispatch(buffer)
+                if (item != null) {
+                    val sent = dispatchQueue.trySend(item)
+                    if (sent.isFailure) {
+                        logger?.w {
+                            "[collector] Dispatch queue full (capacity=$dispatchQueueCapacity). " +
+                                "Dropping ${buffer.size} events. Dispatcher may be too slow."
                         }
                     }
                 }
             }
-            .onFailure { e -> logger?.d { "[collector] Stopped. ${e.message}" } }
+        } catch (_: ClosedReceiveChannelException) {
+            logger?.d { "[collector] Inbox closed, shutting down" }
+        }
     }
 
     /**
@@ -176,34 +178,35 @@ internal class StreamEventAggregatorImpl<T>(
             .getOrDefault("")
 
     private suspend fun runDispatcher() {
-        runCatchingCancellable {
-                for (item in dispatchQueue) {
-                    when (item) {
-                        is DispatchItem.Individual -> {
-                            for (event in item.events) {
-                                runCatchingCancellable {
-                                        eventHandler.get().invoke(event.parsed as Any)
-                                    }
-                                    .onFailure { e ->
-                                        logger?.e(e) {
-                                            "[dispatcher] Handler threw on individual event. ${e.message}"
-                                        }
-                                    }
-                            }
-                        }
-
-                        is DispatchItem.Aggregated -> {
-                            runCatchingCancellable { eventHandler.get().invoke(item.aggregated) }
+        try {
+            for (item in dispatchQueue) {
+                when (item) {
+                    is DispatchItem.Individual -> {
+                        for (event in item.events) {
+                            runCatchingCancellable {
+                                    eventHandler.get().invoke(event.parsed as Any)
+                                }
                                 .onFailure { e ->
                                     logger?.e(e) {
-                                        "[dispatcher] Handler threw on aggregated event. ${e.message}"
+                                        "[dispatcher] Handler threw on individual event. ${e.message}"
                                     }
                                 }
                         }
                     }
+
+                    is DispatchItem.Aggregated -> {
+                        runCatchingCancellable { eventHandler.get().invoke(item.aggregated) }
+                            .onFailure { e ->
+                                logger?.e(e) {
+                                    "[dispatcher] Handler threw on aggregated event. ${e.message}"
+                                }
+                            }
+                    }
                 }
             }
-            .onFailure { e -> logger?.d { "[dispatcher] Stopped. ${e.message}" } }
+        } catch (_: ClosedReceiveChannelException) {
+            logger?.d { "[dispatcher] Dispatch queue closed, shutting down" }
+        }
     }
 
     /** A single deserialized event with its raw source preserved for logging. */
