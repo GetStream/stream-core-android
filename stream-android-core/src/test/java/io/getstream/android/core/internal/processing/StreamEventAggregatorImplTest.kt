@@ -108,6 +108,110 @@ class StreamEventAggregatorImplTest {
         )
     }
 
+    // ── Lifecycle edge cases ────────────────────────────────────────────────
+
+    @Test
+    fun `offer before start returns false`() = runTest {
+        val scope = CoroutineScope(SupervisorJob() + StandardTestDispatcher(testScheduler))
+
+        val aggregator =
+            StreamEventAggregator<TestEvent>(
+                scope = scope,
+                policy =
+                    StreamEventAggregationPolicy.from(
+                        typeExtractor = typeExtractor,
+                        deserializer = deserializer,
+                    ),
+            )
+        aggregator.onEvent {}
+
+        // Not started — offer should fail
+        val accepted = aggregator.offer("type:a test")
+        assertTrue("offer should return false before start", !accepted)
+
+        aggregator.stop()
+    }
+
+    @Test
+    fun `double start is idempotent`() = runTest {
+        val scope = CoroutineScope(SupervisorJob() + StandardTestDispatcher(testScheduler))
+        val received = CopyOnWriteArrayList<Any>()
+
+        val aggregator =
+            StreamEventAggregator<TestEvent>(
+                scope = scope,
+                policy =
+                    StreamEventAggregationPolicy.from(
+                        typeExtractor = typeExtractor,
+                        deserializer = deserializer,
+                        aggregationThreshold = 50,
+                        maxWindowMs = 200,
+                    ),
+            )
+        aggregator.onEvent { received += it }
+
+        // Start twice — should not create duplicate workers
+        val first = aggregator.start()
+        val second = aggregator.start()
+
+        assertTrue(first.isSuccess)
+        assertTrue(second.isSuccess)
+
+        aggregator.offer("type:a event1")
+        advanceTimeBy(500)
+        advanceUntilIdle()
+
+        // Should receive exactly 1 event, not duplicates
+        assertEquals(1, received.size)
+
+        aggregator.stop()
+    }
+
+    @Test
+    fun `handler exception on aggregated event does not break dispatcher`() {
+        val scope = CoroutineScope(SupervisorJob() + kotlinx.coroutines.Dispatchers.Default)
+        val received = CopyOnWriteArrayList<Any>()
+        val latch = java.util.concurrent.CountDownLatch(1)
+        var throwOnFirst = true
+
+        val aggregator =
+            StreamEventAggregator<TestEvent>(
+                scope = scope,
+                policy =
+                    StreamEventAggregationPolicy.from(
+                        typeExtractor = typeExtractor,
+                        deserializer = deserializer,
+                        aggregationThreshold = 3,
+                        maxWindowMs = 100,
+                    ),
+            )
+        aggregator.onEvent { event ->
+            if (event is StreamAggregatedEvent<*> && throwOnFirst) {
+                throwOnFirst = false
+                throw RuntimeException("aggregated handler boom")
+            }
+            received += event
+            latch.countDown()
+        }
+        aggregator.start()
+        Thread.sleep(50)
+
+        // First batch — triggers aggregation, handler throws
+        repeat(5) { aggregator.offer("type:a event$it") }
+        Thread.sleep(300)
+
+        // Second batch — handler should still work
+        aggregator.offer("type:b after_error")
+        assertTrue(
+            "Events should still be delivered after handler error",
+            latch.await(5, java.util.concurrent.TimeUnit.SECONDS),
+        )
+        assertTrue(received.isNotEmpty())
+
+        aggregator.stop()
+        scope.cancel()
+    }
+
     // ── Behavior tests ───────────────────────────────────────────────────────
 
     @Test
