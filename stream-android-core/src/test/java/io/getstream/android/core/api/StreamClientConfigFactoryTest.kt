@@ -206,9 +206,11 @@ internal class StreamClientConfigFactoryTest {
                 as StreamSocketSession<*>
         val aggregator = socketSession.readPrivateField("aggregator")
         assertNotNull(aggregator)
-        aggregator!!.assertFieldEquals("aggregationThreshold", 20)
-        aggregator.assertFieldEquals("maxWindowMs", 200L)
-        aggregator.assertFieldEquals("dispatchQueueCapacity", 8)
+        val policy = aggregator!!.readPrivateField("policy")
+        assertNotNull(policy)
+        policy!!.assertFieldEquals("aggregationThreshold", 20)
+        policy.assertFieldEquals("maxWindowMs", 200L)
+        policy.assertFieldEquals("dispatchQueueCapacity", 8)
     }
 
     // ── StreamComponentProvider overrides ────────────────────────────────────
