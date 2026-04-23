@@ -19,6 +19,7 @@
 package io.getstream.android.core.api.processing
 
 import io.getstream.android.core.api.model.StreamTypedKey.Companion.asStreamTypedKey
+import io.getstream.android.core.api.model.processing.StreamThrottlePolicy
 import io.getstream.android.core.api.model.retry.StreamRetryPolicy
 import io.mockk.mockk
 import kotlinx.coroutines.CoroutineScope

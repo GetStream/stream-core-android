@@ -17,7 +17,7 @@
 package io.getstream.android.core.internal.processing
 
 import io.getstream.android.core.api.log.StreamLogger
-import io.getstream.android.core.api.processing.StreamThrottlePolicy
+import io.getstream.android.core.api.model.processing.StreamThrottlePolicy
 import io.getstream.android.core.api.processing.StreamThrottler
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
