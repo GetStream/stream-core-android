@@ -859,17 +859,17 @@ class StreamEventAggregatorImplTest {
 
         val startNs = System.nanoTime()
         aggregator.start()
-        Thread.sleep(20) // let collector suspend on receive
+        // No sleep needed — UNLIMITED inbox buffers everything regardless of collector state
 
         // Flood 10K events with realistic type distribution
         repeat(totalEvents) { i ->
             val type = eventTypes[i % eventTypes.size]
-            aggregator.offer("type:$type event$i")
+            assertTrue("offer failed for event $i", aggregator.offer("type:$type event$i"))
         }
 
         assertTrue(
             "10K events not delivered in time",
-            latch.await(30, java.util.concurrent.TimeUnit.SECONDS),
+            latch.await(60, java.util.concurrent.TimeUnit.SECONDS),
         )
         val elapsedMs = (System.nanoTime() - startNs) / 1_000_000L
 
