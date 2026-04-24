@@ -31,6 +31,7 @@ import io.getstream.android.core.api.socket.StreamWebSocketFactory
 import io.getstream.android.core.api.socket.listeners.StreamClientListener
 import io.getstream.android.core.api.socket.monitor.StreamHealthMonitor
 import io.getstream.android.core.api.subscribe.StreamSubscriptionManager
+import io.getstream.android.core.api.telemetry.StreamTelemetry
 
 /**
  * Optional overrides for internal components used by
@@ -70,6 +71,7 @@ import io.getstream.android.core.api.subscribe.StreamSubscriptionManager
  * @param connectionRecoveryEvaluator Reconnection heuristics evaluator.
  * @param clientSubscriptionManager Socket-level listener registry.
  * @param androidComponentsProvider Android system service provider.
+ * @param telemetry Telemetry engine. When `null`, core uses a no-op that discards all signals.
  */
 @Suppress("LongParameterList")
 @StreamInternalApi
@@ -87,4 +89,5 @@ public data class StreamComponentProvider(
     val connectionRecoveryEvaluator: StreamConnectionRecoveryEvaluator? = null,
     val clientSubscriptionManager: StreamSubscriptionManager<StreamClientListener>? = null,
     val androidComponentsProvider: StreamAndroidComponentsProvider? = null,
+    val telemetry: StreamTelemetry? = null,
 )
