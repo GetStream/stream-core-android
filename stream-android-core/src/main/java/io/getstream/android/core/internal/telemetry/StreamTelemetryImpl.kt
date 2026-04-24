@@ -20,18 +20,17 @@ import android.content.Context
 import io.getstream.android.core.api.model.config.StreamTelemetryConfig
 import io.getstream.android.core.api.telemetry.StreamTelemetry
 import io.getstream.android.core.api.telemetry.StreamTelemetryScope
+import io.getstream.android.core.api.utils.runCatchingCancellable
 import java.io.File
 import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 
 /**
  * Default [StreamTelemetry] implementation.
  *
- * On creation, scans the telemetry base directory and deletes any version subdirectories that don't
- * match [StreamTelemetryConfig.version]. This ensures stale spill files from older SDK versions are
- * never deserialized with an incompatible format.
+ * Scans the telemetry base directory on [cleanStaleVersions] and deletes any version subdirectories
+ * that don't match [StreamTelemetryConfig.version]. This ensures stale spill files from older SDK
+ * versions are never deserialized with an incompatible format.
  */
 internal class StreamTelemetryImpl(
     context: Context,
@@ -43,10 +42,6 @@ internal class StreamTelemetryImpl(
 
     private val baseDir: File =
         File(config.root ?: context.cacheDir, "${config.basePath}/${config.version}")
-
-    init {
-        scope.launch(Dispatchers.IO) { cleanStaleVersions() }
-    }
 
     override fun scope(name: String): StreamTelemetryScope =
         scopes.getOrPut(name) {
@@ -60,25 +55,15 @@ internal class StreamTelemetryImpl(
             )
         }
 
-    /**
-     * Deletes any sibling directories under the telemetry base path that don't match the current
-     * version. For example, if the base path is `stream/telemetry` and the version is `1.2.0`, this
-     * deletes `stream/telemetry/1.1.0/` but keeps `stream/telemetry/1.2.0/`.
-     */
-    @Suppress("ReturnCount")
-    private fun cleanStaleVersions() {
-        try {
-            val versionParent = baseDir.parentFile ?: return
-            if (!versionParent.exists()) {
-                return
+    override suspend fun cleanStaleVersions(): Result<Unit> = runCatchingCancellable {
+        val versionParent = baseDir.parentFile ?: return@runCatchingCancellable
+        if (!versionParent.exists()) {
+            return@runCatchingCancellable
+        }
+        versionParent.listFiles()?.forEach { dir ->
+            if (dir.isDirectory && dir.name != config.version) {
+                dir.deleteRecursively()
             }
-            versionParent.listFiles()?.forEach { dir ->
-                if (dir.isDirectory && dir.name != config.version) {
-                    dir.deleteRecursively()
-                }
-            }
-        } catch (@Suppress("TooGenericExceptionCaught") ignored: Exception) {
-            // Best-effort cleanup. If it fails, stale files remain in cache — OS can reclaim.
         }
     }
 }

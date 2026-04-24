@@ -66,6 +66,16 @@ public interface StreamTelemetry {
      * @return The scope for [name].
      */
     public fun scope(name: String): StreamTelemetryScope
+
+    /**
+     * Deletes disk spill directories from previous SDK versions.
+     *
+     * Call this when the product SDK is ready (e.g. after initialization). Directories that don't
+     * match the current [StreamTelemetryConfig.version] are removed.
+     *
+     * @return [Result.success] on completion, or [Result.failure] if cleanup could not run.
+     */
+    public suspend fun cleanStaleVersions(): Result<Unit>
 }
 
 /**
@@ -94,6 +104,8 @@ public fun StreamTelemetry(
 public object StreamTelemetryNoOp : StreamTelemetry {
 
     override fun scope(name: String): StreamTelemetryScope = NoOpScope
+
+    override suspend fun cleanStaleVersions(): Result<Unit> = Result.success(Unit)
 
     private object NoOpScope : StreamTelemetryScope {
         override val name: String = "noop"

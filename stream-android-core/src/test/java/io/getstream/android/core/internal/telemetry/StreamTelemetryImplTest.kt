@@ -133,8 +133,8 @@ class StreamTelemetryImplTest {
         File(baseDir, "0.8.0/network").mkdirs()
         File(baseDir, "0.8.0/network/spill.bin").writeText("older-data")
 
-        StreamTelemetryImpl(context, config(version = "1.0.0"), scope)
-        Thread.sleep(500) // wait for IO cleanup
+        val sut = StreamTelemetryImpl(context, config(version = "1.0.0"), scope)
+        sut.cleanStaleVersions()
 
         assertFalse("0.9.0 should be deleted", File(baseDir, "0.9.0").exists())
         assertFalse("0.8.0 should be deleted", File(baseDir, "0.8.0").exists())
@@ -146,19 +146,19 @@ class StreamTelemetryImplTest {
         File(baseDir, "1.0.0/connection").mkdirs()
         File(baseDir, "1.0.0/connection/spill.bin").writeText("current-data")
 
-        StreamTelemetryImpl(context, config(version = "1.0.0"), scope)
-        Thread.sleep(500)
+        val sut = StreamTelemetryImpl(context, config(version = "1.0.0"), scope)
+        sut.cleanStaleVersions()
 
         assertTrue("1.0.0 should be kept", File(baseDir, "1.0.0").exists())
         assertTrue("spill.bin should be kept", File(baseDir, "1.0.0/connection/spill.bin").exists())
     }
 
     @Test
-    fun `init with no existing directories does not crash`() = runBlocking {
+    fun `cleanStaleVersions with no existing directories does not crash`() = runBlocking {
         // cacheDir exists but no telemetry dirs
-        StreamTelemetryImpl(context, config(version = "1.0.0"), scope)
-        Thread.sleep(500)
-        // No assertion — just verifying no exception
+        val sut = StreamTelemetryImpl(context, config(version = "1.0.0"), scope)
+        val result = sut.cleanStaleVersions()
+        assertTrue(result.isSuccess)
     }
 
     @Test
@@ -168,8 +168,8 @@ class StreamTelemetryImplTest {
         unrelated.parentFile?.mkdirs()
         unrelated.writeText("important")
 
-        StreamTelemetryImpl(context, config(version = "1.0.0"), scope)
-        Thread.sleep(500)
+        val sut = StreamTelemetryImpl(context, config(version = "1.0.0"), scope)
+        sut.cleanStaleVersions()
 
         assertTrue("Unrelated file should survive", unrelated.exists())
     }
@@ -183,8 +183,8 @@ class StreamTelemetryImplTest {
         // Create an old version dir
         File(baseDir, "0.9.0").mkdirs()
 
-        StreamTelemetryImpl(context, config(version = "1.0.0"), scope)
-        Thread.sleep(500)
+        val sut = StreamTelemetryImpl(context, config(version = "1.0.0"), scope)
+        sut.cleanStaleVersions()
 
         assertTrue("File should survive (not a directory)", File(baseDir, "some-file.txt").exists())
         assertFalse("Old version dir should be deleted", File(baseDir, "0.9.0").exists())
@@ -215,8 +215,9 @@ class StreamTelemetryImplTest {
         // Create old version to verify cleanup uses custom path
         File(baseDir, "0.9.0").mkdirs()
 
-        StreamTelemetryImpl(context, config(version = "1.0.0", basePath = "custom/path"), scope)
-        Thread.sleep(500)
+        val sut =
+            StreamTelemetryImpl(context, config(version = "1.0.0", basePath = "custom/path"), scope)
+        sut.cleanStaleVersions()
 
         assertFalse(
             "Old version under custom path should be deleted",
