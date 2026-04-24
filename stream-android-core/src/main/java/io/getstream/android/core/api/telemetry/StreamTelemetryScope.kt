@@ -65,7 +65,8 @@ public interface StreamTelemetryScope {
      *
      * Disk reads run on `Dispatchers.IO`.
      *
-     * @return All buffered signals in chronological order, or an empty list if none.
+     * @return [Result.success] with signals in chronological order, or [Result.failure] if the
+     *   drain could not complete (e.g. disk I/O error).
      */
-    public suspend fun drain(): List<StreamSignal>
+    public suspend fun drain(): Result<List<StreamSignal>>
 }

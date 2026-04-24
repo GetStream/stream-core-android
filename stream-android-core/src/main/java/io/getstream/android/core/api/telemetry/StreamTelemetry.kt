@@ -100,6 +100,6 @@ public object StreamTelemetryNoOp : StreamTelemetry {
 
         override fun emit(tag: String, data: Any?) = Unit
 
-        override suspend fun drain(): List<StreamSignal> = emptyList()
+        override suspend fun drain(): Result<List<StreamSignal>> = Result.success(emptyList())
     }
 }

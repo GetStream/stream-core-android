@@ -19,6 +19,7 @@ package io.getstream.android.core.internal.telemetry
 import io.getstream.android.core.api.model.telemetry.StreamSignal
 import io.getstream.android.core.api.telemetry.StreamSignalRedactor
 import io.getstream.android.core.api.telemetry.StreamTelemetryScope
+import io.getstream.android.core.api.utils.runCatchingCancellable
 import java.io.File
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlinx.coroutines.CoroutineScope
@@ -83,14 +84,14 @@ internal class StreamTelemetryScopeImpl(
         }
     }
 
-    override suspend fun drain(): List<StreamSignal> {
+    override suspend fun drain(): Result<List<StreamSignal>> = runCatchingCancellable {
         val memorySnapshot: List<StreamSignal>
         synchronized(lock) {
             memorySnapshot = buffer
             buffer = mutableListOf()
         }
         val diskSignals = withContext(Dispatchers.IO) { drainDisk() }
-        return if (diskSignals.isEmpty()) {
+        if (diskSignals.isEmpty()) {
             memorySnapshot
         } else {
             diskSignals + memorySnapshot
@@ -123,20 +124,14 @@ internal class StreamTelemetryScopeImpl(
         }
     }
 
-    @Suppress("ReturnCount")
     private fun drainDisk(): List<StreamSignal> {
         val file = spillFile
         if (!file.exists() || file.length() == 0L) {
             return emptyList()
         }
-        return try {
-            val signals = file.readLines().mapNotNull { decode(it) }
-            file.delete()
-            signals
-        } catch (@Suppress("TooGenericExceptionCaught") ignored: Exception) {
-            file.delete()
-            emptyList()
-        }
+        val signals = file.readLines().mapNotNull { decode(it) }
+        file.delete()
+        return signals
     }
 
     // --- Serialization (simple line-based format) -----------------------------------
