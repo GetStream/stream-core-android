@@ -54,8 +54,10 @@ public interface StreamTelemetryScope {
      *
      * @param tag Identifies what happened.
      * @param data Optional payload. Pass `null` for tag-only signals.
+     * @return [Result.success] if the signal was buffered, or [Result.failure] if an error
+     *   occurred.
      */
-    public fun emit(tag: String, data: Any? = null)
+    public fun emit(tag: String, data: Any? = null): Result<Unit>
 
     /**
      * Atomically consumes all buffered signals, including any that were spilled to disk.

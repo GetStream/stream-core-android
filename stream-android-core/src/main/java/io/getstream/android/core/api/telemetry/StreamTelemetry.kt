@@ -98,7 +98,7 @@ public object StreamTelemetryNoOp : StreamTelemetry {
     private object NoOpScope : StreamTelemetryScope {
         override val name: String = "noop"
 
-        override fun emit(tag: String, data: Any?) = Unit
+        override fun emit(tag: String, data: Any?): Result<Unit> = Result.success(Unit)
 
         override suspend fun drain(): Result<List<StreamSignal>> = Result.success(emptyList())
     }

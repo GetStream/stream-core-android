@@ -25,6 +25,8 @@ import java.util.concurrent.atomic.AtomicBoolean
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 
 /**
@@ -33,8 +35,13 @@ import kotlinx.coroutines.withContext
  *
  * ### Buffer swap
  *
- * [emit] appends to a mutable list guarded by an internal lock. [drain] atomically swaps the list
- * for a fresh one, so reads and writes never contend beyond the swap itself.
+ * [emit] appends to a mutable list guarded by [synchronized]. [drain] atomically swaps the list for
+ * a fresh one, so reads and writes never contend beyond the swap itself.
+ *
+ * ### Disk concurrency
+ *
+ * All disk I/O ([spillToDisk], [trimDiskIfNeeded], [drainDisk]) is serialized through a [Mutex].
+ * This prevents races between a spill write and a drain read on the same file.
  *
  * ### Disk spill
  *
@@ -57,14 +64,16 @@ internal class StreamTelemetryScopeImpl(
 ) : StreamTelemetryScope {
 
     private val lock = Any()
+    private val diskMutex = Mutex()
     private val spillFile: File
         get() = File(spillDir, SPILL_FILE_NAME)
 
     private var buffer = mutableListOf<StreamSignal>()
     private val spilling = AtomicBoolean(false)
 
-    override fun emit(tag: String, data: Any?) {
-        try {
+    override fun emit(tag: String, data: Any?): Result<Unit> =
+        // runCatching (not cancellable) — emit is not a suspend function.
+        runCatching {
             val raw = StreamSignal(tag = tag, data = data, timestamp = System.currentTimeMillis())
             val signal = redactor?.redact(raw) ?: raw
             synchronized(lock) {
@@ -79,10 +88,7 @@ internal class StreamTelemetryScopeImpl(
                     }
                 }
             }
-        } catch (@Suppress("TooGenericExceptionCaught") ignored: Exception) {
-            // Telemetry must never affect the caller.
         }
-    }
 
     override suspend fun drain(): Result<List<StreamSignal>> = runCatchingCancellable {
         val memorySnapshot: List<StreamSignal>
@@ -100,17 +106,20 @@ internal class StreamTelemetryScopeImpl(
 
     // --- Disk spill ----------------------------------------------------------------
 
-    private fun spillToDisk(signals: List<StreamSignal>) {
-        try {
-            spillDir.mkdirs()
-            val file = spillFile
-            file.appendText(signals.joinToString(separator = "\n", postfix = "\n") { encode(it) })
-            trimDiskIfNeeded(file)
-        } catch (@Suppress("TooGenericExceptionCaught") ignored: Exception) {
-            // Disk I/O failure — signals are lost. That's acceptable for telemetry.
-        } finally {
-            spilling.set(false)
+    private suspend fun spillToDisk(signals: List<StreamSignal>) {
+        runCatchingCancellable {
+            diskMutex.withLock {
+                spillDir.mkdirs()
+                val file = spillFile
+                file.appendText(
+                    signals.joinToString(separator = "\n", postfix = "\n") { encode(it) }
+                )
+                trimDiskIfNeeded(file)
+            }
         }
+        // Disk I/O failure — signals are lost. That's acceptable for telemetry.
+        // Always reset the spilling flag so future emits can trigger new spills.
+        spilling.set(false)
     }
 
     private fun trimDiskIfNeeded(file: File) {
@@ -124,15 +133,16 @@ internal class StreamTelemetryScopeImpl(
         }
     }
 
-    private fun drainDisk(): List<StreamSignal> {
-        val file = spillFile
-        if (!file.exists() || file.length() == 0L) {
-            return emptyList()
+    private suspend fun drainDisk(): List<StreamSignal> =
+        diskMutex.withLock {
+            val file = spillFile
+            if (!file.exists() || file.length() == 0L) {
+                return@withLock emptyList()
+            }
+            val signals = file.readLines().mapNotNull { decode(it) }
+            file.delete()
+            signals
         }
-        val signals = file.readLines().mapNotNull { decode(it) }
-        file.delete()
-        return signals
-    }
 
     // --- Serialization (simple line-based format) -----------------------------------
 
