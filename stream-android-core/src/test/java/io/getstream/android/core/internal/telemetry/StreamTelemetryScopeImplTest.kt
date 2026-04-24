@@ -430,6 +430,142 @@ class StreamTelemetryScopeImplTest {
     }
 
     // ========================================
+    // Disk Mutex — concurrent spill + drain
+    // ========================================
+
+    @Test
+    fun `drain while spill is in flight returns consistent data`() = runBlocking {
+        val dir = tempDir.newFolder()
+        val sut = createScope(memoryCapacity = 3, dir = dir)
+
+        // Emit enough to trigger spill
+        repeat(4) { sut.emit("event-$it", null) }
+
+        // Immediately drain — spill may or may not have finished
+        // With the disk Mutex, drain waits for spill to complete before reading
+        Thread.sleep(100)
+        val result = sut.drain()
+
+        assertTrue("drain should succeed", result.isSuccess)
+        val signals = result.getOrThrow()
+        // All 4 signals should be accounted for (either from disk or memory)
+        assertEquals(4, signals.size)
+    }
+
+    @Test
+    fun `rapid spill cycles with tiny memory capacity`() = runBlocking {
+        val dir = tempDir.newFolder()
+        val sut = createScope(memoryCapacity = 1, dir = dir)
+
+        // Rapid-fire 200 emits — each pair triggers a spill
+        repeat(200) { sut.emit("event-$it", null) }
+        waitForSpill()
+
+        val result = sut.drain()
+        assertTrue("drain should succeed after many spill cycles", result.isSuccess)
+        val signals = result.getOrThrow()
+        assertTrue("Expected signals, got ${signals.size}", signals.isNotEmpty())
+
+        // All signals should have valid structure
+        signals.forEach { signal ->
+            assertTrue("Tag should start with event-", signal.tag.startsWith("event-"))
+            assertTrue("Timestamp should be positive", signal.timestamp > 0)
+        }
+    }
+
+    @Test
+    fun `concurrent drain and emit with disk overflow`() = runBlocking {
+        val dir = tempDir.newFolder()
+        val sut = createScope(memoryCapacity = 2, diskCapacity = 200, dir = dir)
+        val emitting = AtomicInteger(1)
+        val allDrainedSignals = mutableListOf<StreamSignal>()
+        val drainFailures = AtomicInteger(0)
+
+        // Emit rapidly in background
+        val emitJob =
+            scope.launch {
+                var i = 0
+                while (emitting.get() == 1) {
+                    sut.emit("event-${i++}", "payload")
+                    delay(1)
+                }
+            }
+
+        // Drain 30 times concurrently with emit
+        repeat(30) {
+            Thread.sleep(10)
+            val result = sut.drain()
+            if (result.isSuccess) {
+                synchronized(allDrainedSignals) { allDrainedSignals.addAll(result.getOrThrow()) }
+            } else {
+                drainFailures.incrementAndGet()
+            }
+        }
+
+        emitting.set(0)
+        emitJob.cancel()
+        waitForSpill()
+
+        // Final drain to get remaining signals
+        sut.drain().onSuccess { remaining ->
+            synchronized(allDrainedSignals) { allDrainedSignals.addAll(remaining) }
+        }
+
+        assertTrue("Should have collected some signals", allDrainedSignals.isNotEmpty())
+        assertEquals("No drain should have failed", 0, drainFailures.get())
+
+        // No duplicates — each drain clears the buffer
+        val uniqueTimestampTagPairs = allDrainedSignals.map { "${it.timestamp}-${it.tag}" }.toSet()
+        assertEquals(
+            "No duplicate signals expected",
+            allDrainedSignals.size,
+            uniqueTimestampTagPairs.size,
+        )
+    }
+
+    @Test
+    fun `multiple coroutines draining same scope concurrently`() = runBlocking {
+        val dir = tempDir.newFolder()
+        val sut = createScope(memoryCapacity = 5, dir = dir)
+
+        // Pre-fill with signals that will spill
+        repeat(20) { sut.emit("event-$it", null) }
+        waitForSpill()
+
+        // Launch 10 concurrent drains
+        val results = (1..10).map { scope.launch { sut.drain() } }
+        results.forEach { it.join() }
+
+        // After all drains, scope should be empty
+        val remaining = sut.drain().getOrThrow()
+        assertTrue("Scope should be empty after concurrent drains", remaining.isEmpty())
+    }
+
+    @Test
+    fun `spill and drain interleaved rapidly`() = runBlocking {
+        val dir = tempDir.newFolder()
+        val sut = createScope(memoryCapacity = 2, dir = dir)
+        val allSignals = mutableListOf<StreamSignal>()
+
+        // 50 cycles of: emit enough to spill, then drain
+        repeat(50) { cycle ->
+            repeat(3) { sut.emit("cycle-$cycle-event-$it", null) }
+            Thread.sleep(50) // let spill run
+            sut.drain().onSuccess { signals ->
+                synchronized(allSignals) { allSignals.addAll(signals) }
+            }
+        }
+
+        // Wait for any remaining spills
+        waitForSpill()
+        sut.drain().onSuccess { signals -> synchronized(allSignals) { allSignals.addAll(signals) } }
+
+        // We emitted 150 signals total (50 * 3)
+        // Some may be lost due to drop-oldest under pressure, but most should survive
+        assertTrue("Expected most of 150 signals, got ${allSignals.size}", allSignals.size >= 100)
+    }
+
+    // ========================================
     // Disk I/O failures
     // ========================================
 
