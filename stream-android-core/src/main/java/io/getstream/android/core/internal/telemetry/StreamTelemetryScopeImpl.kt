@@ -75,7 +75,7 @@ internal class StreamTelemetryScopeImpl(
                         buffer = mutableListOf()
                         scope.launch(Dispatchers.IO) { spillToDisk(snapshot) }
                     } else {
-                        buffer.removeFirst()
+                        buffer.removeAt(0)
                     }
                 }
             }
@@ -119,7 +119,7 @@ internal class StreamTelemetryScopeImpl(
         }
         val lines = file.readLines().toMutableList()
         while (lines.isNotEmpty() && file.length() > diskCapacity) {
-            lines.removeFirst()
+            lines.removeAt(0)
             file.writeText(lines.joinToString(separator = "\n", postfix = "\n"))
         }
     }
