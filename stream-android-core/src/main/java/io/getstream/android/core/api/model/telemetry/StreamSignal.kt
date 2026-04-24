@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.getstream.android.core.api.telemetry
+package io.getstream.android.core.api.model.telemetry
 
 import io.getstream.android.core.annotations.StreamInternalApi
 

@@ -18,7 +18,10 @@ package io.getstream.android.core.api.telemetry
 
 import android.content.Context
 import io.getstream.android.core.annotations.StreamInternalApi
+import io.getstream.android.core.api.model.config.StreamTelemetryConfig
+import io.getstream.android.core.api.model.telemetry.StreamSignal
 import io.getstream.android.core.internal.telemetry.StreamTelemetryImpl
+import kotlinx.coroutines.CoroutineScope
 
 /**
  * Engine for collecting telemetry signals across named [scopes][StreamTelemetryScope].
@@ -71,11 +74,15 @@ public interface StreamTelemetry {
  * @param context Android application context (used for `cacheDir` when [StreamTelemetryConfig.root]
  *   is `null`).
  * @param config Telemetry configuration.
+ * @param scope Coroutine scope for disk I/O operations (spill, drain, cleanup).
  * @return A new [StreamTelemetry] instance.
  */
 @StreamInternalApi
-public fun StreamTelemetry(context: Context, config: StreamTelemetryConfig): StreamTelemetry =
-    StreamTelemetryImpl(context.applicationContext, config)
+public fun StreamTelemetry(
+    context: Context,
+    config: StreamTelemetryConfig,
+    scope: CoroutineScope,
+): StreamTelemetry = StreamTelemetryImpl(context.applicationContext, config, scope)
 
 /**
  * No-op implementation that discards all signals without allocating buffers.
@@ -93,6 +100,6 @@ public object StreamTelemetryNoOp : StreamTelemetry {
 
         override fun emit(tag: String, data: Any?) = Unit
 
-        override fun drain(): List<StreamSignal> = emptyList()
+        override suspend fun drain(): List<StreamSignal> = emptyList()
     }
 }

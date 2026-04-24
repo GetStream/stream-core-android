@@ -17,6 +17,7 @@
 package io.getstream.android.core.api.telemetry
 
 import io.getstream.android.core.annotations.StreamInternalApi
+import io.getstream.android.core.api.model.telemetry.StreamSignal
 
 /**
  * Transforms or redacts sensitive data from a [StreamSignal] before it is stored.

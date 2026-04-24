@@ -17,11 +17,14 @@
 package io.getstream.android.core.internal.telemetry
 
 import android.content.Context
+import io.getstream.android.core.api.model.config.StreamTelemetryConfig
 import io.getstream.android.core.api.telemetry.StreamTelemetry
-import io.getstream.android.core.api.telemetry.StreamTelemetryConfig
 import io.getstream.android.core.api.telemetry.StreamTelemetryScope
 import java.io.File
 import java.util.concurrent.ConcurrentHashMap
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 /**
  * Default [StreamTelemetry] implementation.
@@ -30,8 +33,11 @@ import java.util.concurrent.ConcurrentHashMap
  * match [StreamTelemetryConfig.version]. This ensures stale spill files from older SDK versions are
  * never deserialized with an incompatible format.
  */
-internal class StreamTelemetryImpl(context: Context, private val config: StreamTelemetryConfig) :
-    StreamTelemetry {
+internal class StreamTelemetryImpl(
+    context: Context,
+    private val config: StreamTelemetryConfig,
+    private val scope: CoroutineScope,
+) : StreamTelemetry {
 
     private val scopes = ConcurrentHashMap<String, StreamTelemetryScope>()
 
@@ -39,7 +45,7 @@ internal class StreamTelemetryImpl(context: Context, private val config: StreamT
         File(config.root ?: context.cacheDir, "${config.basePath}/${config.version}")
 
     init {
-        cleanStaleVersions()
+        scope.launch(Dispatchers.IO) { cleanStaleVersions() }
     }
 
     override fun scope(name: String): StreamTelemetryScope =
@@ -50,6 +56,7 @@ internal class StreamTelemetryImpl(context: Context, private val config: StreamT
                 diskCapacity = config.diskCapacity,
                 spillDir = File(baseDir, name),
                 redactor = config.redactor,
+                scope = scope,
             )
         }
 

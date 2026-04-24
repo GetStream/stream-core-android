@@ -14,9 +14,12 @@
  * limitations under the License.
  */
 
-package io.getstream.android.core.api.telemetry
+package io.getstream.android.core.api.model.config
 
 import io.getstream.android.core.annotations.StreamInternalApi
+import io.getstream.android.core.api.telemetry.StreamSignalRedactor
+import io.getstream.android.core.api.telemetry.StreamTelemetry
+import io.getstream.android.core.api.telemetry.StreamTelemetryScope
 import java.io.File
 
 /**

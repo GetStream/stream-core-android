@@ -16,11 +16,15 @@
 
 package io.getstream.android.core.internal.telemetry
 
-import io.getstream.android.core.api.telemetry.StreamSignal
+import io.getstream.android.core.api.model.telemetry.StreamSignal
 import io.getstream.android.core.api.telemetry.StreamSignalRedactor
 import io.getstream.android.core.api.telemetry.StreamTelemetryScope
 import java.io.File
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /**
  * Thread-safe [StreamTelemetryScope] backed by an in-memory ring buffer that spills to disk when
@@ -33,9 +37,9 @@ import java.util.concurrent.atomic.AtomicBoolean
  *
  * ### Disk spill
  *
- * When the memory buffer exceeds the configured capacity, the oldest signals are serialized to
- * disk. If a spill is already in progress, the oldest in-memory signal is dropped instead. Disk
- * storage is capped per scope; when exceeded the oldest lines are removed.
+ * When the memory buffer exceeds the configured capacity, the oldest signals are serialized to disk
+ * on [Dispatchers.IO]. If a spill is already in progress, the oldest in-memory signal is dropped
+ * instead. Disk storage is capped per scope; when exceeded the oldest lines are removed.
  *
  * ### Drain order
  *
@@ -48,6 +52,7 @@ internal class StreamTelemetryScopeImpl(
     private val diskCapacity: Long,
     private val spillDir: File,
     private val redactor: StreamSignalRedactor?,
+    private val scope: CoroutineScope,
 ) : StreamTelemetryScope {
 
     private val lock = Any()
@@ -67,7 +72,7 @@ internal class StreamTelemetryScopeImpl(
                     if (spilling.compareAndSet(false, true)) {
                         val snapshot = buffer
                         buffer = mutableListOf()
-                        spillToDisk(snapshot)
+                        scope.launch(Dispatchers.IO) { spillToDisk(snapshot) }
                     } else {
                         buffer.removeFirst()
                     }
@@ -78,13 +83,13 @@ internal class StreamTelemetryScopeImpl(
         }
     }
 
-    override fun drain(): List<StreamSignal> {
+    override suspend fun drain(): List<StreamSignal> {
         val memorySnapshot: List<StreamSignal>
         synchronized(lock) {
             memorySnapshot = buffer
             buffer = mutableListOf()
         }
-        val diskSignals = drainDisk()
+        val diskSignals = withContext(Dispatchers.IO) { drainDisk() }
         return if (diskSignals.isEmpty()) {
             memorySnapshot
         } else {

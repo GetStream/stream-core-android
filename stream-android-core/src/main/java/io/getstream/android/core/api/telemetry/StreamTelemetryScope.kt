@@ -17,6 +17,7 @@
 package io.getstream.android.core.api.telemetry
 
 import io.getstream.android.core.annotations.StreamInternalApi
+import io.getstream.android.core.api.model.telemetry.StreamSignal
 
 /**
  * A named channel that groups related [signals][StreamSignal].
@@ -62,7 +63,9 @@ public interface StreamTelemetryScope {
      * After this call, the scope's buffer is empty. Disk-spilled signals are read first (oldest),
      * followed by in-memory signals (newest), preserving FIFO order.
      *
+     * Disk reads run on `Dispatchers.IO`.
+     *
      * @return All buffered signals in chronological order, or an empty list if none.
      */
-    public fun drain(): List<StreamSignal>
+    public suspend fun drain(): List<StreamSignal>
 }
