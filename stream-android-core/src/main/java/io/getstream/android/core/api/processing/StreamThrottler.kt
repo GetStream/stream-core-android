@@ -18,6 +18,7 @@ package io.getstream.android.core.api.processing
 
 import io.getstream.android.core.annotations.StreamInternalApi
 import io.getstream.android.core.api.log.StreamLogger
+import io.getstream.android.core.api.model.processing.StreamThrottlePolicy
 import io.getstream.android.core.internal.processing.StreamThrottlerImpl
 import kotlinx.coroutines.CoroutineScope
 

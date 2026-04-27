@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.getstream.android.core.api.processing
+package io.getstream.android.core.api.model.processing
 
 import io.getstream.android.core.annotations.StreamInternalApi
 
