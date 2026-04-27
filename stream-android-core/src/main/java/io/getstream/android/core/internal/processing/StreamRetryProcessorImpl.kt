@@ -29,6 +29,7 @@ internal class StreamRetryProcessorImpl(private val logger: StreamLogger) : Stre
         policy: StreamRetryPolicy,
         block: suspend (attempt: StreamRetryAttemptInfo) -> T,
     ): Result<T> = runCatchingCancellable {
+        policy.requireValid()
         var delayMs = policy.initialDelayMillis
         var attempt = 1
         var previousError: Throwable? = null
