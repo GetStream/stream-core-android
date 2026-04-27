@@ -22,6 +22,7 @@ import io.getstream.android.core.api.telemetry.StreamTelemetryScope
 import io.getstream.android.core.api.utils.runCatchingCancellable
 import java.io.File
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -62,6 +63,7 @@ internal class StreamTelemetryScopeImpl(
     private val spillDir: File,
     private val redactor: StreamSignalRedactor?,
     private val scope: CoroutineScope,
+    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) : StreamTelemetryScope {
 
     private val lock = Any()
@@ -84,7 +86,7 @@ internal class StreamTelemetryScopeImpl(
                     if (spilling.compareAndSet(false, true)) {
                         val snapshot = buffer
                         buffer = mutableListOf()
-                        scope.launch(Dispatchers.IO) { spillToDisk(snapshot) }
+                        scope.launch(ioDispatcher) { spillToDisk(snapshot) }
                     } else {
                         buffer.removeAt(0)
                     }
@@ -98,7 +100,7 @@ internal class StreamTelemetryScopeImpl(
             memorySnapshot = buffer
             buffer = mutableListOf()
         }
-        val diskSignals = withContext(Dispatchers.IO) { drainDisk() }
+        val diskSignals = withContext(ioDispatcher) { drainDisk() }
         if (diskSignals.isEmpty()) {
             memorySnapshot
         } else {
@@ -148,7 +150,9 @@ internal class StreamTelemetryScopeImpl(
                 return@withLock emptyList()
             }
             val signals = file.readLines().mapNotNull { decode(it) }
-            file.delete()
+            if (!file.delete()) {
+                file.writeText("")
+            }
             signals
         }
 
