@@ -195,17 +195,22 @@ class StreamTelemetryImplTest {
     // ========================================
 
     @Test
-    fun `custom root overrides cacheDir`() = runBlocking {
+    fun `custom root overrides cacheDir for cleanup`() = runBlocking {
         val customRoot = tempDir.newFolder("custom-root")
+        // Seed stale version under custom root and cacheDir
+        val staleUnderCustomRoot = File(customRoot, "stream/telemetry/0.9.0")
+        staleUnderCustomRoot.mkdirs()
+        val staleUnderCacheDir = File(cacheDir, "stream/telemetry/0.9.0")
+        staleUnderCacheDir.mkdirs()
+
         val sut = StreamTelemetryImpl(context, config(version = "2.0.0", root = customRoot), scope)
+        sut.cleanStaleVersions()
 
-        val telemetryScope = sut.scope("test")
-        telemetryScope.emit("event", null)
-
-        // Spill dir should be under custom root
-        val expectedDir = File(customRoot, "stream/telemetry/2.0.0/test")
-        // Even if no spill happened, the scope should use this path
-        assertEquals("test", telemetryScope.name)
+        assertFalse("Stale under custom root should be deleted", staleUnderCustomRoot.exists())
+        assertTrue(
+            "cacheDir should not be touched when custom root is set",
+            staleUnderCacheDir.exists(),
+        )
     }
 
     @Test

@@ -50,14 +50,14 @@ public interface StreamTelemetryScope {
      * Records a signal into this scope.
      *
      * The [StreamSignalRedactor] (if configured) runs synchronously before the signal is buffered.
-     * Failures are silently consumed — this method never throws or affects the caller's flow.
+     * If the redactor returns `null`, the signal is dropped and not buffered.
      *
      * @param tag Identifies what happened.
-     * @param data Optional payload. Pass `null` for tag-only signals.
-     * @return [Result.success] if the signal was buffered, or [Result.failure] if an error
-     *   occurred.
+     * @param data Optional pre-serialized payload. Pass `null` for tag-only signals.
+     * @return [Result.success] if the signal was buffered (or intentionally dropped by the
+     *   redactor), or [Result.failure] if an error occurred.
      */
-    public fun emit(tag: String, data: Any? = null): Result<Unit>
+    public fun emit(tag: String, data: String? = null): Result<Unit>
 
     /**
      * Atomically consumes all buffered signals, including any that were spilled to disk.

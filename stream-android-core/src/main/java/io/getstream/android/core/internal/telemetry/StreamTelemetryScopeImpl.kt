@@ -47,7 +47,8 @@ import kotlinx.coroutines.withContext
  *
  * When the memory buffer exceeds the configured capacity, the oldest signals are serialized to disk
  * on [Dispatchers.IO]. If a spill is already in progress, the oldest in-memory signal is dropped
- * instead. Disk storage is capped per scope; when exceeded the oldest lines are removed.
+ * instead. Disk storage is capped per scope; when exceeded the oldest lines are removed in a single
+ * pass.
  *
  * ### Drain order
  *
@@ -71,11 +72,12 @@ internal class StreamTelemetryScopeImpl(
     private var buffer = mutableListOf<StreamSignal>()
     private val spilling = AtomicBoolean(false)
 
-    override fun emit(tag: String, data: Any?): Result<Unit> =
+    override fun emit(tag: String, data: String?): Result<Unit> =
         // runCatching (not cancellable) — emit is not a suspend function.
         runCatching {
             val raw = StreamSignal(tag = tag, data = data, timestamp = System.currentTimeMillis())
-            val signal = redactor?.redact(raw) ?: raw
+            val signal = if (redactor != null) redactor.redact(raw) else raw
+            if (signal == null) return@runCatching // redactor dropped the signal
             synchronized(lock) {
                 buffer.add(signal)
                 if (buffer.size > memoryCapacity) {
@@ -126,11 +128,17 @@ internal class StreamTelemetryScopeImpl(
         if (!file.exists() || file.length() <= diskCapacity) {
             return
         }
-        val lines = file.readLines().toMutableList()
-        while (lines.isNotEmpty() && file.length() > diskCapacity) {
-            lines.removeAt(0)
-            file.writeText(lines.joinToString(separator = "\n", postfix = "\n"))
+        val lines = file.readLines()
+        var bytes = 0L
+        var startIdx = lines.size
+        for (i in lines.indices.reversed()) {
+            val next = bytes + lines[i].toByteArray(Charsets.UTF_8).size + 1
+            if (next > diskCapacity) break
+            bytes = next
+            startIdx = i
         }
+        val kept = lines.subList(startIdx, lines.size)
+        file.writeText(if (kept.isEmpty()) "" else kept.joinToString("\n", postfix = "\n"))
     }
 
     private suspend fun drainDisk(): List<StreamSignal> =
@@ -148,7 +156,7 @@ internal class StreamTelemetryScopeImpl(
 
     private fun encode(signal: StreamSignal): String {
         val escapedTag = signal.tag.replace(DELIMITER, DELIMITER_ESCAPE)
-        val escapedData = signal.data?.toString()?.replace(DELIMITER, DELIMITER_ESCAPE).orEmpty()
+        val escapedData = signal.data?.replace(DELIMITER, DELIMITER_ESCAPE).orEmpty()
         return "${signal.timestamp}$DELIMITER$escapedTag$DELIMITER$escapedData"
     }
 

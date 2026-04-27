@@ -120,14 +120,13 @@ class StreamTelemetryScopeImplTest {
     }
 
     @Test
-    fun `emit with complex data`() = runBlocking {
+    fun `emit with string data`() = runBlocking {
         val sut = createScope()
-        val data = mapOf("key" to "value", "count" to 42)
-        sut.emit("event", data)
+        sut.emit("event", """{"key":"value","count":42}""")
 
         val signals = sut.drain().getOrThrow()
         assertEquals(1, signals.size)
-        assertEquals(data, signals[0].data)
+        assertEquals("""{"key":"value","count":42}""", signals[0].data)
     }
 
     @Test
@@ -225,16 +224,29 @@ class StreamTelemetryScopeImplTest {
     }
 
     @Test
-    fun `redactor returning null falls back to raw signal`() = runBlocking {
-        // val signal = redactor?.redact(raw) ?: raw — null falls back to raw
+    fun `redactor returning null drops the signal`() = runBlocking {
         val redactor = StreamSignalRedactor { null }
         val sut = createScope(redactor = redactor)
 
         sut.emit("event", "data")
 
         val signals = sut.drain().getOrThrow()
+        assertTrue("Signal should be dropped when redactor returns null", signals.isEmpty())
+    }
+
+    @Test
+    fun `redactor selectively drops signals`() = runBlocking {
+        val redactor = StreamSignalRedactor { signal ->
+            if (signal.tag == "debug") null else signal
+        }
+        val sut = createScope(redactor = redactor)
+
+        sut.emit("debug", "verbose info")
+        sut.emit("connected", "user-123")
+
+        val signals = sut.drain().getOrThrow()
         assertEquals(1, signals.size)
-        assertEquals("event", signals[0].tag)
+        assertEquals("connected", signals[0].tag)
     }
 
     @Test
@@ -248,12 +260,15 @@ class StreamTelemetryScopeImplTest {
     }
 
     @Test
-    fun `redactor exception does not crash emit`() {
+    fun `redactor exception does not crash emit and returns failure`() = runBlocking {
         val redactor = StreamSignalRedactor { throw RuntimeException("redactor boom") }
         val sut = createScope(redactor = redactor)
 
-        sut.emit("event", null)
-        // No exception thrown
+        val emitResult = sut.emit("event", null)
+        assertTrue("emit should capture redactor failure in Result", emitResult.isFailure)
+
+        val drainResult = sut.drain()
+        assertTrue("drain should still succeed", drainResult.isSuccess)
     }
 
     @Test
@@ -308,12 +323,8 @@ class StreamTelemetryScopeImplTest {
 
         waitForSpill()
 
-        val signals = sut.drain().getOrThrow()
-        val tags = signals.map { it.tag }
-        assertTrue(
-            "Expected disk signals before memory, got: $tags",
-            tags.indexOf("a") < tags.indexOf("d"),
-        )
+        val tags = sut.drain().getOrThrow().map { it.tag }
+        assertEquals(listOf("a", "b", "c", "d"), tags)
     }
 
     @Test
@@ -438,17 +449,13 @@ class StreamTelemetryScopeImplTest {
         val dir = tempDir.newFolder()
         val sut = createScope(memoryCapacity = 3, dir = dir)
 
-        // Emit enough to trigger spill
         repeat(4) { sut.emit("event-$it", null) }
 
-        // Immediately drain — spill may or may not have finished
-        // With the disk Mutex, drain waits for spill to complete before reading
         Thread.sleep(100)
         val result = sut.drain()
 
         assertTrue("drain should succeed", result.isSuccess)
         val signals = result.getOrThrow()
-        // All 4 signals should be accounted for (either from disk or memory)
         assertEquals(4, signals.size)
     }
 
@@ -457,7 +464,6 @@ class StreamTelemetryScopeImplTest {
         val dir = tempDir.newFolder()
         val sut = createScope(memoryCapacity = 1, dir = dir)
 
-        // Rapid-fire 200 emits — each pair triggers a spill
         repeat(200) { sut.emit("event-$it", null) }
         waitForSpill()
 
@@ -466,7 +472,6 @@ class StreamTelemetryScopeImplTest {
         val signals = result.getOrThrow()
         assertTrue("Expected signals, got ${signals.size}", signals.isNotEmpty())
 
-        // All signals should have valid structure
         signals.forEach { signal ->
             assertTrue("Tag should start with event-", signal.tag.startsWith("event-"))
             assertTrue("Timestamp should be positive", signal.timestamp > 0)
@@ -481,7 +486,6 @@ class StreamTelemetryScopeImplTest {
         val allDrainedSignals = mutableListOf<StreamSignal>()
         val drainFailures = AtomicInteger(0)
 
-        // Emit rapidly in background
         val emitJob =
             scope.launch {
                 var i = 0
@@ -491,7 +495,6 @@ class StreamTelemetryScopeImplTest {
                 }
             }
 
-        // Drain 30 times concurrently with emit
         repeat(30) {
             Thread.sleep(10)
             val result = sut.drain()
@@ -506,7 +509,6 @@ class StreamTelemetryScopeImplTest {
         emitJob.cancel()
         waitForSpill()
 
-        // Final drain to get remaining signals
         sut.drain().onSuccess { remaining ->
             synchronized(allDrainedSignals) { allDrainedSignals.addAll(remaining) }
         }
@@ -514,7 +516,6 @@ class StreamTelemetryScopeImplTest {
         assertTrue("Should have collected some signals", allDrainedSignals.isNotEmpty())
         assertEquals("No drain should have failed", 0, drainFailures.get())
 
-        // No duplicates — each drain clears the buffer
         val uniqueTimestampTagPairs = allDrainedSignals.map { "${it.timestamp}-${it.tag}" }.toSet()
         assertEquals(
             "No duplicate signals expected",
@@ -528,15 +529,12 @@ class StreamTelemetryScopeImplTest {
         val dir = tempDir.newFolder()
         val sut = createScope(memoryCapacity = 5, dir = dir)
 
-        // Pre-fill with signals that will spill
         repeat(20) { sut.emit("event-$it", null) }
         waitForSpill()
 
-        // Launch 10 concurrent drains
         val results = (1..10).map { scope.launch { sut.drain() } }
         results.forEach { it.join() }
 
-        // After all drains, scope should be empty
         val remaining = sut.drain().getOrThrow()
         assertTrue("Scope should be empty after concurrent drains", remaining.isEmpty())
     }
@@ -547,21 +545,17 @@ class StreamTelemetryScopeImplTest {
         val sut = createScope(memoryCapacity = 2, dir = dir)
         val allSignals = mutableListOf<StreamSignal>()
 
-        // 50 cycles of: emit enough to spill, then drain
         repeat(50) { cycle ->
             repeat(3) { sut.emit("cycle-$cycle-event-$it", null) }
-            Thread.sleep(50) // let spill run
+            Thread.sleep(50)
             sut.drain().onSuccess { signals ->
                 synchronized(allSignals) { allSignals.addAll(signals) }
             }
         }
 
-        // Wait for any remaining spills
         waitForSpill()
         sut.drain().onSuccess { signals -> synchronized(allSignals) { allSignals.addAll(signals) } }
 
-        // We emitted 150 signals total (50 * 3)
-        // Some may be lost due to drop-oldest under pressure, but most should survive
         assertTrue("Expected most of 150 signals, got ${allSignals.size}", allSignals.size >= 100)
     }
 
@@ -583,11 +577,10 @@ class StreamTelemetryScopeImplTest {
     }
 
     @Test
-    fun `emit does not throw when spill directory is read-only`() = runBlocking {
-        val readOnlyDir = tempDir.newFolder("readonly")
-        readOnlyDir.setReadOnly()
-
-        val sut = createScope(memoryCapacity = 2, dir = File(readOnlyDir, "nested"))
+    fun `emit succeeds when spill directory cannot be created`() = runBlocking {
+        // Use a file as parent so mkdirs() fails deterministically (not uid-dependent)
+        val blocker = tempDir.newFile("blocker-file")
+        val sut = createScope(memoryCapacity = 2, dir = File(blocker, "nested"))
 
         repeat(5) { sut.emit("event-$it", null) }
         waitForSpill()
@@ -819,9 +812,6 @@ class StreamTelemetryScopeImplTest {
         waitForSpill()
 
         val signals = sut.drain().getOrThrow()
-        // Spilled signals are trimmed to 0 bytes, but memory buffer survives.
-        // With rapid emits and spill resets, count varies — key assertion is that
-        // we get fewer than total emitted (some were lost to disk trim).
         assertTrue("Expected fewer than 5 due to disk trim, got ${signals.size}", signals.size < 5)
     }
 
@@ -891,20 +881,19 @@ class StreamTelemetryScopeImplTest {
     }
 
     // ========================================
-    // Disk full / permission failures
+    // Disk write failure (deterministic)
     // ========================================
 
     @Test
-    fun `emit survives when spill dir is read-only`() = runBlocking {
-        val readOnlySpill = tempDir.newFolder("readonly-spill")
-        readOnlySpill.setReadOnly()
-
+    fun `emit survives when spill dir parent is a file`() = runBlocking {
+        // A file as parent makes mkdirs() fail deterministically regardless of uid
+        val blocker = tempDir.newFile("blocker")
         val sut =
             StreamTelemetryScopeImpl(
                 name = "test",
                 memoryCapacity = 2,
                 diskCapacity = 1_000_000L,
-                spillDir = File(readOnlySpill, "nested"),
+                spillDir = File(blocker, "nested"),
                 redactor = null,
                 scope = scope,
             )
@@ -1068,9 +1057,6 @@ class StreamTelemetryScopeImplTest {
             val dir = tempDir.newFolder()
             val sut = createScope(memoryCapacity = 1, dir = dir)
 
-            // The literal string "\t" (backslash + t) collides with the delimiter escape sequence.
-            // After a spill roundtrip, decode converts "\\t" back to a real tab character.
-            // This documents the known limitation.
             sut.emit("tag\\twith\\tescape", "data")
             sut.emit("trigger", null)
             waitForSpill()

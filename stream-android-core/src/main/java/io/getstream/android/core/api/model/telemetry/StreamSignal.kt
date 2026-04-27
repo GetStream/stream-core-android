@@ -23,8 +23,9 @@ import io.getstream.android.core.annotations.StreamInternalApi
  *
  * @param tag Identifies what happened (e.g. `"connected"`, `"token.refreshed"`,
  *   `"network.changed"`).
- * @param data Arbitrary payload associated with the signal. May be `null` for tag-only signals.
+ * @param data Pre-serialized payload associated with the signal. Callers are responsible for
+ *   serializing domain objects to a string before emitting. May be `null` for tag-only signals.
  * @param timestamp Epoch milliseconds when the signal was recorded.
  */
 @StreamInternalApi
-public data class StreamSignal(val tag: String, val data: Any?, val timestamp: Long)
+public data class StreamSignal(val tag: String, val data: String?, val timestamp: Long)
