@@ -106,7 +106,7 @@ internal class StreamEventAggregatorImpl<T>(
                     val sent = dispatchQueue.trySend(item)
                     if (sent.isFailure) {
                         logger?.w {
-                            "[collector] Dispatch queue full (capacity=$policy.dispatchQueueCapacity). " +
+                            "[collector] Dispatch queue full (capacity=${policy.dispatchQueueCapacity}). " +
                                 "Dropping ${buffer.size} events. Dispatcher may be too slow."
                         }
                     }
