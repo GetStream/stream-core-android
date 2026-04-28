@@ -900,14 +900,10 @@ class StreamSocketSessionTest {
             // Simulate aggregated event delivery (spike path)
             val aggregatedEvent =
                 StreamAggregatedEvent(
-                    mapOf(
-                        "connection.error" to
-                            listOf(StreamCompositeSerializationEvent.internal<Unit>(errorEvent)),
-                        "channel.updated" to
-                            listOf(
-                                StreamCompositeSerializationEvent.external("product1"),
-                                StreamCompositeSerializationEvent.external("product2"),
-                            ),
+                    listOf(
+                        StreamCompositeSerializationEvent.internal<Unit>(errorEvent),
+                        StreamCompositeSerializationEvent.external("product1"),
+                        StreamCompositeSerializationEvent.external("product2"),
                     )
                 )
             cb.invoke(aggregatedEvent)
@@ -919,11 +915,8 @@ class StreamSocketSessionTest {
             assertTrue(seenEvents.any { it is StreamClientConnectionErrorEvent })
             val forwardedAggregate =
                 seenEvents.filterIsInstance<StreamAggregatedEvent<*>>().single()
-            assertFalse(forwardedAggregate.events.containsKey("connection.error"))
-            assertEquals(
-                listOf("product1", "product2"),
-                forwardedAggregate.events["channel.updated"],
-            )
+            // Product events preserved in arrival order, core events excluded
+            assertEquals(listOf("product1", "product2"), forwardedAggregate.events)
 
             job.cancelAndJoin()
         }

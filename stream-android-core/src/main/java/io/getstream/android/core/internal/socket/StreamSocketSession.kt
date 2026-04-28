@@ -491,51 +491,46 @@ internal class StreamSocketSession<T>(
      * Handles an aggregated event (spike dispatch path — high traffic).
      *
      * Core events are processed individually (connection errors need immediate handling). Product
-     * events are re-grouped into a [StreamAggregatedEvent] keyed by event type and dispatched as a
+     * events are collected in arrival order into a [StreamAggregatedEvent] and dispatched as a
      * single call to listeners.
      */
     private fun handleAggregatedEvent(aggregated: StreamAggregatedEvent<*>) {
         @Suppress("UNCHECKED_CAST")
         val typed = aggregated as StreamAggregatedEvent<StreamCompositeSerializationEvent<T>>
-        val productEvents = LinkedHashMap<String, MutableList<T>>()
+        val productEvents = mutableListOf<T>()
 
-        for ((type, compositeEvents) in typed.events) {
-            for (composite in compositeEvents) {
-                val coreEvent = composite.core
-                val productEvent = composite.product
+        for (composite in typed.events) {
+            val coreEvent = composite.core
+            val productEvent = composite.product
 
-                // Handle core events individually — they're rare and need immediate processing
-                if (coreEvent != null && coreEvent is StreamClientConnectionErrorEvent) {
-                    notifyState(
-                        StreamConnectionState.Disconnected(
-                            StreamEndpointException("Connection error", coreEvent.error)
-                        )
+            // Handle core events individually — they're rare and need immediate processing
+            if (coreEvent != null && coreEvent is StreamClientConnectionErrorEvent) {
+                notifyState(
+                    StreamConnectionState.Disconnected(
+                        StreamEndpointException("Connection error", coreEvent.error)
                     )
+                )
+            }
+            coreEvent
+                ?.takeUnless { it is StreamHealthCheckEvent }
+                ?.let { core ->
+                    subscriptionManager
+                        .forEach { listener -> listener.onEvent(core) }
+                        .onFailure { e ->
+                            logger.e(e) { "[onEvent] Listener dispatch failed. ${e.message}" }
+                        }
                 }
-                coreEvent
-                    ?.takeUnless { it is StreamHealthCheckEvent }
-                    ?.let { core ->
-                        subscriptionManager
-                            .forEach { listener -> listener.onEvent(core) }
-                            .onFailure { e ->
-                                logger.e(e) { "[onEvent] Listener dispatch failed. ${e.message}" }
-                            }
-                    }
 
-                // Collect product events for aggregated dispatch
-                if (productEvent != null) {
-                    productEvents.getOrPut(type) { mutableListOf() }.add(productEvent)
-                }
+            // Collect product events for aggregated dispatch
+            if (productEvent != null) {
+                productEvents.add(productEvent)
             }
         }
 
         // Dispatch aggregated product events as a single call
         if (productEvents.isNotEmpty()) {
-            logger.v {
-                "[onEvent] Aggregated: ${productEvents.size} types, " +
-                    "${productEvents.values.sumOf { it.size }} total events"
-            }
-            val productAggregated = StreamAggregatedEvent(productEvents.toMap())
+            logger.v { "[onEvent] Aggregated: ${productEvents.size} total events" }
+            val productAggregated = StreamAggregatedEvent(productEvents)
             subscriptionManager
                 .forEach { listener -> listener.onEvent(productAggregated) }
                 .onFailure { e ->

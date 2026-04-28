@@ -275,7 +275,7 @@ class StreamEventAggregatorImplTest {
             var count = 0
             for (item in received) {
                 when (item) {
-                    is StreamAggregatedEvent<*> -> count += item.events.values.sumOf { it.size }
+                    is StreamAggregatedEvent<*> -> count += item.events.size
                     is TestEvent -> count++
                 }
             }
@@ -304,7 +304,7 @@ class StreamEventAggregatorImplTest {
             when (item) {
                 is StreamAggregatedEvent<*> -> {
                     aggregated += item
-                    totalEvents += item.events.values.sumOf { it.size }
+                    totalEvents += item.events.size
                 }
                 is TestEvent -> totalEvents++
             }
@@ -320,10 +320,11 @@ class StreamEventAggregatorImplTest {
             aggregated.isNotEmpty(),
         )
 
-        // Both types should appear somewhere across all deliveries
-        val allTypes = aggregated.flatMap { it.events.keys }
-        assertTrue("channel.updated" in allTypes)
-        assertTrue("message.new" in allTypes)
+        // Both types should appear somewhere across all deliveries (events are now a flat list)
+        val allRaws =
+            aggregated.flatMap { agg -> agg.events.filterIsInstance<TestEvent>().map { it.raw } }
+        assertTrue(allRaws.any { "channel.updated" in it })
+        assertTrue(allRaws.any { "message.new" in it })
 
         aggregator.stop()
         scope.cancel()
@@ -487,7 +488,7 @@ class StreamEventAggregatorImplTest {
         var totalEvents = 0
         for (item in received) {
             when (item) {
-                is StreamAggregatedEvent<*> -> totalEvents += item.events.values.sumOf { it.size }
+                is StreamAggregatedEvent<*> -> totalEvents += item.events.size
                 is TestEvent -> totalEvents++
             }
         }
@@ -522,8 +523,8 @@ class StreamEventAggregatorImplTest {
 
         val aggregated = received.filterIsInstance<StreamAggregatedEvent<*>>()
         assertTrue(aggregated.isNotEmpty())
-        // All events grouped under empty key
-        assertTrue(aggregated.first().events.containsKey(""))
+        // All events should be in the aggregated list
+        assertTrue(aggregated.first().events.isNotEmpty())
 
         aggregator.stop()
     }
@@ -562,11 +563,11 @@ class StreamEventAggregatorImplTest {
         advanceTimeBy(500)
         advanceUntilIdle()
 
-        // All 5 events should still be delivered (throwing one grouped under "")
+        // All 5 events should still be delivered despite extractor throwing
         var total = 0
         for (item in received) {
             when (item) {
-                is StreamAggregatedEvent<*> -> total += item.events.values.sumOf { it.size }
+                is StreamAggregatedEvent<*> -> total += item.events.size
                 is TestEvent -> total++
             }
         }
@@ -687,7 +688,7 @@ class StreamEventAggregatorImplTest {
             var count = 0
             for (item in received) {
                 when (item) {
-                    is StreamAggregatedEvent<*> -> count += item.events.values.sumOf { it.size }
+                    is StreamAggregatedEvent<*> -> count += item.events.size
                     is TestEvent -> count++
                 }
             }
@@ -848,7 +849,7 @@ class StreamEventAggregatorImplTest {
             received += event
             val count =
                 when (event) {
-                    is StreamAggregatedEvent<*> -> event.events.values.sumOf { it.size }
+                    is StreamAggregatedEvent<*> -> event.events.size
                     is TestEvent -> 1
                     else -> 0
                 }
@@ -881,7 +882,7 @@ class StreamEventAggregatorImplTest {
             when (item) {
                 is StreamAggregatedEvent<*> -> {
                     aggregatedBatches++
-                    aggregatedEventCount += item.events.values.sumOf { it.size }
+                    aggregatedEventCount += item.events.size
                 }
                 is TestEvent -> individualCount++
             }
@@ -905,7 +906,7 @@ class StreamEventAggregatorImplTest {
         // Guarantee 2: each aggregated batch has at most `threshold` events
         for ((i, item) in received.withIndex()) {
             if (item is StreamAggregatedEvent<*>) {
-                val batchSize = item.events.values.sumOf { it.size }
+                val batchSize = item.events.size
                 assertTrue(
                     "Batch $i has $batchSize events, exceeds threshold $threshold",
                     batchSize <= threshold,

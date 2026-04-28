@@ -146,15 +146,13 @@ internal class StreamEventAggregatorImpl<T>(
             return if (events.isEmpty()) null else DispatchItem.Individual(events)
         }
 
-        // Spike — group by type
-        val grouped = LinkedHashMap<String, MutableList<T>>()
+        // Spike — collect in arrival order
+        val batch = mutableListOf<T>()
         for (raw in rawMessages) {
-            val type = safeExtractType(raw)
             val event = safeDeserialize(raw) ?: continue
-            grouped.getOrPut(type) { mutableListOf() }.add(event)
+            batch.add(event)
         }
-        return if (grouped.isEmpty()) null
-        else DispatchItem.Aggregated(StreamAggregatedEvent(grouped))
+        return if (batch.isEmpty()) null else DispatchItem.Aggregated(StreamAggregatedEvent(batch))
     }
 
     /** Calls [deserializer], catching both Result.failure and thrown exceptions. */
@@ -169,12 +167,6 @@ internal class StreamEventAggregatorImpl<T>(
             }
             .onFailure { e -> logger?.e(e) { "[collector] Deserializer threw. ${e.message}" } }
             .getOrNull()
-
-    /** Calls [typeExtractor], catching thrown exceptions. Returns empty string on failure. */
-    private fun safeExtractType(raw: String): String =
-        runCatchingCancellable { policy.extractType(raw) ?: "" }
-            .onFailure { e -> logger?.e(e) { "[collector] Type extractor threw. ${e.message}" } }
-            .getOrDefault("")
 
     private suspend fun runDispatcher() {
         try {

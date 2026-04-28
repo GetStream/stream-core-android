@@ -19,13 +19,16 @@ package io.getstream.android.core.api.processing
 import io.getstream.android.core.annotations.StreamInternalApi
 
 /**
- * A collection of events grouped by their type, produced by [StreamEventAggregator] during a
- * traffic spike.
+ * A batch of events produced by [StreamEventAggregator] during a traffic spike.
  *
  * When the aggregator detects high event throughput, it collects events within a time window and
  * delivers them as a single [StreamAggregatedEvent] instead of dispatching each individually. This
- * allows product SDKs to apply one state update and one UI recomposition per window instead of one
- * per event.
+ * allows product SDKs to apply all updates sequentially in one atomic state update and one UI
+ * recomposition per window instead of one per event.
+ *
+ * Events are stored in arrival order. Product SDKs should process them sequentially to maintain
+ * correctness (e.g. "reaction added" must be processed before "reaction removed" for the same
+ * entity).
  *
  * During normal (low) traffic, events flow through individually — this class is only used during
  * spikes.
@@ -35,11 +38,8 @@ import io.getstream.android.core.annotations.StreamInternalApi
  * ```kotlin
  * when (event) {
  *     is StreamAggregatedEvent<*> -> {
- *         event.events.forEach { (type, eventsOfType) ->
- *             when (type) {
- *                 "channel.updated" -> applyLatest(eventsOfType)
- *                 "message.new" -> processAll(eventsOfType)
- *             }
+ *         event.events.forEach { singleEvent ->
+ *             handleSingleEvent(singleEvent)
  *         }
  *     }
  *     else -> handleSingleEvent(event)
@@ -47,9 +47,9 @@ import io.getstream.android.core.annotations.StreamInternalApi
  * ```
  *
  * @param T The type of the individual events.
- * @property events Events grouped by type string. Each list preserves arrival order.
+ * @property events Events in arrival order. Process sequentially to maintain correctness.
  */
 @StreamInternalApi
-public class StreamAggregatedEvent<T>(events: Map<String, List<T>>) {
-    public val events: Map<String, List<T>> = events.mapValues { (_, v) -> v.toList() }
+public class StreamAggregatedEvent<T>(events: List<T>) {
+    public val events: List<T> = events.toList()
 }
