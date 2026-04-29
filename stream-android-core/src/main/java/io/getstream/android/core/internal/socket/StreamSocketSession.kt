@@ -25,7 +25,8 @@ import io.getstream.android.core.api.model.connection.StreamConnectionState
 import io.getstream.android.core.api.model.exceptions.StreamClientException
 import io.getstream.android.core.api.model.exceptions.StreamEndpointErrorData
 import io.getstream.android.core.api.model.exceptions.StreamEndpointException
-import io.getstream.android.core.api.processing.StreamBatcher
+import io.getstream.android.core.api.processing.StreamAggregatedEvent
+import io.getstream.android.core.api.processing.StreamEventAggregator
 import io.getstream.android.core.api.serialization.StreamJsonSerialization
 import io.getstream.android.core.api.socket.StreamWebSocket
 import io.getstream.android.core.api.socket.listeners.StreamClientListener
@@ -57,7 +58,7 @@ internal class StreamSocketSession<T>(
     private val jsonSerialization: StreamJsonSerialization,
     private val eventParser: StreamCompositeEventSerializationImpl<T>,
     private val healthMonitor: StreamHealthMonitor,
-    private val batcher: StreamBatcher<String>,
+    private val aggregator: StreamEventAggregator<*>,
     private val subscriptionManager: StreamSubscriptionManager<StreamClientListener>,
     private val products: List<String>,
 ) : StreamSubscriptionManager<StreamClientListener> by subscriptionManager {
@@ -84,13 +85,15 @@ internal class StreamSocketSession<T>(
             override fun onMessage(text: String) {
                 logger.v { "[onMessage] Socket message: $text" }
                 healthMonitor.acknowledgeHeartbeat()
-                val accepted = batcher.offer(text)
+                val accepted = aggregator.offer(text)
                 if (!accepted) {
                     val error =
                         IllegalStateException(
-                            "Failed to offer message to debounce processor. Message dropped: $text"
+                            "Failed to offer message to event aggregator. Message dropped (${text.length} bytes)"
                         )
-                    logger.e(error) { "[onMessage] Message dropped: $text" }
+                    logger.e(error) {
+                        "[onMessage] Message dropped by event aggregator (${text.length} bytes)"
+                    }
                     disconnect(error)
                 } else {
                     logger.v { "[onMessage] Message accepted: $text" }
@@ -124,7 +127,7 @@ internal class StreamSocketSession<T>(
      *
      * The method emits a `StreamConnectionState.Disconnected` state (embedding [error] when
      * provided), cancels the active socket subscription, closes the underlying [StreamWebSocket],
-     * and stops the health monitor and batch processor. Subsequent invocations are idempotent:
+     * and stops the health monitor and event aggregator. Subsequent invocations are idempotent:
      * listeners are only notified on the first call while the socket close is still attempted every
      * time.
      *
@@ -231,55 +234,21 @@ internal class StreamSocketSession<T>(
             healthMonitor.onUnhealthy {
                 disconnect(StreamClientException("Socket did not receive any events."))
             }
-            // Batch processing of incoming messages
-            batcher.onBatch { batch, delay, count ->
-                logger.v {
-                    "[onBatch] Socket batch (delay: $delay ms, buffer size: $count): $batch"
+
+            // Event aggregator handler — receives individual or aggregated events
+            aggregator.onEvent { event ->
+                when (event) {
+                    is StreamAggregatedEvent<*> -> handleAggregatedEvent(event)
+                    is StreamCompositeSerializationEvent<*> -> {
+                        @Suppress("UNCHECKED_CAST")
+                        handleSingleCompositeEvent(event as StreamCompositeSerializationEvent<T>)
+                    }
                 }
+            }
 
-                batch.forEach { message ->
-                    eventParser
-                        .deserialize(message)
-                        .onSuccess { event ->
-                            logger.v { "[onBatch] Deserialized event: $event" }
-                            val coreEvent = event.core
-                            val productEvent = event.product
-
-                            if (
-                                coreEvent != null && coreEvent is StreamClientConnectionErrorEvent
-                            ) {
-                                notifyState(
-                                    StreamConnectionState.Disconnected(
-                                        StreamEndpointException("Connection error", coreEvent.error)
-                                    )
-                                )
-                            }
-                            subscriptionManager.forEach { listener ->
-                                coreEvent
-                                    ?.takeUnless { it is StreamHealthCheckEvent }
-                                    ?.let { listener.onEvent(it) }
-
-                                productEvent?.let { listener.onEvent(it) }
-                            }
-                        }
-                        .onFailure {
-                            logger.e(it) {
-                                "[onBatch] Failed to deserialize socket message. ${it.message}"
-                            }
-                            // Attempt to parse as API error
-                            jsonSerialization
-                                .fromJson(message, StreamEndpointErrorData::class.java)
-                                .onSuccess { apiError ->
-                                    logger.e { "[onBatch] Parsed error event: $apiError" }
-                                    notifyState(
-                                        StreamConnectionState.Disconnected(
-                                            StreamEndpointException("Connection error", apiError)
-                                        )
-                                    )
-                                }
-                                .onFailure { logger.i { "[onBatch] Failed to parse $message" } }
-                        }
-                }
+            aggregator.start().onFailure { throwable ->
+                completeFailure(throwable)
+                return@suspendCancellableCoroutine
             }
 
             // Success/Failure continuations
@@ -300,7 +269,7 @@ internal class StreamSocketSession<T>(
 
                 // Replay messages buffered during handshake
                 for (message in pendingMessages) {
-                    if (!batcher.offer(message)) {
+                    if (!aggregator.offer(message)) {
                         val err =
                             IllegalStateException(
                                 "Failed to replay buffered message during handshake transition"
@@ -496,13 +465,91 @@ internal class StreamSocketSession<T>(
             }
         }
 
+    /** Handles a single deserialized composite event (individual dispatch path — low traffic). */
+    private fun handleSingleCompositeEvent(event: StreamCompositeSerializationEvent<T>) {
+        logger.v { "[onEvent] Individual event: $event" }
+        val coreEvent = event.core
+        val productEvent = event.product
+
+        if (coreEvent != null && coreEvent is StreamClientConnectionErrorEvent) {
+            notifyState(
+                StreamConnectionState.Disconnected(
+                    StreamEndpointException("Connection error", coreEvent.error)
+                )
+            )
+        }
+        subscriptionManager
+            .forEach { listener ->
+                coreEvent?.takeUnless { it is StreamHealthCheckEvent }?.let { listener.onEvent(it) }
+
+                productEvent?.let { listener.onEvent(it) }
+            }
+            .onFailure { e -> logger.e(e) { "[onEvent] Listener dispatch failed. ${e.message}" } }
+    }
+
+    /**
+     * Handles an aggregated event (spike dispatch path — high traffic).
+     *
+     * Core events are processed individually (connection errors need immediate handling). Product
+     * events are collected in arrival order into a [StreamAggregatedEvent] and dispatched as a
+     * single call to listeners.
+     */
+    private fun handleAggregatedEvent(aggregated: StreamAggregatedEvent<*>) {
+        @Suppress("UNCHECKED_CAST")
+        val typed = aggregated as StreamAggregatedEvent<StreamCompositeSerializationEvent<T>>
+        val productEvents = mutableListOf<T>()
+
+        for (composite in typed.events) {
+            val coreEvent = composite.core
+            val productEvent = composite.product
+
+            // Handle core events individually — they're rare and need immediate processing
+            if (coreEvent != null && coreEvent is StreamClientConnectionErrorEvent) {
+                notifyState(
+                    StreamConnectionState.Disconnected(
+                        StreamEndpointException("Connection error", coreEvent.error)
+                    )
+                )
+            }
+            coreEvent
+                ?.takeUnless { it is StreamHealthCheckEvent }
+                ?.let { core ->
+                    subscriptionManager
+                        .forEach { listener -> listener.onEvent(core) }
+                        .onFailure { e ->
+                            logger.e(e) { "[onEvent] Listener dispatch failed. ${e.message}" }
+                        }
+                }
+
+            // Collect product events for aggregated dispatch
+            if (productEvent != null) {
+                productEvents.add(productEvent)
+            }
+        }
+
+        // Dispatch aggregated product events as a single call
+        if (productEvents.isNotEmpty()) {
+            logger.v { "[onEvent] Aggregated: ${productEvents.size} total events" }
+            val productAggregated = StreamAggregatedEvent(productEvents)
+            subscriptionManager
+                .forEach { listener -> listener.onEvent(productAggregated) }
+                .onFailure { e ->
+                    logger.e(e) { "[onEvent] Listener dispatch failed. ${e.message}" }
+                }
+        }
+    }
+
     private fun cleanup() {
         if (!cleaned.compareAndSet(false, true)) {
             return
         }
         logger.d { "[cleanup] Cleaning up socket" }
         healthMonitor.stop()
-        batcher.stop()
+        aggregator.stop().onFailure { throwable ->
+            logger.e(throwable) {
+                "[cleanup] Failed to stop event aggregator. ${throwable.message}"
+            }
+        }
         socketSubscription?.cancel()
         socketSubscription = null
         streamClientConnectedEvent = null

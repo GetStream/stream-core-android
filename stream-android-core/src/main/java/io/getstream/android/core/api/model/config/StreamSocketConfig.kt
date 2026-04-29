@@ -25,8 +25,8 @@ import io.getstream.android.core.api.model.value.StreamWsUrl
  * Configuration for the Stream WebSocket connection.
  *
  * Holds both **identity** (URL, API key, auth type) and **operational** tunables (health check
- * timing, batching, connection timeout). Products pass this to the [StreamClient] factory to
- * describe their socket.
+ * timing, event aggregation, connection timeout). Products pass this to the [StreamClient] factory
+ * to describe their socket.
  *
  * ### Usage
  *
@@ -38,7 +38,7 @@ import io.getstream.android.core.api.model.value.StreamWsUrl
  *     clientInfoHeader = clientInfo,
  * )
  *
- * // SFU socket — aggressive timing, no batching
+ * // SFU socket — aggressive timing, low aggregation threshold
  * val sfuSocket = StreamSocketConfig.jwt(
  *     url = StreamWsUrl.fromString("wss://sfu.stream-io-api.com"),
  *     apiKey = apiKey,
@@ -46,7 +46,8 @@ import io.getstream.android.core.api.model.value.StreamWsUrl
  *     healthCheckIntervalMs = 5_000,
  *     livenessThresholdMs = 15_000,
  *     connectionTimeoutMs = 2_000,
- *     batchSize = 1,
+ *     aggregationThreshold = 10,
+ *     aggregationMaxWindowMs = 200,
  * )
  * ```
  *
@@ -58,9 +59,12 @@ import io.getstream.android.core.api.model.value.StreamWsUrl
  * @param livenessThresholdMs Time without a health check ack before the connection is considered
  *   unhealthy in milliseconds.
  * @param connectionTimeoutMs WebSocket connection timeout in milliseconds.
- * @param batchSize Maximum number of WebSocket messages to batch before flushing.
- * @param batchInitialDelayMs Initial debounce window for batching in milliseconds.
- * @param batchMaxDelayMs Maximum debounce window for batching in milliseconds.
+ * @param aggregationThreshold Number of accumulated events that triggers aggregated delivery
+ *   instead of individual dispatch.
+ * @param aggregationMaxWindowMs Maximum time the aggregator collects events before delivering. This
+ *   is the latency ceiling in milliseconds.
+ * @param aggregationDispatchQueueCapacity Bounded capacity of the dispatch queue between the
+ *   aggregator's collector and dispatcher coroutines.
  */
 @Suppress("LongParameterList")
 @StreamInternalApi
@@ -74,9 +78,9 @@ private constructor(
     val healthCheckIntervalMs: Long = DEFAULT_HEALTH_INTERVAL_MS,
     val livenessThresholdMs: Long = DEFAULT_LIVENESS_MS,
     val connectionTimeoutMs: Long = DEFAULT_CONNECTION_TIMEOUT_MS,
-    val batchSize: Int = DEFAULT_BATCH_SIZE,
-    val batchInitialDelayMs: Long = DEFAULT_BATCH_INIT_DELAY_MS,
-    val batchMaxDelayMs: Long = DEFAULT_BATCH_MAX_DELAY_MS,
+    val aggregationThreshold: Int = DEFAULT_AGGREGATION_THRESHOLD,
+    val aggregationMaxWindowMs: Long = DEFAULT_AGGREGATION_MAX_WINDOW_MS,
+    val aggregationDispatchQueueCapacity: Int = DEFAULT_AGGREGATION_DISPATCH_QUEUE_CAPACITY,
 ) {
     /** Default values for [StreamSocketConfig] fields. */
     public companion object {
@@ -92,14 +96,14 @@ private constructor(
         /** Default connection timeout: 10 seconds. */
         public const val DEFAULT_CONNECTION_TIMEOUT_MS: Long = 10_000L
 
-        /** Default batch size: 10 messages. */
-        public const val DEFAULT_BATCH_SIZE: Int = 10
+        /** Default aggregation threshold: 50 events trigger aggregated delivery. */
+        public const val DEFAULT_AGGREGATION_THRESHOLD: Int = 50
 
-        /** Default initial batch delay: 100ms. */
-        public const val DEFAULT_BATCH_INIT_DELAY_MS: Long = 100L
+        /** Default aggregation max window: 500ms latency ceiling. */
+        public const val DEFAULT_AGGREGATION_MAX_WINDOW_MS: Long = 500L
 
-        /** Default max batch delay: 1 second. */
-        public const val DEFAULT_BATCH_MAX_DELAY_MS: Long = 1_000L
+        /** Default dispatch queue capacity: 16 items. */
+        public const val DEFAULT_AGGREGATION_DISPATCH_QUEUE_CAPACITY: Int = 16
 
         /**
          * Creates a JWT-based [StreamSocketConfig].
@@ -110,9 +114,9 @@ private constructor(
          * @param healthCheckIntervalMs Interval between health check pings in milliseconds.
          * @param livenessThresholdMs Liveness threshold in milliseconds.
          * @param connectionTimeoutMs WebSocket connection timeout in milliseconds.
-         * @param batchSize Maximum batch size before flush.
-         * @param batchInitialDelayMs Initial debounce window in milliseconds.
-         * @param batchMaxDelayMs Maximum debounce window in milliseconds.
+         * @param aggregationThreshold Events before aggregated delivery triggers.
+         * @param aggregationMaxWindowMs Maximum collection window in milliseconds.
+         * @param aggregationDispatchQueueCapacity Dispatch queue capacity.
          * @return A JWT-based [StreamSocketConfig].
          */
         @Suppress("LongParameterList")
@@ -123,9 +127,9 @@ private constructor(
             healthCheckIntervalMs: Long = DEFAULT_HEALTH_INTERVAL_MS,
             livenessThresholdMs: Long = DEFAULT_LIVENESS_MS,
             connectionTimeoutMs: Long = DEFAULT_CONNECTION_TIMEOUT_MS,
-            batchSize: Int = DEFAULT_BATCH_SIZE,
-            batchInitialDelayMs: Long = DEFAULT_BATCH_INIT_DELAY_MS,
-            batchMaxDelayMs: Long = DEFAULT_BATCH_MAX_DELAY_MS,
+            aggregationThreshold: Int = DEFAULT_AGGREGATION_THRESHOLD,
+            aggregationMaxWindowMs: Long = DEFAULT_AGGREGATION_MAX_WINDOW_MS,
+            aggregationDispatchQueueCapacity: Int = DEFAULT_AGGREGATION_DISPATCH_QUEUE_CAPACITY,
         ): StreamSocketConfig =
             StreamSocketConfig(
                 url = url,
@@ -135,9 +139,9 @@ private constructor(
                 healthCheckIntervalMs = healthCheckIntervalMs,
                 livenessThresholdMs = livenessThresholdMs,
                 connectionTimeoutMs = connectionTimeoutMs,
-                batchSize = batchSize,
-                batchInitialDelayMs = batchInitialDelayMs,
-                batchMaxDelayMs = batchMaxDelayMs,
+                aggregationThreshold = aggregationThreshold,
+                aggregationMaxWindowMs = aggregationMaxWindowMs,
+                aggregationDispatchQueueCapacity = aggregationDispatchQueueCapacity,
             )
 
         /**
@@ -149,9 +153,9 @@ private constructor(
          * @param healthCheckIntervalMs Interval between health check pings in milliseconds.
          * @param livenessThresholdMs Liveness threshold in milliseconds.
          * @param connectionTimeoutMs WebSocket connection timeout in milliseconds.
-         * @param batchSize Maximum batch size before flush.
-         * @param batchInitialDelayMs Initial debounce window in milliseconds.
-         * @param batchMaxDelayMs Maximum debounce window in milliseconds.
+         * @param aggregationThreshold Events before aggregated delivery triggers.
+         * @param aggregationMaxWindowMs Maximum collection window in milliseconds.
+         * @param aggregationDispatchQueueCapacity Dispatch queue capacity.
          * @return An anonymous [StreamSocketConfig].
          */
         @Suppress("LongParameterList")
@@ -162,9 +166,9 @@ private constructor(
             healthCheckIntervalMs: Long = DEFAULT_HEALTH_INTERVAL_MS,
             livenessThresholdMs: Long = DEFAULT_LIVENESS_MS,
             connectionTimeoutMs: Long = DEFAULT_CONNECTION_TIMEOUT_MS,
-            batchSize: Int = DEFAULT_BATCH_SIZE,
-            batchInitialDelayMs: Long = DEFAULT_BATCH_INIT_DELAY_MS,
-            batchMaxDelayMs: Long = DEFAULT_BATCH_MAX_DELAY_MS,
+            aggregationThreshold: Int = DEFAULT_AGGREGATION_THRESHOLD,
+            aggregationMaxWindowMs: Long = DEFAULT_AGGREGATION_MAX_WINDOW_MS,
+            aggregationDispatchQueueCapacity: Int = DEFAULT_AGGREGATION_DISPATCH_QUEUE_CAPACITY,
         ): StreamSocketConfig =
             StreamSocketConfig(
                 url = url,
@@ -174,9 +178,9 @@ private constructor(
                 healthCheckIntervalMs = healthCheckIntervalMs,
                 livenessThresholdMs = livenessThresholdMs,
                 connectionTimeoutMs = connectionTimeoutMs,
-                batchSize = batchSize,
-                batchInitialDelayMs = batchInitialDelayMs,
-                batchMaxDelayMs = batchMaxDelayMs,
+                aggregationThreshold = aggregationThreshold,
+                aggregationMaxWindowMs = aggregationMaxWindowMs,
+                aggregationDispatchQueueCapacity = aggregationDispatchQueueCapacity,
             )
 
         /**
@@ -189,9 +193,9 @@ private constructor(
          * @param healthCheckIntervalMs Interval between health check pings in milliseconds.
          * @param livenessThresholdMs Liveness threshold in milliseconds.
          * @param connectionTimeoutMs WebSocket connection timeout in milliseconds.
-         * @param batchSize Maximum batch size before flush.
-         * @param batchInitialDelayMs Initial debounce window in milliseconds.
-         * @param batchMaxDelayMs Maximum debounce window in milliseconds.
+         * @param aggregationThreshold Events before aggregated delivery triggers.
+         * @param aggregationMaxWindowMs Maximum collection window in milliseconds.
+         * @param aggregationDispatchQueueCapacity Dispatch queue capacity.
          * @return A custom [StreamSocketConfig].
          */
         @Suppress("LongParameterList")
@@ -203,9 +207,9 @@ private constructor(
             healthCheckIntervalMs: Long = DEFAULT_HEALTH_INTERVAL_MS,
             livenessThresholdMs: Long = DEFAULT_LIVENESS_MS,
             connectionTimeoutMs: Long = DEFAULT_CONNECTION_TIMEOUT_MS,
-            batchSize: Int = DEFAULT_BATCH_SIZE,
-            batchInitialDelayMs: Long = DEFAULT_BATCH_INIT_DELAY_MS,
-            batchMaxDelayMs: Long = DEFAULT_BATCH_MAX_DELAY_MS,
+            aggregationThreshold: Int = DEFAULT_AGGREGATION_THRESHOLD,
+            aggregationMaxWindowMs: Long = DEFAULT_AGGREGATION_MAX_WINDOW_MS,
+            aggregationDispatchQueueCapacity: Int = DEFAULT_AGGREGATION_DISPATCH_QUEUE_CAPACITY,
         ): StreamSocketConfig {
             require(authType.isNotBlank()) { "Auth type must not be blank" }
             return StreamSocketConfig(
@@ -216,9 +220,9 @@ private constructor(
                 healthCheckIntervalMs = healthCheckIntervalMs,
                 livenessThresholdMs = livenessThresholdMs,
                 connectionTimeoutMs = connectionTimeoutMs,
-                batchSize = batchSize,
-                batchInitialDelayMs = batchInitialDelayMs,
-                batchMaxDelayMs = batchMaxDelayMs,
+                aggregationThreshold = aggregationThreshold,
+                aggregationMaxWindowMs = aggregationMaxWindowMs,
+                aggregationDispatchQueueCapacity = aggregationDispatchQueueCapacity,
             )
         }
     }

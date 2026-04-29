@@ -22,7 +22,7 @@ import io.getstream.android.core.api.components.StreamAndroidComponentsProvider
 import io.getstream.android.core.api.log.StreamLoggerProvider
 import io.getstream.android.core.api.observers.lifecycle.StreamLifecycleMonitor
 import io.getstream.android.core.api.observers.network.StreamNetworkMonitor
-import io.getstream.android.core.api.processing.StreamBatcher
+import io.getstream.android.core.api.processing.StreamEventAggregator
 import io.getstream.android.core.api.processing.StreamSerialProcessingQueue
 import io.getstream.android.core.api.processing.StreamSingleFlightProcessor
 import io.getstream.android.core.api.recovery.StreamConnectionRecoveryEvaluator
@@ -64,7 +64,7 @@ import io.getstream.android.core.api.telemetry.StreamTelemetry
  * @param tokenManager Token lifecycle manager.
  * @param connectionIdHolder Connection ID storage.
  * @param socketFactory WebSocket factory.
- * @param batcher WebSocket message batcher.
+ * @param eventAggregator WebSocket event aggregator.
  * @param healthMonitor Connection health monitor.
  * @param networkMonitor Network connectivity monitor.
  * @param lifecycleMonitor App lifecycle monitor.
@@ -82,7 +82,7 @@ public data class StreamComponentProvider(
     val tokenManager: StreamTokenManager? = null,
     val connectionIdHolder: StreamConnectionIdHolder? = null,
     val socketFactory: StreamWebSocketFactory? = null,
-    val batcher: StreamBatcher<String>? = null,
+    val eventAggregator: StreamEventAggregator<*>? = null,
     val healthMonitor: StreamHealthMonitor? = null,
     val networkMonitor: StreamNetworkMonitor? = null,
     val lifecycleMonitor: StreamLifecycleMonitor? = null,

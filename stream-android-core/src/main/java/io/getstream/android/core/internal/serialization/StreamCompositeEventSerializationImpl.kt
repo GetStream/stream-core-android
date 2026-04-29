@@ -124,7 +124,7 @@ internal class StreamCompositeEventSerializationImpl<T>(
             }.getOrThrow()
         }
 
-    private fun peekType(raw: String): String? {
+    internal fun peekType(raw: String): String? {
         val reader = JsonReader.of(Buffer().writeUtf8(raw))
         reader.isLenient = true
         return try {

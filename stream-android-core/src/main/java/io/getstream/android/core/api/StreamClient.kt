@@ -35,7 +35,8 @@ import io.getstream.android.core.api.model.connection.lifecycle.StreamLifecycleS
 import io.getstream.android.core.api.model.connection.network.StreamNetworkState
 import io.getstream.android.core.api.observers.lifecycle.StreamLifecycleMonitor
 import io.getstream.android.core.api.observers.network.StreamNetworkMonitor
-import io.getstream.android.core.api.processing.StreamBatcher
+import io.getstream.android.core.api.processing.StreamEventAggregationPolicy
+import io.getstream.android.core.api.processing.StreamEventAggregator
 import io.getstream.android.core.api.processing.StreamSerialProcessingQueue
 import io.getstream.android.core.api.processing.StreamSingleFlightProcessor
 import io.getstream.android.core.api.recovery.StreamConnectionRecoveryEvaluator
@@ -249,14 +250,7 @@ public fun StreamClient(
         socketFactory =
             components.socketFactory
                 ?: StreamWebSocketFactory(logger = logProvider.taggedLogger("SCWebSocketFactory")),
-        batcher =
-            components.batcher
-                ?: StreamBatcher(
-                    scope = scope,
-                    batchSize = socketConfig.batchSize,
-                    initialDelayMs = socketConfig.batchInitialDelayMs,
-                    maxDelayMs = socketConfig.batchMaxDelayMs,
-                ),
+        eventAggregator = components.eventAggregator,
         healthMonitor =
             components.healthMonitor
                 ?: StreamHealthMonitor(
@@ -320,13 +314,7 @@ internal fun createStreamClientInternal(
     connectionIdHolder: StreamConnectionIdHolder = StreamConnectionIdHolder(),
     socketFactory: StreamWebSocketFactory =
         StreamWebSocketFactory(logger = logProvider.taggedLogger("SCWebSocketFactory")),
-    batcher: StreamBatcher<String> =
-        StreamBatcher(
-            scope = scope,
-            batchSize = socketConfig.batchSize,
-            initialDelayMs = socketConfig.batchInitialDelayMs,
-            maxDelayMs = socketConfig.batchMaxDelayMs,
-        ),
+    eventAggregator: StreamEventAggregator<*>? = null,
 
     // Monitoring
     healthMonitor: StreamHealthMonitor =
@@ -427,6 +415,28 @@ internal fun createStreamClientInternal(
                 ),
         )
 
+    val eventParser =
+        StreamCompositeEventSerializationImpl(
+            internal =
+                serializationConfig.eventParser ?: StreamEventSerialization(compositeSerialization),
+            external = serializationConfig.productEventSerializers,
+        )
+
+    val resolvedAggregator =
+        eventAggregator
+            ?: StreamEventAggregator(
+                scope = clientScope,
+                policy =
+                    StreamEventAggregationPolicy.from(
+                        typeExtractor = { raw -> eventParser.peekType(raw) },
+                        deserializer = { raw -> eventParser.deserialize(raw) },
+                        aggregationThreshold = socketConfig.aggregationThreshold,
+                        maxWindowMs = socketConfig.aggregationMaxWindowMs,
+                        dispatchQueueCapacity = socketConfig.aggregationDispatchQueueCapacity,
+                    ),
+                logger = logProvider.taggedLogger("SCEventAggregator"),
+            )
+
     val mutableConnectionState = MutableStateFlow<StreamConnectionState>(StreamConnectionState.Idle)
     return StreamClientImpl(
         user = user,
@@ -446,15 +456,9 @@ internal fun createStreamClientInternal(
                 products = products,
                 config = socketConfig,
                 jsonSerialization = compositeSerialization,
-                eventParser =
-                    StreamCompositeEventSerializationImpl(
-                        internal =
-                            serializationConfig.eventParser
-                                ?: StreamEventSerialization(compositeSerialization),
-                        external = serializationConfig.productEventSerializers,
-                    ),
+                eventParser = eventParser,
                 healthMonitor = healthMonitor,
-                batcher = batcher,
+                aggregator = resolvedAggregator,
                 internalSocket = socket,
                 subscriptionManager =
                     StreamSubscriptionManager(
