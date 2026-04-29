@@ -1,0 +1,359 @@
+<!doctype html>
+<html class="no-js">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8">
+    <title>Snapshot</title>
+<link href="../../../../images/logo-icon.svg" rel="icon" type="image/svg">    <script>var pathToRoot = "../../../../";</script>
+    <script>document.documentElement.classList.replace("no-js","js");</script>
+    <script>const storage = localStorage.getItem("dokka-dark-mode")
+    if (storage == null) {
+        const osDarkSchemePreferred = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+        if (osDarkSchemePreferred === true) {
+            document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+    } else {
+        const savedDarkMode = JSON.parse(storage)
+        if(savedDarkMode === true) {
+            document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+    }
+    </script>
+<script type="text/javascript" src="https://unpkg.com/kotlin-playground@1/dist/playground.min.js" async></script>
+<script type="text/javascript" src="../../../../scripts/sourceset_dependencies.js" async></script>
+<link href="../../../../styles/style.css" rel="Stylesheet">
+<link href="../../../../styles/main.css" rel="Stylesheet">
+<link href="../../../../styles/prism.css" rel="Stylesheet">
+<link href="../../../../styles/logo-styles.css" rel="Stylesheet">
+<link href="../../../../styles/font-jb-sans-auto.css" rel="Stylesheet">
+<script type="text/javascript" src="../../../../scripts/clipboard.js" async></script>
+<script type="text/javascript" src="../../../../scripts/navigation-loader.js" async></script>
+<script type="text/javascript" src="../../../../scripts/platform-content-handler.js" async></script>
+<script type="text/javascript" src="../../../../scripts/main.js" defer></script>
+<script type="text/javascript" src="../../../../scripts/prism.js" async></script>
+<script type="text/javascript" src="../../../../scripts/symbol-parameters-wrapper_deferred.js" defer></script></head>
+<body>
+    <div class="root">
+<nav class="navigation" id="navigation-wrapper">
+    <div class="navigation--inner">
+        <div class="navigation-title">
+            <button class="menu-toggle" id="menu-toggle" type="button">toggle menu</button>
+            <div class="library-name">
+<a class="library-name--link" href="../../../../index.html">
+                            stream-android-core
+                    </a>            </div>
+            <div class="library-version">5.0.0
+            </div>
+        </div>
+        <div class="filter-section" id="filter-section">
+                <button class="platform-tag platform-selector jvm-like" data-active="" data-filter=":stream-android-core:dokkaHtmlPartial/release">androidJvm</button>
+        </div>
+    </div>
+    <div class="navigation-controls">
+        <button class="navigation-controls--btn navigation-controls--theme" id="theme-toggle-button" type="button">switch theme</button>
+        <div class="navigation-controls--btn navigation-controls--search" id="searchBar" role="button">search in API</div>
+    </div>
+</nav>
+        <div id="container">
+            <div class="sidebar" id="leftColumn">
+                <div class="sidebar--inner" id="sideMenu"></div>
+            </div>
+            <div id="main">
+<div class="main-content" data-page-type="classlike" id="content" pageids="stream-android-core::io.getstream.android.core.api.model.connection.network/StreamNetworkInfo.Snapshot///PointingToDeclaration//2080241467">
+  <div class="breadcrumbs"><a href="../../../index.html">stream-android-core</a><span class="delimiter">/</span><a href="../../index.html">io.getstream.android.core.api.model.connection.network</a><span class="delimiter">/</span><a href="../index.html">StreamNetworkInfo</a><span class="delimiter">/</span><span class="current">Snapshot</span></div>
+  <div class="cover ">
+    <h1 class="cover"><span><span>Snapshot</span></span></h1>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">data </span><span class="token keyword">class </span><a href="index.html">Snapshot</a><span class="token punctuation">(</span><span class="parameters "><span class="parameter "><span class="token keyword">val </span>timestamp<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.time/-instant/index.html">Instant</a><span class="token operator"> = </span>Clock.System.now()<span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>transports<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.collections/-set/index.html">Set</a><span class="token operator">&lt;</span><a href="../-transport/index.html">StreamNetworkInfo.Transport</a><span class="token operator">&gt;</span><span class="token operator"> = </span>emptySet()<span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>internet<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-boolean/index.html">Boolean</a><span class="token operator">?</span><span class="token operator"> = </span>null<span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>validated<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-boolean/index.html">Boolean</a><span class="token operator">?</span><span class="token operator"> = </span>null<span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>captivePortal<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-boolean/index.html">Boolean</a><span class="token operator">?</span><span class="token operator"> = </span>null<span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>vpn<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-boolean/index.html">Boolean</a><span class="token operator">?</span><span class="token operator"> = </span>null<span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>trusted<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-boolean/index.html">Boolean</a><span class="token operator">?</span><span class="token operator"> = </span>null<span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>localOnly<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-boolean/index.html">Boolean</a><span class="token operator">?</span><span class="token operator"> = </span>null<span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>metered<span class="token operator">: </span><a href="../-metered/index.html">StreamNetworkInfo.Metered</a><span class="token operator"> = </span>Metered.UNKNOWN_OR_METERED<span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>roaming<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-boolean/index.html">Boolean</a><span class="token operator">?</span><span class="token operator"> = </span>null<span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>congested<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-boolean/index.html">Boolean</a><span class="token operator">?</span><span class="token operator"> = </span>null<span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>suspended<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-boolean/index.html">Boolean</a><span class="token operator">?</span><span class="token operator"> = </span>null<span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>bandwidthConstrained<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-boolean/index.html">Boolean</a><span class="token operator">?</span><span class="token operator"> = </span>null<span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>bandwidthKbps<span class="token operator">: </span><a href="../-bandwidth/index.html">StreamNetworkInfo.Bandwidth</a><span class="token operator">?</span><span class="token operator"> = </span>null<span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>priority<span class="token operator">: </span><a href="../-priority-hint/index.html">StreamNetworkInfo.PriorityHint</a><span class="token operator"> = </span>PriorityHint.NONE<span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>signal<span class="token operator">: </span><a href="../-signal/index.html">StreamNetworkInfo.Signal</a><span class="token operator">?</span><span class="token operator"> = </span>null<span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>link<span class="token operator">: </span><a href="../-link/index.html">StreamNetworkInfo.Link</a><span class="token operator">?</span><span class="token operator"> = </span>null</span></span><span class="token punctuation">)</span></div><p class="paragraph">Immutable capture of the device's currently selected network at a specific point in time.</p><p class="paragraph">Every field maps back to values provided by <a href="https://developer.android.com/reference/kotlin/android/net/NetworkCapabilities.html">android.net.NetworkCapabilities</a> or <a href="https://developer.android.com/reference/kotlin/android/net/LinkProperties.html">android.net.LinkProperties</a>. Nullable fields either were not reported by the platform or are hidden due to missing runtime permissions (for example, fine location for Wi-Fi SSID).</p></div></div>
+  </div>
+  <div class="tabbedcontent">
+    <div class="tabs-section" tabs-section="tabs-section"><button class="section-tab" data-active="" data-togglable="CONSTRUCTOR,TYPE,PROPERTY,FUNCTION">Members</button></div>
+    <div class="tabs-section-body">
+      <div data-togglable="CONSTRUCTOR">
+        <h2 class="">Constructors</h2>
+        <div class="table"><a data-name="1679771675%2FConstructors%2F2080241467" anchor-label="Snapshot" id="1679771675%2FConstructors%2F2080241467" data-filterable-set=":stream-android-core:dokkaHtmlPartial/release"></a>
+          <div class="table-row" data-togglable="CONSTRUCTOR" data-filterable-current=":stream-android-core:dokkaHtmlPartial/release" data-filterable-set=":stream-android-core:dokkaHtmlPartial/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-snapshot.html"><span><span>Snapshot</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1679771675%2FConstructors%2F2080241467"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">constructor</span><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">timestamp<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.time/-instant/index.html">Instant</a><span class="token operator"> = </span>Clock.System.now()<span class="token punctuation">, </span></span><span class="parameter ">transports<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.collections/-set/index.html">Set</a><span class="token operator">&lt;</span><a href="../-transport/index.html">StreamNetworkInfo.Transport</a><span class="token operator">&gt;</span><span class="token operator"> = </span>emptySet()<span class="token punctuation">, </span></span><span class="parameter ">internet<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-boolean/index.html">Boolean</a><span class="token operator">?</span><span class="token operator"> = </span>null<span class="token punctuation">, </span></span><span class="parameter ">validated<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-boolean/index.html">Boolean</a><span class="token operator">?</span><span class="token operator"> = </span>null<span class="token punctuation">, </span></span><span class="parameter ">captivePortal<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-boolean/index.html">Boolean</a><span class="token operator">?</span><span class="token operator"> = </span>null<span class="token punctuation">, </span></span><span class="parameter ">vpn<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-boolean/index.html">Boolean</a><span class="token operator">?</span><span class="token operator"> = </span>null<span class="token punctuation">, </span></span><span class="parameter ">trusted<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-boolean/index.html">Boolean</a><span class="token operator">?</span><span class="token operator"> = </span>null<span class="token punctuation">, </span></span><span class="parameter ">localOnly<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-boolean/index.html">Boolean</a><span class="token operator">?</span><span class="token operator"> = </span>null<span class="token punctuation">, </span></span><span class="parameter ">metered<span class="token operator">: </span><a href="../-metered/index.html">StreamNetworkInfo.Metered</a><span class="token operator"> = </span>Metered.UNKNOWN_OR_METERED<span class="token punctuation">, </span></span><span class="parameter ">roaming<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-boolean/index.html">Boolean</a><span class="token operator">?</span><span class="token operator"> = </span>null<span class="token punctuation">, </span></span><span class="parameter ">congested<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-boolean/index.html">Boolean</a><span class="token operator">?</span><span class="token operator"> = </span>null<span class="token punctuation">, </span></span><span class="parameter ">suspended<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-boolean/index.html">Boolean</a><span class="token operator">?</span><span class="token operator"> = </span>null<span class="token punctuation">, </span></span><span class="parameter ">bandwidthConstrained<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-boolean/index.html">Boolean</a><span class="token operator">?</span><span class="token operator"> = </span>null<span class="token punctuation">, </span></span><span class="parameter ">bandwidthKbps<span class="token operator">: </span><a href="../-bandwidth/index.html">StreamNetworkInfo.Bandwidth</a><span class="token operator">?</span><span class="token operator"> = </span>null<span class="token punctuation">, </span></span><span class="parameter ">priority<span class="token operator">: </span><a href="../-priority-hint/index.html">StreamNetworkInfo.PriorityHint</a><span class="token operator"> = </span>PriorityHint.NONE<span class="token punctuation">, </span></span><span class="parameter ">signal<span class="token operator">: </span><a href="../-signal/index.html">StreamNetworkInfo.Signal</a><span class="token operator">?</span><span class="token operator"> = </span>null<span class="token punctuation">, </span></span><span class="parameter ">link<span class="token operator">: </span><a href="../-link/index.html">StreamNetworkInfo.Link</a><span class="token operator">?</span><span class="token operator"> = </span>null</span></span><span class="token punctuation">)</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div data-togglable="PROPERTY">
+        <h2 class="">Properties</h2>
+        <div class="table"><a data-name="436908391%2FProperties%2F2080241467" anchor-label="bandwidthConstrained" id="436908391%2FProperties%2F2080241467" data-filterable-set=":stream-android-core:dokkaHtmlPartial/release"></a>
+          <div class="table-row" data-filterable-current=":stream-android-core:dokkaHtmlPartial/release" data-filterable-set=":stream-android-core:dokkaHtmlPartial/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="bandwidth-constrained.html"><span>bandwidth</span><wbr><span><span>Constrained</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="436908391%2FProperties%2F2080241467"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">val </span><a href="bandwidth-constrained.html">bandwidthConstrained</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-boolean/index.html">Boolean</a><span class="token operator">?</span><span class="token operator"> = </span>null</div><div class="brief "><p class="paragraph">False when the OS explicitly reports the network is <i>not</i> bandwidth constrained.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-251410909%2FProperties%2F2080241467" anchor-label="bandwidthKbps" id="-251410909%2FProperties%2F2080241467" data-filterable-set=":stream-android-core:dokkaHtmlPartial/release"></a>
+          <div class="table-row" data-filterable-current=":stream-android-core:dokkaHtmlPartial/release" data-filterable-set=":stream-android-core:dokkaHtmlPartial/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="bandwidth-kbps.html"><span>bandwidth</span><wbr><span><span>Kbps</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-251410909%2FProperties%2F2080241467"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">val </span><a href="bandwidth-kbps.html">bandwidthKbps</a><span class="token operator">: </span><a href="../-bandwidth/index.html">StreamNetworkInfo.Bandwidth</a><span class="token operator">?</span><span class="token operator"> = </span>null</div><div class="brief "><p class="paragraph">Platform-estimated downstream and upstream throughput in kilobits per second.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="569539884%2FProperties%2F2080241467" anchor-label="captivePortal" id="569539884%2FProperties%2F2080241467" data-filterable-set=":stream-android-core:dokkaHtmlPartial/release"></a>
+          <div class="table-row" data-filterable-current=":stream-android-core:dokkaHtmlPartial/release" data-filterable-set=":stream-android-core:dokkaHtmlPartial/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="captive-portal.html"><span>captive</span><wbr><span><span>Portal</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="569539884%2FProperties%2F2080241467"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">val </span><a href="captive-portal.html">captivePortal</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-boolean/index.html">Boolean</a><span class="token operator">?</span><span class="token operator"> = </span>null</div><div class="brief "><p class="paragraph">True when the network is gated behind a captive portal login flow.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="630732174%2FProperties%2F2080241467" anchor-label="congested" id="630732174%2FProperties%2F2080241467" data-filterable-set=":stream-android-core:dokkaHtmlPartial/release"></a>
+          <div class="table-row" data-filterable-current=":stream-android-core:dokkaHtmlPartial/release" data-filterable-set=":stream-android-core:dokkaHtmlPartial/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="congested.html"><span><span>congested</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="630732174%2FProperties%2F2080241467"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">val </span><a href="congested.html">congested</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-boolean/index.html">Boolean</a><span class="token operator">?</span><span class="token operator"> = </span>null</div><div class="brief "><p class="paragraph">False when the OS explicitly reports the network is <i>not</i> congested.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1154865931%2FProperties%2F2080241467" anchor-label="internet" id="1154865931%2FProperties%2F2080241467" data-filterable-set=":stream-android-core:dokkaHtmlPartial/release"></a>
+          <div class="table-row" data-filterable-current=":stream-android-core:dokkaHtmlPartial/release" data-filterable-set=":stream-android-core:dokkaHtmlPartial/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="internet.html"><span><span>internet</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1154865931%2FProperties%2F2080241467"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">val </span><a href="internet.html">internet</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-boolean/index.html">Boolean</a><span class="token operator">?</span><span class="token operator"> = </span>null</div><div class="brief "><p class="paragraph">Whether the OS believes the network offers internet reachability.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-621407246%2FProperties%2F2080241467" anchor-label="link" id="-621407246%2FProperties%2F2080241467" data-filterable-set=":stream-android-core:dokkaHtmlPartial/release"></a>
+          <div class="table-row" data-filterable-current=":stream-android-core:dokkaHtmlPartial/release" data-filterable-set=":stream-android-core:dokkaHtmlPartial/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="link.html"><span><span>link</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-621407246%2FProperties%2F2080241467"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">val </span><a href="link.html">link</a><span class="token operator">: </span><a href="../-link/index.html">StreamNetworkInfo.Link</a><span class="token operator">?</span><span class="token operator"> = </span>null</div><div class="brief "><p class="paragraph">Link-layer metadata such as interface name, IP addresses, DNS servers, and MTU.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1020286039%2FProperties%2F2080241467" anchor-label="localOnly" id="1020286039%2FProperties%2F2080241467" data-filterable-set=":stream-android-core:dokkaHtmlPartial/release"></a>
+          <div class="table-row" data-filterable-current=":stream-android-core:dokkaHtmlPartial/release" data-filterable-set=":stream-android-core:dokkaHtmlPartial/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="local-only.html"><span>local</span><wbr><span><span>Only</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1020286039%2FProperties%2F2080241467"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">val </span><a href="local-only.html">localOnly</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-boolean/index.html">Boolean</a><span class="token operator">?</span><span class="token operator"> = </span>null</div><div class="brief "><p class="paragraph">True for local-only networks without internet routing (e.g., Wi-Fi Direct).</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-223710842%2FProperties%2F2080241467" anchor-label="metered" id="-223710842%2FProperties%2F2080241467" data-filterable-set=":stream-android-core:dokkaHtmlPartial/release"></a>
+          <div class="table-row" data-filterable-current=":stream-android-core:dokkaHtmlPartial/release" data-filterable-set=":stream-android-core:dokkaHtmlPartial/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="metered.html"><span><span>metered</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-223710842%2FProperties%2F2080241467"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">val </span><a href="metered.html">metered</a><span class="token operator">: </span><a href="../-metered/index.html">StreamNetworkInfo.Metered</a></div><div class="brief "><p class="paragraph">Billing hint describing if traffic may incur charges.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1473999352%2FProperties%2F2080241467" anchor-label="priority" id="-1473999352%2FProperties%2F2080241467" data-filterable-set=":stream-android-core:dokkaHtmlPartial/release"></a>
+          <div class="table-row" data-filterable-current=":stream-android-core:dokkaHtmlPartial/release" data-filterable-set=":stream-android-core:dokkaHtmlPartial/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="priority.html"><span><span>priority</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1473999352%2FProperties%2F2080241467"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">val </span><a href="priority.html">priority</a><span class="token operator">: </span><a href="../-priority-hint/index.html">StreamNetworkInfo.PriorityHint</a></div><div class="brief "><p class="paragraph">Platform hint for whether latency or bandwidth should be prioritised.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1013856373%2FProperties%2F2080241467" anchor-label="roaming" id="1013856373%2FProperties%2F2080241467" data-filterable-set=":stream-android-core:dokkaHtmlPartial/release"></a>
+          <div class="table-row" data-filterable-current=":stream-android-core:dokkaHtmlPartial/release" data-filterable-set=":stream-android-core:dokkaHtmlPartial/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="roaming.html"><span><span>roaming</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1013856373%2FProperties%2F2080241467"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">val </span><a href="roaming.html">roaming</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-boolean/index.html">Boolean</a><span class="token operator">?</span><span class="token operator"> = </span>null</div><div class="brief "><p class="paragraph">True when the cellular connection is roaming, <code class="lang-kotlin">null</code> when unknown.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-803039932%2FProperties%2F2080241467" anchor-label="signal" id="-803039932%2FProperties%2F2080241467" data-filterable-set=":stream-android-core:dokkaHtmlPartial/release"></a>
+          <div class="table-row" data-filterable-current=":stream-android-core:dokkaHtmlPartial/release" data-filterable-set=":stream-android-core:dokkaHtmlPartial/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="signal.html"><span><span>signal</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-803039932%2FProperties%2F2080241467"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">val </span><a href="signal.html">signal</a><span class="token operator">: </span><a href="../-signal/index.html">StreamNetworkInfo.Signal</a><span class="token operator">?</span><span class="token operator"> = </span>null</div><div class="brief "><p class="paragraph">Normalised radio-level signal information when exposed.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1948466355%2FProperties%2F2080241467" anchor-label="suspended" id="1948466355%2FProperties%2F2080241467" data-filterable-set=":stream-android-core:dokkaHtmlPartial/release"></a>
+          <div class="table-row" data-filterable-current=":stream-android-core:dokkaHtmlPartial/release" data-filterable-set=":stream-android-core:dokkaHtmlPartial/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="suspended.html"><span><span>suspended</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1948466355%2FProperties%2F2080241467"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">val </span><a href="suspended.html">suspended</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-boolean/index.html">Boolean</a><span class="token operator">?</span><span class="token operator"> = </span>null</div><div class="brief "><p class="paragraph">False when the OS explicitly reports the network is <i>not</i> suspended.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1013306920%2FProperties%2F2080241467" anchor-label="timestamp" id="-1013306920%2FProperties%2F2080241467" data-filterable-set=":stream-android-core:dokkaHtmlPartial/release"></a>
+          <div class="table-row" data-filterable-current=":stream-android-core:dokkaHtmlPartial/release" data-filterable-set=":stream-android-core:dokkaHtmlPartial/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="timestamp.html"><span><span>timestamp</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1013306920%2FProperties%2F2080241467"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">val </span><a href="timestamp.html">timestamp</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.time/-instant/index.html">Instant</a></div><div class="brief "><p class="paragraph">When the snapshot was assembled. Defaults to <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.time/-clock/-system/now.html">Clock.System.now</a>.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-272710590%2FProperties%2F2080241467" anchor-label="transports" id="-272710590%2FProperties%2F2080241467" data-filterable-set=":stream-android-core:dokkaHtmlPartial/release"></a>
+          <div class="table-row" data-filterable-current=":stream-android-core:dokkaHtmlPartial/release" data-filterable-set=":stream-android-core:dokkaHtmlPartial/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="transports.html"><span><span>transports</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-272710590%2FProperties%2F2080241467"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">val </span><a href="transports.html">transports</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.collections/-set/index.html">Set</a><span class="token operator">&lt;</span><a href="../-transport/index.html">StreamNetworkInfo.Transport</a><span class="token operator">&gt;</span></div><div class="brief "><p class="paragraph">Physical or virtual mediums (Wi-Fi, cellular, VPN, …) backing the connection.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-528771753%2FProperties%2F2080241467" anchor-label="trusted" id="-528771753%2FProperties%2F2080241467" data-filterable-set=":stream-android-core:dokkaHtmlPartial/release"></a>
+          <div class="table-row" data-filterable-current=":stream-android-core:dokkaHtmlPartial/release" data-filterable-set=":stream-android-core:dokkaHtmlPartial/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="trusted.html"><span><span>trusted</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-528771753%2FProperties%2F2080241467"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">val </span><a href="trusted.html">trusted</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-boolean/index.html">Boolean</a><span class="token operator">?</span><span class="token operator"> = </span>null</div><div class="brief "><p class="paragraph">True when the network is marked as trusted by the system.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-28454944%2FProperties%2F2080241467" anchor-label="validated" id="-28454944%2FProperties%2F2080241467" data-filterable-set=":stream-android-core:dokkaHtmlPartial/release"></a>
+          <div class="table-row" data-filterable-current=":stream-android-core:dokkaHtmlPartial/release" data-filterable-set=":stream-android-core:dokkaHtmlPartial/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="validated.html"><span><span>validated</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-28454944%2FProperties%2F2080241467"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">val </span><a href="validated.html">validated</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-boolean/index.html">Boolean</a><span class="token operator">?</span><span class="token operator"> = </span>null</div><div class="brief "><p class="paragraph">Whether the OS completed captive portal / validation checks.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="519137402%2FProperties%2F2080241467" anchor-label="vpn" id="519137402%2FProperties%2F2080241467" data-filterable-set=":stream-android-core:dokkaHtmlPartial/release"></a>
+          <div class="table-row" data-filterable-current=":stream-android-core:dokkaHtmlPartial/release" data-filterable-set=":stream-android-core:dokkaHtmlPartial/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="vpn.html"><span><span>vpn</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="519137402%2FProperties%2F2080241467"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">val </span><a href="vpn.html">vpn</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-boolean/index.html">Boolean</a><span class="token operator">?</span><span class="token operator"> = </span>null</div><div class="brief "><p class="paragraph">Indicates that the network represents, or is routed through, a VPN.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      <div class="footer">
+        <span class="go-to-top-icon"><a href="#content" id="go-to-top-link"></a></span><span>© 2026 Copyright</span><span class="pull-right"><span>Generated by </span><a href="https://github.com/Kotlin/dokka"><span>dokka</span><span class="padded-icon"></span></a></span>
+      </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+

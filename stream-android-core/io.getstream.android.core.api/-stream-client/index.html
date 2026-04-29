@@ -1,0 +1,149 @@
+<!doctype html>
+<html class="no-js">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8">
+    <title>StreamClient</title>
+<link href="../../../images/logo-icon.svg" rel="icon" type="image/svg">    <script>var pathToRoot = "../../../";</script>
+    <script>document.documentElement.classList.replace("no-js","js");</script>
+    <script>const storage = localStorage.getItem("dokka-dark-mode")
+    if (storage == null) {
+        const osDarkSchemePreferred = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+        if (osDarkSchemePreferred === true) {
+            document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+    } else {
+        const savedDarkMode = JSON.parse(storage)
+        if(savedDarkMode === true) {
+            document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+    }
+    </script>
+<script type="text/javascript" src="https://unpkg.com/kotlin-playground@1/dist/playground.min.js" async></script>
+<script type="text/javascript" src="../../../scripts/sourceset_dependencies.js" async></script>
+<link href="../../../styles/style.css" rel="Stylesheet">
+<link href="../../../styles/main.css" rel="Stylesheet">
+<link href="../../../styles/prism.css" rel="Stylesheet">
+<link href="../../../styles/logo-styles.css" rel="Stylesheet">
+<link href="../../../styles/font-jb-sans-auto.css" rel="Stylesheet">
+<script type="text/javascript" src="../../../scripts/clipboard.js" async></script>
+<script type="text/javascript" src="../../../scripts/navigation-loader.js" async></script>
+<script type="text/javascript" src="../../../scripts/platform-content-handler.js" async></script>
+<script type="text/javascript" src="../../../scripts/main.js" defer></script>
+<script type="text/javascript" src="../../../scripts/prism.js" async></script>
+<script type="text/javascript" src="../../../scripts/symbol-parameters-wrapper_deferred.js" defer></script></head>
+<body>
+    <div class="root">
+<nav class="navigation" id="navigation-wrapper">
+    <div class="navigation--inner">
+        <div class="navigation-title">
+            <button class="menu-toggle" id="menu-toggle" type="button">toggle menu</button>
+            <div class="library-name">
+<a class="library-name--link" href="../../../index.html">
+                            stream-android-core
+                    </a>            </div>
+            <div class="library-version">5.0.0
+            </div>
+        </div>
+        <div class="filter-section" id="filter-section">
+                <button class="platform-tag platform-selector jvm-like" data-active="" data-filter=":stream-android-core:dokkaHtmlPartial/release">androidJvm</button>
+        </div>
+    </div>
+    <div class="navigation-controls">
+        <button class="navigation-controls--btn navigation-controls--theme" id="theme-toggle-button" type="button">switch theme</button>
+        <div class="navigation-controls--btn navigation-controls--search" id="searchBar" role="button">search in API</div>
+    </div>
+</nav>
+        <div id="container">
+            <div class="sidebar" id="leftColumn">
+                <div class="sidebar--inner" id="sideMenu"></div>
+            </div>
+            <div id="main">
+<div class="main-content" data-page-type="classlike" id="content" pageids="stream-android-core::io.getstream.android.core.api/StreamClient///PointingToDeclaration//2080241467">
+  <div class="breadcrumbs"><a href="../../index.html">stream-android-core</a><span class="delimiter">/</span><a href="../index.html">io.getstream.android.core.api</a><span class="delimiter">/</span><span class="current">StreamClient</span></div>
+  <div class="cover ">
+    <h1 class="cover"><span>Stream</span><wbr><span><span>Client</span></span></h1>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">interface </span><a href="index.html">StreamClient</a> : <a href="../../io.getstream.android.core.api.subscribe/-stream-observable/index.html">StreamObservable</a><span class="token operator">&lt;</span><a href="../../io.getstream.android.core.api.socket.listeners/-stream-client-listener/index.html">StreamClientListener</a><span class="token operator">&gt; </span></div><p class="paragraph">Entry point for establishing and managing a connection to Stream services.</p><h3 class="">Semantics</h3><ul><li><p class="paragraph">Exposes connection-related state via <a href="connection-state.html">connectionState</a> (hot, read-only).</p></li><li><p class="paragraph">Implementations may perform network I/O and authentication during <a href="connect.html">connect</a>.</p></li></ul><h3 class="">Threading</h3><ul><li><p class="paragraph">All APIs are safe to call from any thread.</p></li><li><p class="paragraph"><a href="connect.html">connect</a> and <a href="disconnect.html">disconnect</a> are <code class="lang-kotlin">suspend</code> and must not block the caller thread.</p></li></ul><h3 class="">Lifecycle</h3><ul><li><p class="paragraph">Create → <a href="connect.html">connect</a> → use → <a href="disconnect.html">disconnect</a>.</p></li><li><p class="paragraph">After <a href="disconnect.html">disconnect</a>, resources are released; <a href="connection-state.html">connectionState</a> continues to reflect the latest status.</p></li></ul><h3 class="">Errors &amp; cancellation</h3><ul><li><p class="paragraph">Methods return <code class="lang-kotlin">Result&lt;…&gt;</code>: <code class="lang-kotlin">success</code> on completion, <code class="lang-kotlin">failure</code> on error.</p></li><li><p class="paragraph">If the <i>caller</i> is cancelled while awaiting, a kotlinx.coroutines.CancellationException is thrown.</p></li></ul><h3 class="">Usage</h3><div class="sample-container"><pre><code class="block lang-kotlin" theme="idea">// Use<br>val result = client.connect()<br>if (result.isSuccess) {<br>    // Observe connection state<br>    // Connected...<br>} else {<br>    val cause = result.exceptionOrNull()<br>    // handle error<br>}<br><br>// Observe exposed client state<br>client.state.collect {<br>  // Get state updates...<br>}<br><br>// …<br>client.disconnect()</code></pre><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+  </div>
+  <div class="tabbedcontent">
+    <div class="tabs-section" tabs-section="tabs-section"><button class="section-tab" data-active="" data-togglable="CONSTRUCTOR,TYPE,PROPERTY,FUNCTION">Members</button></div>
+    <div class="tabs-section-body">
+      <div data-togglable="PROPERTY">
+        <h2 class="">Properties</h2>
+        <div class="table"><a data-name="-2050360631%2FProperties%2F2080241467" anchor-label="connectionState" id="-2050360631%2FProperties%2F2080241467" data-filterable-set=":stream-android-core:dokkaHtmlPartial/release"></a>
+          <div class="table-row" data-filterable-current=":stream-android-core:dokkaHtmlPartial/release" data-filterable-set=":stream-android-core:dokkaHtmlPartial/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="connection-state.html"><span>connection</span><wbr><span><span>State</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-2050360631%2FProperties%2F2080241467"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">val </span><a href="connection-state.html">connectionState</a><span class="token operator">: </span><span data-unresolved-link="kotlinx.coroutines.flow/StateFlow///PointingToDeclaration/">StateFlow</span><span class="token operator">&lt;</span><a href="../../io.getstream.android.core.api.model.connection/-stream-connection-state/index.html">StreamConnectionState</a><span class="token operator">&gt;</span></div><div class="brief "><p class="paragraph">Read-only, hot state holder for this client.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div data-togglable="FUNCTION">
+        <h2 class="">Functions</h2>
+        <div class="table"><a data-name="-1814304494%2FFunctions%2F2080241467" anchor-label="connect" id="-1814304494%2FFunctions%2F2080241467" data-filterable-set=":stream-android-core:dokkaHtmlPartial/release"></a>
+          <div class="table-row" data-filterable-current=":stream-android-core:dokkaHtmlPartial/release" data-filterable-set=":stream-android-core:dokkaHtmlPartial/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="connect.html"><span><span>connect</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1814304494%2FFunctions%2F2080241467"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">suspend </span><span class="token keyword">fun </span><a href="connect.html"><span class="token function">connect</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-result/index.html">Result</a><span class="token operator">&lt;</span><a href="../../io.getstream.android.core.api.model.connection/-stream-connected-user/index.html">StreamConnectedUser</a><span class="token operator">&gt;</span></div><div class="brief "><p class="paragraph">Establishes a connection for the current user.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1476713282%2FFunctions%2F2080241467" anchor-label="disconnect" id="1476713282%2FFunctions%2F2080241467" data-filterable-set=":stream-android-core:dokkaHtmlPartial/release"></a>
+          <div class="table-row" data-filterable-current=":stream-android-core:dokkaHtmlPartial/release" data-filterable-set=":stream-android-core:dokkaHtmlPartial/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="disconnect.html"><span><span>disconnect</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1476713282%2FFunctions%2F2080241467"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">suspend </span><span class="token keyword">fun </span><a href="disconnect.html"><span class="token function">disconnect</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-result/index.html">Result</a><span class="token operator">&lt;</span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-unit/index.html">Unit</a><span class="token operator">&gt;</span></div><div class="brief "><p class="paragraph">Terminates the active connection and releases related resources.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-2110552974%2FFunctions%2F2080241467" anchor-label="subscribe" id="-2110552974%2FFunctions%2F2080241467" data-filterable-set=":stream-android-core:dokkaHtmlPartial/release"></a>
+          <div class="table-row" data-filterable-current=":stream-android-core:dokkaHtmlPartial/release" data-filterable-set=":stream-android-core:dokkaHtmlPartial/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="index.html#-2110552974%2FFunctions%2F2080241467"><span><span>subscribe</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-2110552974%2FFunctions%2F2080241467"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">fun </span><a href="index.html#-2110552974%2FFunctions%2F2080241467"><span class="token function">subscribe</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">listener<span class="token operator">: </span><a href="../../io.getstream.android.core.api.socket.listeners/-stream-client-listener/index.html">StreamClientListener</a><span class="token punctuation">, </span></span><span class="parameter ">options<span class="token operator">: </span><a href="../../io.getstream.android.core.api.subscribe/-stream-subscription-manager/-options/index.html">StreamSubscriptionManager.Options</a><span class="token operator"> = </span>Options()</span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-result/index.html">Result</a><span class="token operator">&lt;</span><a href="../../io.getstream.android.core.api.subscribe/-stream-subscription/index.html">StreamSubscription</a><span class="token operator">&gt;</span></div><div class="brief "><p class="paragraph">Adds <a href="index.html#-2110552974%2FFunctions%2F2080241467">listener</a> to the active set and returns a handle that can later be used to unregister it.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      <div class="footer">
+        <span class="go-to-top-icon"><a href="#content" id="go-to-top-link"></a></span><span>© 2026 Copyright</span><span class="pull-right"><span>Generated by </span><a href="https://github.com/Kotlin/dokka"><span>dokka</span><span class="padded-icon"></span></a></span>
+      </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+

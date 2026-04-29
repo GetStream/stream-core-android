@@ -1,0 +1,234 @@
+<!doctype html>
+<html class="no-js">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8">
+    <title>io.getstream.android.core.api.utils</title>
+<link href="../../images/logo-icon.svg" rel="icon" type="image/svg">    <script>var pathToRoot = "../../";</script>
+    <script>document.documentElement.classList.replace("no-js","js");</script>
+    <script>const storage = localStorage.getItem("dokka-dark-mode")
+    if (storage == null) {
+        const osDarkSchemePreferred = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+        if (osDarkSchemePreferred === true) {
+            document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+    } else {
+        const savedDarkMode = JSON.parse(storage)
+        if(savedDarkMode === true) {
+            document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+    }
+    </script>
+<script type="text/javascript" src="https://unpkg.com/kotlin-playground@1/dist/playground.min.js" async></script>
+<script type="text/javascript" src="../../scripts/sourceset_dependencies.js" async></script>
+<link href="../../styles/style.css" rel="Stylesheet">
+<link href="../../styles/main.css" rel="Stylesheet">
+<link href="../../styles/prism.css" rel="Stylesheet">
+<link href="../../styles/logo-styles.css" rel="Stylesheet">
+<link href="../../styles/font-jb-sans-auto.css" rel="Stylesheet">
+<script type="text/javascript" src="../../scripts/clipboard.js" async></script>
+<script type="text/javascript" src="../../scripts/navigation-loader.js" async></script>
+<script type="text/javascript" src="../../scripts/platform-content-handler.js" async></script>
+<script type="text/javascript" src="../../scripts/main.js" defer></script>
+<script type="text/javascript" src="../../scripts/prism.js" async></script>
+<script type="text/javascript" src="../../scripts/symbol-parameters-wrapper_deferred.js" defer></script></head>
+<body>
+    <div class="root">
+<nav class="navigation" id="navigation-wrapper">
+    <div class="navigation--inner">
+        <div class="navigation-title">
+            <button class="menu-toggle" id="menu-toggle" type="button">toggle menu</button>
+            <div class="library-name">
+<a class="library-name--link" href="../../index.html">
+                            stream-android-core
+                    </a>            </div>
+            <div class="library-version">5.0.0
+            </div>
+        </div>
+        <div class="filter-section" id="filter-section">
+                <button class="platform-tag platform-selector jvm-like" data-active="" data-filter=":stream-android-core:dokkaHtmlPartial/release">androidJvm</button>
+        </div>
+    </div>
+    <div class="navigation-controls">
+        <button class="navigation-controls--btn navigation-controls--theme" id="theme-toggle-button" type="button">switch theme</button>
+        <div class="navigation-controls--btn navigation-controls--search" id="searchBar" role="button">search in API</div>
+    </div>
+</nav>
+        <div id="container">
+            <div class="sidebar" id="leftColumn">
+                <div class="sidebar--inner" id="sideMenu"></div>
+            </div>
+            <div id="main">
+<div class="main-content" data-page-type="package" id="content" pageids="stream-android-core::io.getstream.android.core.api.utils////PointingToDeclaration//2080241467">
+  <div class="breadcrumbs"><a href="../index.html">stream-android-core</a><span class="delimiter">/</span><span class="current">io.getstream.android.core.api.utils</span></div>
+  <div class="cover ">
+    <h1 class="cover"><span><span>Package-level</span></span> <span><span>declarations</span></span></h1>
+  </div>
+  <div class="tabbedcontent">
+    <div class="tabs-section" tabs-section="tabs-section"><button class="section-tab" data-active="" data-togglable="FUNCTION,EXTENSION_FUNCTION">Functions</button></div>
+    <div class="tabs-section-body">
+      <div data-togglable="FUNCTION">
+        <h2 class="">Functions</h2>
+        <div class="table"><a data-name="-486026059%2FFunctions%2F2080241467" anchor-label="flatMap" id="-486026059%2FFunctions%2F2080241467" data-filterable-set=":stream-android-core:dokkaHtmlPartial/release"></a>
+          <div class="table-row" data-togglable="EXTENSION_FUNCTION" data-filterable-current=":stream-android-core:dokkaHtmlPartial/release" data-filterable-set=":stream-android-core:dokkaHtmlPartial/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="flat-map.html"><span>flat</span><wbr><span><span>Map</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-486026059%2FFunctions%2F2080241467"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">inline </span><span class="token keyword">fun </span><span class="token operator">&lt;</span><a href="flat-map.html">T</a><span class="token punctuation">, </span><a href="flat-map.html">R</a><span class="token operator">&gt; </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-result/index.html">Result</a><span class="token operator">&lt;</span><a href="flat-map.html">T</a><span class="token operator">&gt;</span><span class="token punctuation">.</span><a href="flat-map.html"><span class="token function">flatMap</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">transform<span class="token operator">: </span><span class="token punctuation">(</span><a href="flat-map.html">T</a><span class="token punctuation">)</span><span class="token operator"> -&gt; </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-result/index.html">Result</a><span class="token operator">&lt;</span><a href="flat-map.html">R</a><span class="token operator">&gt;</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-result/index.html">Result</a><span class="token operator">&lt;</span><a href="flat-map.html">R</a><span class="token operator">&gt;</span></div><div class="brief "><p class="paragraph">Returns the result of applying the given <a href="flat-map.html">transform</a> function to the value of this <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-result/index.html">Result</a> if it is <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-result/is-success.html">Result.isSuccess</a>, or propagates the failure if it is <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-result/is-failure.html">Result.isFailure</a>.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1576828775%2FFunctions%2F2080241467" anchor-label="onTokenError" id="1576828775%2FFunctions%2F2080241467" data-filterable-set=":stream-android-core:dokkaHtmlPartial/release"></a>
+          <div class="table-row" data-togglable="EXTENSION_FUNCTION" data-filterable-current=":stream-android-core:dokkaHtmlPartial/release" data-filterable-set=":stream-android-core:dokkaHtmlPartial/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="on-token-error.html"><span>on</span><wbr><span>Token</span><wbr><span><span>Error</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1576828775%2FFunctions%2F2080241467"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">suspend </span><span class="token keyword">fun </span><span class="token operator">&lt;</span><a href="on-token-error.html">T</a><span class="token operator">&gt; </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-result/index.html">Result</a><span class="token operator">&lt;</span><a href="on-token-error.html">T</a><span class="token operator">&gt;</span><span class="token punctuation">.</span><a href="on-token-error.html"><span class="token function">onTokenError</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">function<span class="token operator">: </span><span class="token keyword">suspend </span><span class="token punctuation">(</span>exception<span class="token operator">: </span><a href="../io.getstream.android.core.api.model.exceptions/-stream-endpoint-exception/index.html">StreamEndpointException</a><span class="token punctuation">, </span>code<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-int/index.html">Int</a><span class="token punctuation">)</span><span class="token operator"> -&gt; </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-result/index.html">Result</a><span class="token operator">&lt;</span><a href="on-token-error.html">T</a><span class="token operator">&gt;</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-result/index.html">Result</a><span class="token operator">&lt;</span><a href="on-token-error.html">T</a><span class="token operator">&gt;</span></div><div class="brief "><p class="paragraph">Invokes the given <a href="on-token-error.html">function</a> if this <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-result/index.html">Result</a> is a failure and the error is a token error.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1116220790%2FFunctions%2F2080241467" anchor-label="plus" id="1116220790%2FFunctions%2F2080241467" data-filterable-set=":stream-android-core:dokkaHtmlPartial/release"></a>
+          <div class="table-row" data-togglable="EXTENSION_FUNCTION" data-filterable-current=":stream-android-core:dokkaHtmlPartial/release" data-filterable-set=":stream-android-core:dokkaHtmlPartial/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="plus.html"><span><span>plus</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1116220790%2FFunctions%2F2080241467"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">operator </span><span class="token keyword">fun </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-throwable/index.html">Throwable</a><span class="token punctuation">.</span><a href="plus.html"><span class="token function">plus</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">other<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-throwable/index.html">Throwable</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../io.getstream.android.core.api.model.exceptions/-stream-aggregate-exception/index.html">StreamAggregateException</a></div><div class="brief "><p class="paragraph">Operator overload for creating a <a href="../io.getstream.android.core.api.model.exceptions/-stream-aggregate-exception/index.html">StreamAggregateException</a> from two <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-throwable/index.html">Throwable</a>s.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1813089053%2FFunctions%2F2080241467" anchor-label="runCatchingCancellable" id="-1813089053%2FFunctions%2F2080241467" data-filterable-set=":stream-android-core:dokkaHtmlPartial/release"></a>
+          <div class="table-row" data-filterable-current=":stream-android-core:dokkaHtmlPartial/release" data-filterable-set=":stream-android-core:dokkaHtmlPartial/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="run-catching-cancellable.html"><span>run</span><wbr><span>Catching</span><wbr><span><span>Cancellable</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1813089053%2FFunctions%2F2080241467"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">inline </span><span class="token keyword">fun </span><span class="token operator">&lt;</span><a href="run-catching-cancellable.html">T</a><span class="token operator">&gt; </span><a href="run-catching-cancellable.html"><span class="token function">runCatchingCancellable</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">block<span class="token operator">: </span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator"> -&gt; </span><a href="run-catching-cancellable.html">T</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-result/index.html">Result</a><span class="token operator">&lt;</span><a href="run-catching-cancellable.html">T</a><span class="token operator">&gt;</span></div><div class="brief "><p class="paragraph">Runs a <a href="run-catching-cancellable.html">block</a> and returns a <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-result/index.html">Result</a> with proper cancellation semantics:</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="204861408%2FFunctions%2F2080241467" anchor-label="runOn" id="204861408%2FFunctions%2F2080241467" data-filterable-set=":stream-android-core:dokkaHtmlPartial/release"></a>
+          <div class="table-row" data-filterable-current=":stream-android-core:dokkaHtmlPartial/release" data-filterable-set=":stream-android-core:dokkaHtmlPartial/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="run-on.html"><span>run</span><wbr><span><span>On</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="204861408%2FFunctions%2F2080241467"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">inline </span><span class="token keyword">fun </span><span class="token operator">&lt;</span><a href="run-on.html">T</a><span class="token operator">&gt; </span><a href="run-on.html"><span class="token function">runOn</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">looper<span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/android/os/Looper.html">Looper</a><span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">crossinline </span>block<span class="token operator">: </span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator"> -&gt; </span><a href="run-on.html">T</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-result/index.html">Result</a><span class="token operator">&lt;</span><a href="run-on.html">T</a><span class="token operator">&gt;</span></div><div class="brief "><p class="paragraph">Executes the given <a href="run-on.html">block</a> on the specified <a href="run-on.html">looper</a>'s thread and returns the result.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1177092285%2FFunctions%2F2080241467" anchor-label="runOnMainLooper" id="-1177092285%2FFunctions%2F2080241467" data-filterable-set=":stream-android-core:dokkaHtmlPartial/release"></a>
+          <div class="table-row" data-filterable-current=":stream-android-core:dokkaHtmlPartial/release" data-filterable-set=":stream-android-core:dokkaHtmlPartial/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="run-on-main-looper.html"><span>run</span><wbr><span>On</span><wbr><span>Main</span><wbr><span><span>Looper</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1177092285%2FFunctions%2F2080241467"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">inline </span><span class="token keyword">fun </span><span class="token operator">&lt;</span><a href="run-on-main-looper.html">T</a><span class="token operator">&gt; </span><a href="run-on-main-looper.html"><span class="token function">runOnMainLooper</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter "><span class="token keyword">crossinline </span>block<span class="token operator">: </span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator"> -&gt; </span><a href="run-on-main-looper.html">T</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-result/index.html">Result</a><span class="token operator">&lt;</span><a href="run-on-main-looper.html">T</a><span class="token operator">&gt;</span></div><div class="brief "><p class="paragraph">Executes the given <a href="run-on-main-looper.html">block</a> on the main (UI) thread and returns the result.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="551482315%2FFunctions%2F2080241467" anchor-label="streamComputeIfAbsent" id="551482315%2FFunctions%2F2080241467" data-filterable-set=":stream-android-core:dokkaHtmlPartial/release"></a>
+          <div class="table-row" data-togglable="EXTENSION_FUNCTION" data-filterable-current=":stream-android-core:dokkaHtmlPartial/release" data-filterable-set=":stream-android-core:dokkaHtmlPartial/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="stream-compute-if-absent.html"><span>stream</span><wbr><span>Compute</span><wbr><span>If</span><wbr><span><span>Absent</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="551482315%2FFunctions%2F2080241467"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">inline </span><span class="token keyword">fun </span><span class="token operator">&lt;</span><a href="stream-compute-if-absent.html">K</a><span class="token punctuation">, </span><a href="stream-compute-if-absent.html">V</a><span class="token operator">&gt; </span><a href="https://developer.android.com/reference/kotlin/java/util/concurrent/ConcurrentMap.html">ConcurrentMap</a><span class="token operator">&lt;</span><a href="stream-compute-if-absent.html">K</a><span class="token punctuation">, </span><a href="stream-compute-if-absent.html">V</a><span class="token operator">&gt;</span><span class="token punctuation">.</span><a href="stream-compute-if-absent.html"><span class="token function">streamComputeIfAbsent</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">key<span class="token operator">: </span><a href="stream-compute-if-absent.html">K</a><span class="token punctuation">, </span></span><span class="parameter ">defaultValue<span class="token operator">: </span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator"> -&gt; </span><a href="stream-compute-if-absent.html">V</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="stream-compute-if-absent.html">V</a></div><div class="brief "><p class="paragraph">Computes the value for the given key if it is not already present in the map.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="2110383780%2FFunctions%2F2080241467" anchor-label="times" id="2110383780%2FFunctions%2F2080241467" data-filterable-set=":stream-android-core:dokkaHtmlPartial/release"></a>
+          <div class="table-row" data-togglable="EXTENSION_FUNCTION" data-filterable-current=":stream-android-core:dokkaHtmlPartial/release" data-filterable-set=":stream-android-core:dokkaHtmlPartial/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="times.html"><span><span>times</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="2110383780%2FFunctions%2F2080241467"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">operator </span><span class="token keyword">fun </span><span class="token operator">&lt;</span><a href="times.html">T</a><span class="token punctuation">, </span><a href="times.html">R</a><span class="token operator">&gt; </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-result/index.html">Result</a><span class="token operator">&lt;</span><a href="times.html">T</a><span class="token operator">&gt;</span><span class="token punctuation">.</span><a href="times.html"><span class="token function">times</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">other<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-result/index.html">Result</a><span class="token operator">&lt;</span><a href="times.html">R</a><span class="token operator">&gt;</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-result/index.html">Result</a><span class="token operator">&lt;</span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-pair/index.html">Pair</a><span class="token operator">&lt;</span><a href="times.html">T</a><span class="token punctuation">, </span><a href="times.html">R</a><span class="token operator">&gt;</span><span class="token operator">&gt;</span></div><div class="brief "><p class="paragraph">Operator overload for creating a <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-result/index.html">Result</a> of a pair from two <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-result/index.html">Result</a>s.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="95544137%2FFunctions%2F2080241467" anchor-label="toErrorData" id="95544137%2FFunctions%2F2080241467" data-filterable-set=":stream-android-core:dokkaHtmlPartial/release"></a>
+          <div class="table-row" data-togglable="EXTENSION_FUNCTION" data-filterable-current=":stream-android-core:dokkaHtmlPartial/release" data-filterable-set=":stream-android-core:dokkaHtmlPartial/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="to-error-data.html"><span>to</span><wbr><span>Error</span><wbr><span><span>Data</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="95544137%2FFunctions%2F2080241467"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">fun </span><span data-unresolved-link="okhttp3/Response///PointingToDeclaration/">Response</span><span class="token punctuation">.</span><a href="to-error-data.html"><span class="token function">toErrorData</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">with<span class="token operator">: </span><a href="../io.getstream.android.core.api.serialization/-stream-json-serialization/index.html">StreamJsonSerialization</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-result/index.html">Result</a><span class="token operator">&lt;</span><a href="../io.getstream.android.core.api.model.exceptions/-stream-endpoint-error-data/index.html">StreamEndpointErrorData</a><span class="token operator">&gt;</span></div><div class="brief "><p class="paragraph">Extracts the API error from the response body.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="3960338%2FFunctions%2F2080241467" anchor-label="update" id="3960338%2FFunctions%2F2080241467" data-filterable-set=":stream-android-core:dokkaHtmlPartial/release"></a>
+          <div class="table-row" data-togglable="EXTENSION_FUNCTION" data-filterable-current=":stream-android-core:dokkaHtmlPartial/release" data-filterable-set=":stream-android-core:dokkaHtmlPartial/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="update.html"><span><span>update</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="3960338%2FFunctions%2F2080241467"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">fun </span><span class="token operator">&lt;</span><a href="update.html">T</a><span class="token operator">&gt; </span><span data-unresolved-link="kotlinx.coroutines.flow/MutableStateFlow///PointingToDeclaration/">MutableStateFlow</span><span class="token operator">&lt;</span><a href="update.html">T</a><span class="token operator">&gt;</span><span class="token punctuation">.</span><a href="update.html"><span class="token function">update</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">state<span class="token operator">: </span><a href="update.html">T</a></span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Updates the value of the <span data-unresolved-link="kotlinx.coroutines.flow/MutableStateFlow///PointingToDeclaration/">MutableStateFlow</span> with the given <a href="update.html">state</a>. Internally calls <a href="update.html">MutableStateFlow.update</a> with a lambda that always returns the given <a href="update.html">state</a>. More readable than <code class="lang-kotlin">stateFlow.update { state }</code>.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      <div class="footer">
+        <span class="go-to-top-icon"><a href="#content" id="go-to-top-link"></a></span><span>© 2026 Copyright</span><span class="pull-right"><span>Generated by </span><a href="https://github.com/Kotlin/dokka"><span>dokka</span><span class="padded-icon"></span></a></span>
+      </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+

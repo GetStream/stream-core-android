@@ -1,0 +1,179 @@
+<!doctype html>
+<html class="no-js">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8">
+    <title>StreamEventAggregationPolicy</title>
+<link href="../../../images/logo-icon.svg" rel="icon" type="image/svg">    <script>var pathToRoot = "../../../";</script>
+    <script>document.documentElement.classList.replace("no-js","js");</script>
+    <script>const storage = localStorage.getItem("dokka-dark-mode")
+    if (storage == null) {
+        const osDarkSchemePreferred = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+        if (osDarkSchemePreferred === true) {
+            document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+    } else {
+        const savedDarkMode = JSON.parse(storage)
+        if(savedDarkMode === true) {
+            document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+    }
+    </script>
+<script type="text/javascript" src="https://unpkg.com/kotlin-playground@1/dist/playground.min.js" async></script>
+<script type="text/javascript" src="../../../scripts/sourceset_dependencies.js" async></script>
+<link href="../../../styles/style.css" rel="Stylesheet">
+<link href="../../../styles/main.css" rel="Stylesheet">
+<link href="../../../styles/prism.css" rel="Stylesheet">
+<link href="../../../styles/logo-styles.css" rel="Stylesheet">
+<link href="../../../styles/font-jb-sans-auto.css" rel="Stylesheet">
+<script type="text/javascript" src="../../../scripts/clipboard.js" async></script>
+<script type="text/javascript" src="../../../scripts/navigation-loader.js" async></script>
+<script type="text/javascript" src="../../../scripts/platform-content-handler.js" async></script>
+<script type="text/javascript" src="../../../scripts/main.js" defer></script>
+<script type="text/javascript" src="../../../scripts/prism.js" async></script>
+<script type="text/javascript" src="../../../scripts/symbol-parameters-wrapper_deferred.js" defer></script></head>
+<body>
+    <div class="root">
+<nav class="navigation" id="navigation-wrapper">
+    <div class="navigation--inner">
+        <div class="navigation-title">
+            <button class="menu-toggle" id="menu-toggle" type="button">toggle menu</button>
+            <div class="library-name">
+<a class="library-name--link" href="../../../index.html">
+                            stream-android-core
+                    </a>            </div>
+            <div class="library-version">5.0.0
+            </div>
+        </div>
+        <div class="filter-section" id="filter-section">
+                <button class="platform-tag platform-selector jvm-like" data-active="" data-filter=":stream-android-core:dokkaHtmlPartial/release">androidJvm</button>
+        </div>
+    </div>
+    <div class="navigation-controls">
+        <button class="navigation-controls--btn navigation-controls--theme" id="theme-toggle-button" type="button">switch theme</button>
+        <div class="navigation-controls--btn navigation-controls--search" id="searchBar" role="button">search in API</div>
+    </div>
+</nav>
+        <div id="container">
+            <div class="sidebar" id="leftColumn">
+                <div class="sidebar--inner" id="sideMenu"></div>
+            </div>
+            <div id="main">
+<div class="main-content" data-page-type="classlike" id="content" pageids="stream-android-core::io.getstream.android.core.api.processing/StreamEventAggregationPolicy///PointingToDeclaration//2080241467">
+  <div class="breadcrumbs"><a href="../../index.html">stream-android-core</a><span class="delimiter">/</span><a href="../index.html">io.getstream.android.core.api.processing</a><span class="delimiter">/</span><span class="current">StreamEventAggregationPolicy</span></div>
+  <div class="cover ">
+    <h1 class="cover"><span>Stream</span><wbr><span>Event</span><wbr><span>Aggregation</span><wbr><span><span>Policy</span></span></h1>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">data </span><span class="token keyword">class </span><a href="index.html">StreamEventAggregationPolicy</a><span class="token operator">&lt;</span><a href="index.html">T</a><span class="token operator">&gt;</span></div><p class="paragraph">Complete aggregation configuration for <a href="../-stream-event-aggregator/index.html">StreamEventAggregator</a>.</p><p class="paragraph">Combines <strong>behavior</strong> (how to extract types and deserialize) with <strong>tuning</strong> (thresholds, windows, queue capacity). Once created via a factory method, the policy is guaranteed valid — all invariants are checked at construction time.</p><p class="paragraph">The primary constructor is <strong>private</strong>. Create instances through the <a href="-companion/from.html">from</a> factory method.</p><h3 class="">Invariants</h3><ul><li><p class="paragraph"><code class="lang-kotlin">aggregationThreshold &gt; 0</code></p></li><li><p class="paragraph"><code class="lang-kotlin">maxWindowMs &gt; 0</code></p></li><li><p class="paragraph"><code class="lang-kotlin">dispatchQueueCapacity &gt; 0</code></p></li></ul><h4 class="">Parameters</h4><div class="table"><div class="table-row" data-filterable-current=":stream-android-core:dokkaHtmlPartial/release" data-filterable-set=":stream-android-core:dokkaHtmlPartial/release"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><u><span><span>T</span></span></u></div></span></div><div><div class="title"><p class="paragraph">The deserialized event type.</p></div></div></div></div><div class="table-row" data-filterable-current=":stream-android-core:dokkaHtmlPartial/release" data-filterable-set=":stream-android-core:dokkaHtmlPartial/release"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><u><span>extract</span><wbr><span><span>Type</span></span></u></div></span></div><div><div class="title"><p class="paragraph">Extracts the event type string from a raw message (typically JSON). Returns <code class="lang-kotlin">null</code> if the type cannot be determined — events with unknown type are grouped under an empty key.</p></div></div></div></div><div class="table-row" data-filterable-current=":stream-android-core:dokkaHtmlPartial/release" data-filterable-set=":stream-android-core:dokkaHtmlPartial/release"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><u><span><span>deserialize</span></span></u></div></span></div><div><div class="title"><p class="paragraph">Deserializes a raw message into <code class="lang-kotlin">T</code>. Returns <code class="lang-kotlin">Result.failure</code> on parse errors.</p></div></div></div></div><div class="table-row" data-filterable-current=":stream-android-core:dokkaHtmlPartial/release" data-filterable-set=":stream-android-core:dokkaHtmlPartial/release"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><u><span>aggregation</span><wbr><span><span>Threshold</span></span></u></div></span></div><div><div class="title"><p class="paragraph">Number of accumulated events that triggers aggregated delivery instead of individual dispatch.</p></div></div></div></div><div class="table-row" data-filterable-current=":stream-android-core:dokkaHtmlPartial/release" data-filterable-set=":stream-android-core:dokkaHtmlPartial/release"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><u><span>max</span><wbr><span>Window</span><wbr><span><span>Ms</span></span></u></div></span></div><div><div class="title"><p class="paragraph">Maximum time (milliseconds) the collector will wait before packaging and delivering whatever has accumulated. This is the latency ceiling.</p></div></div></div></div><div class="table-row" data-filterable-current=":stream-android-core:dokkaHtmlPartial/release" data-filterable-set=":stream-android-core:dokkaHtmlPartial/release"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><u><span>dispatch</span><wbr><span>Queue</span><wbr><span><span>Capacity</span></span></u></div></span></div><div><div class="title"><p class="paragraph">Bounded capacity of the dispatch queue between collector and dispatcher. When full, the collector logs a warning.</p></div></div></div></div></div></div></div>
+  </div>
+  <div class="tabbedcontent">
+    <div class="tabs-section" tabs-section="tabs-section"><button class="section-tab" data-active="" data-togglable="CONSTRUCTOR,TYPE,PROPERTY,FUNCTION">Members</button></div>
+    <div class="tabs-section-body">
+      <div data-togglable="TYPE">
+        <h2 class="">Types</h2>
+        <div class="table"><a data-name="-387444895%2FClasslikes%2F2080241467" anchor-label="Companion" id="-387444895%2FClasslikes%2F2080241467" data-filterable-set=":stream-android-core:dokkaHtmlPartial/release"></a>
+          <div class="table-row" data-filterable-current=":stream-android-core:dokkaHtmlPartial/release" data-filterable-set=":stream-android-core:dokkaHtmlPartial/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-companion/index.html"><span><span>Companion</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-387444895%2FClasslikes%2F2080241467"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">object </span><a href="-companion/index.html">Companion</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div data-togglable="PROPERTY">
+        <h2 class="">Properties</h2>
+        <div class="table"><a data-name="-1117445705%2FProperties%2F2080241467" anchor-label="aggregationThreshold" id="-1117445705%2FProperties%2F2080241467" data-filterable-set=":stream-android-core:dokkaHtmlPartial/release"></a>
+          <div class="table-row" data-filterable-current=":stream-android-core:dokkaHtmlPartial/release" data-filterable-set=":stream-android-core:dokkaHtmlPartial/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="aggregation-threshold.html"><span>aggregation</span><wbr><span><span>Threshold</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1117445705%2FProperties%2F2080241467"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">val </span><a href="aggregation-threshold.html">aggregationThreshold</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-int/index.html">Int</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-625353669%2FProperties%2F2080241467" anchor-label="deserialize" id="-625353669%2FProperties%2F2080241467" data-filterable-set=":stream-android-core:dokkaHtmlPartial/release"></a>
+          <div class="table-row" data-filterable-current=":stream-android-core:dokkaHtmlPartial/release" data-filterable-set=":stream-android-core:dokkaHtmlPartial/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="deserialize.html"><span><span>deserialize</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-625353669%2FProperties%2F2080241467"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">val </span><a href="deserialize.html">deserialize</a><span class="token operator">: </span><span class="token punctuation">(</span>raw<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">)</span><span class="token operator"> -&gt; </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-result/index.html">Result</a><span class="token operator">&lt;</span><a href="index.html">T</a><span class="token operator">&gt;</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="2034400553%2FProperties%2F2080241467" anchor-label="dispatchQueueCapacity" id="2034400553%2FProperties%2F2080241467" data-filterable-set=":stream-android-core:dokkaHtmlPartial/release"></a>
+          <div class="table-row" data-filterable-current=":stream-android-core:dokkaHtmlPartial/release" data-filterable-set=":stream-android-core:dokkaHtmlPartial/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="dispatch-queue-capacity.html"><span>dispatch</span><wbr><span>Queue</span><wbr><span><span>Capacity</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="2034400553%2FProperties%2F2080241467"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">val </span><a href="dispatch-queue-capacity.html">dispatchQueueCapacity</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-int/index.html">Int</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="112447455%2FProperties%2F2080241467" anchor-label="extractType" id="112447455%2FProperties%2F2080241467" data-filterable-set=":stream-android-core:dokkaHtmlPartial/release"></a>
+          <div class="table-row" data-filterable-current=":stream-android-core:dokkaHtmlPartial/release" data-filterable-set=":stream-android-core:dokkaHtmlPartial/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="extract-type.html"><span>extract</span><wbr><span><span>Type</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="112447455%2FProperties%2F2080241467"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">val </span><a href="extract-type.html">extractType</a><span class="token operator">: </span><span class="token punctuation">(</span>raw<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">)</span><span class="token operator"> -&gt; </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-string/index.html">String</a><span class="token operator">?</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-196951840%2FProperties%2F2080241467" anchor-label="maxWindowMs" id="-196951840%2FProperties%2F2080241467" data-filterable-set=":stream-android-core:dokkaHtmlPartial/release"></a>
+          <div class="table-row" data-filterable-current=":stream-android-core:dokkaHtmlPartial/release" data-filterable-set=":stream-android-core:dokkaHtmlPartial/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="max-window-ms.html"><span>max</span><wbr><span>Window</span><wbr><span><span>Ms</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-196951840%2FProperties%2F2080241467"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">val </span><a href="max-window-ms.html">maxWindowMs</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-long/index.html">Long</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      <div class="footer">
+        <span class="go-to-top-icon"><a href="#content" id="go-to-top-link"></a></span><span>© 2026 Copyright</span><span class="pull-right"><span>Generated by </span><a href="https://github.com/Kotlin/dokka"><span>dokka</span><span class="padded-icon"></span></a></span>
+      </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+

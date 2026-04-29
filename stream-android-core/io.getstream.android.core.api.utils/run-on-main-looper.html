@@ -1,0 +1,76 @@
+<!doctype html>
+<html class="no-js">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8">
+    <title>runOnMainLooper</title>
+<link href="../../images/logo-icon.svg" rel="icon" type="image/svg">    <script>var pathToRoot = "../../";</script>
+    <script>document.documentElement.classList.replace("no-js","js");</script>
+    <script>const storage = localStorage.getItem("dokka-dark-mode")
+    if (storage == null) {
+        const osDarkSchemePreferred = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+        if (osDarkSchemePreferred === true) {
+            document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+    } else {
+        const savedDarkMode = JSON.parse(storage)
+        if(savedDarkMode === true) {
+            document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+    }
+    </script>
+<script type="text/javascript" src="https://unpkg.com/kotlin-playground@1/dist/playground.min.js" async></script>
+<script type="text/javascript" src="../../scripts/sourceset_dependencies.js" async></script>
+<link href="../../styles/style.css" rel="Stylesheet">
+<link href="../../styles/main.css" rel="Stylesheet">
+<link href="../../styles/prism.css" rel="Stylesheet">
+<link href="../../styles/logo-styles.css" rel="Stylesheet">
+<link href="../../styles/font-jb-sans-auto.css" rel="Stylesheet">
+<script type="text/javascript" src="../../scripts/clipboard.js" async></script>
+<script type="text/javascript" src="../../scripts/navigation-loader.js" async></script>
+<script type="text/javascript" src="../../scripts/platform-content-handler.js" async></script>
+<script type="text/javascript" src="../../scripts/main.js" defer></script>
+<script type="text/javascript" src="../../scripts/prism.js" async></script>
+<script type="text/javascript" src="../../scripts/symbol-parameters-wrapper_deferred.js" defer></script></head>
+<body>
+    <div class="root">
+<nav class="navigation" id="navigation-wrapper">
+    <div class="navigation--inner">
+        <div class="navigation-title">
+            <button class="menu-toggle" id="menu-toggle" type="button">toggle menu</button>
+            <div class="library-name">
+<a class="library-name--link" href="../../index.html">
+                            stream-android-core
+                    </a>            </div>
+            <div class="library-version">5.0.0
+            </div>
+        </div>
+        <div class="filter-section" id="filter-section">
+                <button class="platform-tag platform-selector jvm-like" data-active="" data-filter=":stream-android-core:dokkaHtmlPartial/release">androidJvm</button>
+        </div>
+    </div>
+    <div class="navigation-controls">
+        <button class="navigation-controls--btn navigation-controls--theme" id="theme-toggle-button" type="button">switch theme</button>
+        <div class="navigation-controls--btn navigation-controls--search" id="searchBar" role="button">search in API</div>
+    </div>
+</nav>
+        <div id="container">
+            <div class="sidebar" id="leftColumn">
+                <div class="sidebar--inner" id="sideMenu"></div>
+            </div>
+            <div id="main">
+<div class="main-content" data-page-type="member" id="content" pageids="stream-android-core::io.getstream.android.core.api.utils//runOnMainLooper/#kotlin.Function0[TypeParam(bounds=[kotlin.Any?])]/PointingToDeclaration//2080241467">
+  <div class="breadcrumbs"><a href="../index.html">stream-android-core</a><span class="delimiter">/</span><a href="index.html">io.getstream.android.core.api.utils</a><span class="delimiter">/</span><span class="current">runOnMainLooper</span></div>
+  <div class="cover ">
+    <h1 class="cover"><span>run</span><wbr><span>On</span><wbr><span>Main</span><wbr><span><span>Looper</span></span></h1>
+  </div>
+  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">inline </span><span class="token keyword">fun </span><span class="token operator">&lt;</span><a href="run-on-main-looper.html">T</a><span class="token operator">&gt; </span><a href="run-on-main-looper.html"><span class="token function">runOnMainLooper</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter "><span class="token keyword">crossinline </span>block<span class="token operator">: </span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator"> -&gt; </span><a href="run-on-main-looper.html">T</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-result/index.html">Result</a><span class="token operator">&lt;</span><a href="run-on-main-looper.html">T</a><span class="token operator">&gt;</span></div><p class="paragraph">Executes the given <a href="run-on-main-looper.html">block</a> on the main (UI) thread and returns the result.</p><p class="paragraph">This function provides thread-safe access to the main looper with proper synchronization:</p><ul><li><p class="paragraph">If already on the main thread, executes <a href="run-on-main-looper.html">block</a> immediately</p></li><li><p class="paragraph">If on a different thread, posts to the main looper and blocks the caller until completion</p></li><li><p class="paragraph">Returns a <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-result/index.html">Result</a> that captures success values or exceptions from <a href="run-on-main-looper.html">block</a></p></li></ul><h3 class="">Thread Safety</h3><p class="paragraph">This function is <strong>blocking</strong> for the calling thread when switching threads. It uses a <a href="https://developer.android.com/reference/kotlin/java/util/concurrent/CountDownLatch.html">CountDownLatch</a> to wait for the main thread to complete execution before returning.</p><h3 class="">Timeout</h3><p class="paragraph">If the main thread does not execute <a href="run-on-main-looper.html">block</a> within <strong>5 seconds</strong>, this function throws <a href="https://developer.android.com/reference/kotlin/java/lang/IllegalStateException.html">IllegalStateException</a>. This prevents indefinite blocking if the main thread is stuck.</p><h3 class="">Exception Handling</h3><ul><li><p class="paragraph">Exceptions thrown by <a href="run-on-main-looper.html">block</a> are captured and returned as <code class="lang-kotlin">Result.failure</code></p></li><li><p class="paragraph">kotlin.coroutines.cancellation.CancellationException is rethrown to preserve coroutine cancellation semantics</p></li><li><p class="paragraph">If the main looper is not initialized, throws <a href="https://developer.android.com/reference/kotlin/java/lang/IllegalStateException.html">IllegalStateException</a></p></li></ul><h3 class="">Use Cases</h3><ul><li><p class="paragraph">Updating UI components from background threads</p></li><li><p class="paragraph">Adding/removing lifecycle observers (requires main thread)</p></li><li><p class="paragraph">Accessing View properties that must be read on the main thread</p></li><li><p class="paragraph">Synchronizing with main thread state before proceeding</p></li></ul><h3 class="">Example Usage</h3><div class="sample-container"><pre><code class="block lang-kotlin" theme="idea">// From a background thread, safely add a lifecycle observer<br>runOnMainLooper {<br>    lifecycle.addObserver(observer)<br>}.onFailure { error -&gt;<br>    logger.e(error) { "Failed to add lifecycle observer" }<br>}<br><br>// Get a value from the UI thread<br>val result = runOnMainLooper {<br>    view.width<br>}.getOrNull()<br><br>// Execute multiple UI operations atomically<br>runOnMainLooper {<br>    textView.text = "Loading..."<br>    progressBar.visibility = View.VISIBLE<br>}</code></pre><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><span class="kdoc-tag"><h4 class="">Return</h4><p class="paragraph"><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-result/-companion/success.html">Result.success</a> with the return value of <a href="run-on-main-looper.html">block</a>, or <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-result/-companion/failure.html">Result.failure</a> if an exception was thrown</p></span><h4 class="">Parameters</h4><div class="table"><div class="table-row" data-filterable-current=":stream-android-core:dokkaHtmlPartial/release" data-filterable-set=":stream-android-core:dokkaHtmlPartial/release"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><u><span><span>T</span></span></u></div></span></div><div><div class="title"><p class="paragraph">the return type of <a href="run-on-main-looper.html">block</a></p></div></div></div></div><div class="table-row" data-filterable-current=":stream-android-core:dokkaHtmlPartial/release" data-filterable-set=":stream-android-core:dokkaHtmlPartial/release"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><u><span><span>block</span></span></u></div></span></div><div><div class="title"><p class="paragraph">the code to execute on the main thread</p></div></div></div></div></div><h4 class="">See also</h4><div class="table"><div class="table-row" data-filterable-current=":stream-android-core:dokkaHtmlPartial/release" data-filterable-set=":stream-android-core:dokkaHtmlPartial/release"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><a href="run-on.html"><span>run</span><wbr><span><span>On</span></span></a></div></span></div><div><div class="title"><p class="paragraph">for executing on a custom <a href="https://developer.android.com/reference/kotlin/android/os/Looper.html">Looper</a></p></div></div></div></div></div><h4 class="">Throws</h4><div class="table"><div class="table-row" data-filterable-current=":stream-android-core:dokkaHtmlPartial/release" data-filterable-set=":stream-android-core:dokkaHtmlPartial/release"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><a href="https://developer.android.com/reference/kotlin/java/lang/IllegalStateException.html"><span>Illegal</span><wbr><span>State</span><wbr><span><span>Exception</span></span></a></div></span></div><div><div class="title"><p class="paragraph">if the main looper is not initialized or if execution times out</p></div></div></div></div></div></div></div>
+</div>
+      <div class="footer">
+        <span class="go-to-top-icon"><a href="#content" id="go-to-top-link"></a></span><span>© 2026 Copyright</span><span class="pull-right"><span>Generated by </span><a href="https://github.com/Kotlin/dokka"><span>dokka</span><span class="padded-icon"></span></a></span>
+      </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+
