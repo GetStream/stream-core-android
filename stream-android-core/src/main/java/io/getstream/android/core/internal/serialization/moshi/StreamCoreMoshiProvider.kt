@@ -16,10 +16,13 @@
 
 package io.getstream.android.core.internal.serialization.moshi
 
-import com.squareup.moshi.FromJson
+import com.squareup.moshi.JsonAdapter
+import com.squareup.moshi.JsonDataException
+import com.squareup.moshi.JsonReader
+import com.squareup.moshi.JsonWriter
 import com.squareup.moshi.Moshi
-import com.squareup.moshi.ToJson
 import com.squareup.moshi.adapters.PolymorphicJsonAdapterFactory
+import com.squareup.moshi.adapters.Rfc3339DateJsonAdapter
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import io.getstream.android.core.api.model.event.StreamClientWsEvent
 import io.getstream.android.core.internal.model.events.StreamClientConnectedEvent
@@ -28,10 +31,32 @@ import io.getstream.android.core.internal.model.events.StreamHealthCheckEvent
 import java.util.Date
 
 internal class StreamCoreMoshiProvider {
-    object DateMillisAdapter {
-        @ToJson fun toJson(value: Date?): Long? = value?.time
+    /**
+     * Adapter for [Date] fields on internal WS events.
+     *
+     * Writes epoch millis, so the wire format of outbound messages is unchanged. Reads leniently:
+     * gateways send dates either as epoch millis (number) or as RFC3339/ISO-8601 strings — e.g. the
+     * video coordinator's `connection.ok` carries `"created_at": "2026-07-06T07:47:26.592958Z"` at
+     * `$.me.created_at` — so both encodings are accepted.
+     */
+    object LenientDateAdapter : JsonAdapter<Date>() {
+        private val rfc3339 = Rfc3339DateJsonAdapter()
 
-        @FromJson fun fromJson(value: Long?): Date? = value?.let { Date(it) }
+        override fun fromJson(reader: JsonReader): Date? =
+            when (reader.peek()) {
+                JsonReader.Token.NULL -> reader.nextNull()
+                JsonReader.Token.NUMBER -> Date(reader.nextLong())
+                JsonReader.Token.STRING -> rfc3339.fromJson(reader)
+                else ->
+                    throw JsonDataException(
+                        "Expected a date as epoch millis or an RFC3339 string " +
+                            "but was ${reader.peek()} at path ${reader.path}"
+                    )
+            }
+
+        override fun toJson(writer: JsonWriter, value: Date?) {
+            writer.value(value?.time)
+        }
     }
 
     fun builder(configure: (Moshi.Builder) -> Unit): Moshi.Builder {
@@ -40,7 +65,7 @@ internal class StreamCoreMoshiProvider {
         val moshiBuilder =
             builder.apply {
                 add(KotlinJsonAdapterFactory())
-                add(DateMillisAdapter)
+                add(Date::class.java, LenientDateAdapter)
                 add(
                     PolymorphicJsonAdapterFactory.of(StreamClientWsEvent::class.java, "type")
                         .withSubtype(StreamClientConnectedEvent::class.java, "connection.ok")
