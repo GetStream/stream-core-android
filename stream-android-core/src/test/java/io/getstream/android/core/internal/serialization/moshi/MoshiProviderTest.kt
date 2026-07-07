@@ -130,26 +130,33 @@ class MoshiProviderTest {
     @Test
     fun `toJson returns millis for non-null Date`() {
         val date = Date(1734567890000L)
-        val millis = StreamCoreMoshiProvider.DateMillisAdapter.toJson(date)
-        assertEquals(1734567890000L, millis)
+        val json = StreamCoreMoshiProvider.LenientDateAdapter.toJson(date)
+        assertEquals("1734567890000", json)
     }
 
     @Test
     fun `toJson returns null for null Date`() {
-        val millis = StreamCoreMoshiProvider.DateMillisAdapter.toJson(null)
-        assertNull(millis)
+        val json = StreamCoreMoshiProvider.LenientDateAdapter.toJson(null)
+        assertEquals("null", json)
     }
 
     @Test
     fun `fromJson returns Date for non-null millis`() {
         val millis = 1734567890000L
-        val date = StreamCoreMoshiProvider.DateMillisAdapter.fromJson(millis)
+        val date = StreamCoreMoshiProvider.LenientDateAdapter.fromJson("$millis")
         assertEquals(Date(millis), date)
     }
 
     @Test
     fun `fromJson returns null for null millis`() {
-        val date = StreamCoreMoshiProvider.DateMillisAdapter.fromJson(null)
+        val date = StreamCoreMoshiProvider.LenientDateAdapter.fromJson("null")
         assertNull(date)
+    }
+
+    @Test
+    fun `fromJson returns Date for RFC3339 string`() {
+        val date =
+            StreamCoreMoshiProvider.LenientDateAdapter.fromJson("\"2024-12-19T00:24:50.000Z\"")
+        assertEquals(Date(1734567890000L), date)
     }
 }
