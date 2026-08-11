@@ -71,6 +71,10 @@ internal class StreamSingleFlightProcessorImpl(
         val existing = flights.putIfAbsent(key, newExecution)
         val job =
             if (existing != null) {
+                // We lost the race. `scope.async` attached this LAZY deferred to `scope`'s Job
+                // at construction, so leaving it unstarted keeps an inert child (holding `block`
+                // and its captures) attached for the scope's lifetime. Cancel to detach it.
+                newExecution.cancel()
                 existing
             } else {
                 // Evict on completion of the shared work itself, never from an awaiting

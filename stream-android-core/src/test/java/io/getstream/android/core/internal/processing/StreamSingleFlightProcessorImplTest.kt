@@ -57,6 +57,17 @@ class StreamSingleFlightProcessorImplTest {
         }
     }
 
+    // Reports every key absent on get() (forces the slow path, so run() builds a newExecution)
+    // but returns a preset winner from putIfAbsent() (forces the loser branch) — reproduces the
+    // putIfAbsent race deterministically, without real threads.
+    class RacyLoserMap(private val winner: Deferred<Result<*>>) :
+        ConcurrentMap<Any, Deferred<Result<*>>> by ConcurrentHashMap() {
+        override fun get(key: Any): Deferred<Result<*>>? = null
+
+        override fun putIfAbsent(key: Any, value: Deferred<Result<*>>): Deferred<Result<*>>? =
+            winner
+    }
+
     // Simple collaborator with a suspend function we can verify
     private interface Worker {
         suspend fun workInt(): Int
@@ -565,6 +576,28 @@ class StreamSingleFlightProcessorImplTest {
         } finally {
             pool.close() // or pool.executor.shutdown()
         }
+    }
+
+    @Test
+    fun `race loser cancels its unstarted deferred so it does not leak into the scope`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val parent = SupervisorJob()
+        val scope = CoroutineScope(parent + dispatcher)
+
+        // A winner already in flight for this key; the caller below will lose the race to it.
+        val winner = CompletableDeferred<Result<*>>()
+        val singleFlight = StreamSingleFlightProcessorImpl(scope, RacyLoserMap(winner))
+
+        val childrenBefore = parent.children.count()
+        winner.complete(Result.success(7))
+
+        val loser = async { singleFlight.run("k".asStreamTypedKey<Int>()) { 1 } }
+        advanceUntilIdle()
+
+        // The loser is served by the winner's result...
+        assertEquals(7, loser.await().getOrThrow())
+        // ...and its own never-started deferred is not left attached to the scope's Job.
+        assertEquals(childrenBefore, parent.children.count())
     }
 
     @Test
