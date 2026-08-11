@@ -57,6 +57,17 @@ class StreamSingleFlightProcessorImplTest {
         }
     }
 
+    // Reports every key absent on get() (forces the slow path, so run() builds a newExecution)
+    // but returns a preset winner from putIfAbsent() (forces the loser branch) — reproduces the
+    // putIfAbsent race deterministically, without real threads.
+    class RacyLoserMap(private val winner: Deferred<Result<*>>) :
+        ConcurrentMap<Any, Deferred<Result<*>>> by ConcurrentHashMap() {
+        override fun get(key: Any): Deferred<Result<*>>? = null
+
+        override fun putIfAbsent(key: Any, value: Deferred<Result<*>>): Deferred<Result<*>>? =
+            winner
+    }
+
     // Simple collaborator with a suspend function we can verify
     private interface Worker {
         suspend fun workInt(): Int
@@ -196,6 +207,111 @@ class StreamSingleFlightProcessorImplTest {
 
         // Underlying work ran only once
         coVerify(exactly = 1) { worker.workSlow() }
+    }
+
+    @Test
+    fun `installer cancellation must not orphan the flight and cause a re-run`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val scope = CoroutineScope(SupervisorJob() + dispatcher)
+        val singleFlight = StreamSingleFlightProcessorImpl(scope)
+
+        val worker = mockk<Worker>()
+        coEvery { worker.workSlow() } coAnswers
+            {
+                delay(1_000)
+                99
+            }
+
+        val key = "k".asStreamTypedKey<Int>()
+
+        // Installer takes the slow path — the only caller that ever carried the eviction.
+        // Before completion-based eviction, cancelling it ran flights.remove(key, job) in its
+        // finally while the shared job kept running in `scope`, so a later caller for the same
+        // key missed the map and re-executed. This test guards against that regression.
+        val installer = async { singleFlight.run(key) { worker.workSlow() } }
+        testScheduler.runCurrent()
+        // Follower takes the fast path and attaches to the same running deferred.
+        val follower = async { singleFlight.run(key) { worker.workSlow() } }
+        testScheduler.runCurrent()
+
+        // Cancel the installer before the shared work completes.
+        installer.cancel(CancellationException("nav away"))
+        testScheduler.runCurrent()
+
+        // A newcomer arriving after the (former) eviction window must still coalesce onto the
+        // in-flight job, not start a second execution.
+        val late = async { singleFlight.run(key) { worker.workSlow() } }
+        advanceUntilIdle()
+
+        // Every caller is served by the one shared job.
+        assertEquals(99, follower.await().getOrThrow())
+        assertEquals(99, late.await().getOrThrow())
+
+        // The shared block must have run exactly once for all callers.
+        coVerify(exactly = 1) { worker.workSlow() }
+    }
+
+    @Test
+    fun `coalescing holds for a newcomer even after all current awaiters are cancelled`() =
+        runTest {
+            val dispatcher = StandardTestDispatcher(testScheduler)
+            val scope = CoroutineScope(SupervisorJob() + dispatcher)
+            val singleFlight = StreamSingleFlightProcessorImpl(scope)
+
+            val worker = mockk<Worker>()
+            coEvery { worker.workSlow() } coAnswers
+                {
+                    delay(1_000)
+                    99
+                }
+
+            val key = "k".asStreamTypedKey<Int>()
+
+            val installer = async { singleFlight.run(key) { worker.workSlow() } }
+            testScheduler.runCurrent()
+            val follower = async { singleFlight.run(key) { worker.workSlow() } }
+            testScheduler.runCurrent()
+
+            // Every current awaiter goes away, but the detached job keeps running in [scope].
+            installer.cancel(CancellationException("gone"))
+            follower.cancel(CancellationException("gone"))
+            testScheduler.runCurrent()
+
+            // A newcomer arriving during the in-flight window must join the running job.
+            val late = async { singleFlight.run(key) { worker.workSlow() } }
+            advanceUntilIdle()
+
+            assertEquals(99, late.await().getOrThrow())
+            coVerify(exactly = 1) { worker.workSlow() }
+        }
+
+    @Test
+    fun `a run after the previous flight completed starts a fresh execution`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val scope = CoroutineScope(SupervisorJob() + dispatcher)
+        val singleFlight = StreamSingleFlightProcessorImpl(scope)
+
+        val worker = mockk<Worker>()
+        coEvery { worker.workInt() } coAnswers
+            {
+                delay(1_000)
+                7
+            }
+
+        val key = "k".asStreamTypedKey<Int>()
+
+        val first = async { singleFlight.run(key) { worker.workInt() } }
+        advanceUntilIdle()
+        assertEquals(7, first.await().getOrThrow())
+
+        // A completed flight must be evicted, never replayed: the next call re-executes.
+        assertFalse(singleFlight.has(key))
+
+        val second = async { singleFlight.run(key) { worker.workInt() } }
+        advanceUntilIdle()
+        assertEquals(7, second.await().getOrThrow())
+
+        coVerify(exactly = 2) { worker.workInt() }
     }
 
     @Test
@@ -460,6 +576,28 @@ class StreamSingleFlightProcessorImplTest {
         } finally {
             pool.close() // or pool.executor.shutdown()
         }
+    }
+
+    @Test
+    fun `race loser cancels its unstarted deferred so it does not leak into the scope`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val parent = SupervisorJob()
+        val scope = CoroutineScope(parent + dispatcher)
+
+        // A winner already in flight for this key; the caller below will lose the race to it.
+        val winner = CompletableDeferred<Result<*>>()
+        val singleFlight = StreamSingleFlightProcessorImpl(scope, RacyLoserMap(winner))
+
+        val childrenBefore = parent.children.count()
+        winner.complete(Result.success(7))
+
+        val loser = async { singleFlight.run("k".asStreamTypedKey<Int>()) { 1 } }
+        advanceUntilIdle()
+
+        // The loser is served by the winner's result...
+        assertEquals(7, loser.await().getOrThrow())
+        // ...and its own never-started deferred is not left attached to the scope's Job.
+        assertEquals(childrenBefore, parent.children.count())
     }
 
     @Test

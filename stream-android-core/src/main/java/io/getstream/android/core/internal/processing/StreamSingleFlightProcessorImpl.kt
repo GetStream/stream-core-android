@@ -69,15 +69,27 @@ internal class StreamSingleFlightProcessorImpl(
 
         // Install ours or join the winner
         val existing = flights.putIfAbsent(key, newExecution)
-        val job = existing ?: newExecution.also { it.start() }
+        val job =
+            if (existing != null) {
+                // We lost the race. `scope.async` attached this LAZY deferred to `scope`'s Job
+                // at construction, so leaving it unstarted keeps an inert child (holding `block`
+                // and its captures) attached for the scope's lifetime. Cancel to detach it.
+                newExecution.cancel()
+                existing
+            } else {
+                // Evict on completion of the shared work itself, never from an awaiting
+                // caller's frame. The work is detached in [scope], so a cancelled installer
+                // whose finally removed the entry would leave the job still running while the
+                // map went empty — the next caller for this key would miss and start a second
+                // execution. Conditional remove leaves any newer flight that replaced us intact.
+                newExecution.invokeOnCompletion { flights.remove(key, newExecution) }
+                newExecution.also { it.start() }
+            }
 
         return try {
             job.await() as Result<T>
         } catch (t: Throwable) {
             Result.failure(t)
-        } finally {
-            // Remove only if this exact job is still mapped
-            flights.remove(key, job)
         }
     }
 
