@@ -199,6 +199,109 @@ class StreamSingleFlightProcessorImplTest {
     }
 
     @Test
+    fun `installer cancellation must not orphan the flight and cause a re-run`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val scope = CoroutineScope(SupervisorJob() + dispatcher)
+        val singleFlight = StreamSingleFlightProcessorImpl(scope)
+
+        val worker = mockk<Worker>()
+        coEvery { worker.workSlow() } coAnswers
+            {
+                delay(1_000)
+                99
+            }
+
+        val key = "k".asStreamTypedKey<Int>()
+
+        // Installer takes the slow path: it is the caller whose finally evicts the map entry.
+        val installer = async { singleFlight.run(key) { worker.workSlow() } }
+        testScheduler.runCurrent()
+        // Follower takes the fast path and attaches to the same running deferred.
+        val follower = async { singleFlight.run(key) { worker.workSlow() } }
+        testScheduler.runCurrent()
+
+        // Cancel the INSTALLER before the shared work completes. Its finally runs
+        // flights.remove(key, job) while the job is still alive in `scope`.
+        installer.cancel(CancellationException("nav away"))
+        testScheduler.runCurrent()
+
+        // A new caller arriving after the eviction window must still coalesce onto the
+        // in-flight job, not start a second execution.
+        val late = async { singleFlight.run(key) { worker.workSlow() } }
+        advanceUntilIdle()
+
+        // Follower is still served by the orphaned-but-running job.
+        assertEquals(99, follower.await().getOrThrow())
+        assertEquals(99, late.await().getOrThrow())
+
+        // The shared block must have run exactly once for all callers.
+        coVerify(exactly = 1) { worker.workSlow() }
+    }
+
+    @Test
+    fun `coalescing holds for a newcomer even after all current awaiters are cancelled`() =
+        runTest {
+            val dispatcher = StandardTestDispatcher(testScheduler)
+            val scope = CoroutineScope(SupervisorJob() + dispatcher)
+            val singleFlight = StreamSingleFlightProcessorImpl(scope)
+
+            val worker = mockk<Worker>()
+            coEvery { worker.workSlow() } coAnswers
+                {
+                    delay(1_000)
+                    99
+                }
+
+            val key = "k".asStreamTypedKey<Int>()
+
+            val installer = async { singleFlight.run(key) { worker.workSlow() } }
+            testScheduler.runCurrent()
+            val follower = async { singleFlight.run(key) { worker.workSlow() } }
+            testScheduler.runCurrent()
+
+            // Every current awaiter goes away, but the detached job keeps running in [scope].
+            installer.cancel(CancellationException("gone"))
+            follower.cancel(CancellationException("gone"))
+            testScheduler.runCurrent()
+
+            // A newcomer arriving during the in-flight window must join the running job.
+            val late = async { singleFlight.run(key) { worker.workSlow() } }
+            advanceUntilIdle()
+
+            assertEquals(99, late.await().getOrThrow())
+            coVerify(exactly = 1) { worker.workSlow() }
+        }
+
+    @Test
+    fun `a run after the previous flight completed starts a fresh execution`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val scope = CoroutineScope(SupervisorJob() + dispatcher)
+        val singleFlight = StreamSingleFlightProcessorImpl(scope)
+
+        val worker = mockk<Worker>()
+        coEvery { worker.workInt() } coAnswers
+            {
+                delay(1_000)
+                7
+            }
+
+        val key = "k".asStreamTypedKey<Int>()
+
+        val first = async { singleFlight.run(key) { worker.workInt() } }
+        advanceUntilIdle()
+        assertEquals(7, first.await().getOrThrow())
+
+        // A completed flight must be evicted, never replayed: the next call re-executes.
+        assertFalse(singleFlight.has(key))
+
+        val second = async { singleFlight.run(key) { worker.workInt() } }
+        advanceUntilIdle()
+        assertEquals(7, second.await().getOrThrow())
+
+        coVerify(exactly = 2) { worker.workInt() }
+    }
+
+    @Test
     fun `cancel(key) cancels in-flight and joiners see failure`() = runTest {
         val dispatcher = StandardTestDispatcher(testScheduler)
         val scope = CoroutineScope(SupervisorJob() + dispatcher)
