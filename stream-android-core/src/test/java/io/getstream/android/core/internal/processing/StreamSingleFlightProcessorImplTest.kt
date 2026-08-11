@@ -213,24 +213,26 @@ class StreamSingleFlightProcessorImplTest {
 
         val key = "k".asStreamTypedKey<Int>()
 
-        // Installer takes the slow path: it is the caller whose finally evicts the map entry.
+        // Installer takes the slow path — the only caller that ever carried the eviction.
+        // Before completion-based eviction, cancelling it ran flights.remove(key, job) in its
+        // finally while the shared job kept running in `scope`, so a later caller for the same
+        // key missed the map and re-executed. This test guards against that regression.
         val installer = async { singleFlight.run(key) { worker.workSlow() } }
         testScheduler.runCurrent()
         // Follower takes the fast path and attaches to the same running deferred.
         val follower = async { singleFlight.run(key) { worker.workSlow() } }
         testScheduler.runCurrent()
 
-        // Cancel the INSTALLER before the shared work completes. Its finally runs
-        // flights.remove(key, job) while the job is still alive in `scope`.
+        // Cancel the installer before the shared work completes.
         installer.cancel(CancellationException("nav away"))
         testScheduler.runCurrent()
 
-        // A new caller arriving after the eviction window must still coalesce onto the
+        // A newcomer arriving after the (former) eviction window must still coalesce onto the
         // in-flight job, not start a second execution.
         val late = async { singleFlight.run(key) { worker.workSlow() } }
         advanceUntilIdle()
 
-        // Follower is still served by the orphaned-but-running job.
+        // Every caller is served by the one shared job.
         assertEquals(99, follower.await().getOrThrow())
         assertEquals(99, late.await().getOrThrow())
 
