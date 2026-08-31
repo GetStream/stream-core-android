@@ -27,12 +27,14 @@ import io.getstream.android.core.api.subscribe.StreamSubscriptionManager
 import io.getstream.android.core.api.subscribe.StreamSubscriptionManager.Options
 import io.getstream.android.core.api.subscribe.StreamSubscriptionManager.Options.Retention
 import io.getstream.android.core.testing.TestLogger
+import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.concurrent.thread
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -145,10 +147,9 @@ class StreamLifecycleMonitorTest {
             completed.countDown()
         }
 
-        // Continuously process main looper tasks while waiting for thread to complete
-        while (!completed.await(10, TimeUnit.MILLISECONDS)) {
-            shadowLooper.idle()
-        }
+        // start() queues the registration and returns; it must not wait on the main looper.
+        assertTrue(completed.await(5, TimeUnit.SECONDS))
+        shadowLooper.idle()
 
         assertEquals(mainLooper.thread, owner.addObserverThread.get())
 
@@ -173,10 +174,9 @@ class StreamLifecycleMonitorTest {
             completed.countDown()
         }
 
-        // Continuously process main looper tasks while waiting for thread to complete
-        while (!completed.await(10, TimeUnit.MILLISECONDS)) {
-            shadowLooper.idle()
-        }
+        // stop() queues the removal and returns; it must not wait on the main looper.
+        assertTrue(completed.await(5, TimeUnit.SECONDS))
+        shadowLooper.idle()
 
         assertEquals(mainLooper.thread, owner.removeObserverThread.get())
     }
@@ -196,10 +196,8 @@ class StreamLifecycleMonitorTest {
                 startCompleted.countDown()
             }
 
-            // Continuously process main looper tasks while waiting for thread to complete
-            while (!startCompleted.await(10, TimeUnit.MILLISECONDS)) {
-                shadowLooper.idle()
-            }
+            assertTrue(startCompleted.await(5, TimeUnit.SECONDS))
+            shadowLooper.idle()
 
             assertEquals(
                 mainLooper.thread,
@@ -213,10 +211,8 @@ class StreamLifecycleMonitorTest {
                 stopCompleted.countDown()
             }
 
-            // Continuously process main looper tasks while waiting for thread to complete
-            while (!stopCompleted.await(10, TimeUnit.MILLISECONDS)) {
-                shadowLooper.idle()
-            }
+            assertTrue(stopCompleted.await(5, TimeUnit.SECONDS))
+            shadowLooper.idle()
 
             assertEquals(
                 mainLooper.thread,
@@ -224,6 +220,53 @@ class StreamLifecycleMonitorTest {
                 "removeObserver should be called on main thread in iteration $iteration",
             )
         }
+    }
+
+    // Regression for AND-1468: start() used to block the caller on a five second latch while
+    // waiting for the main looper to run the registration. A caller that is itself holding the
+    // main looper can never release it, so the wait could only ever end in the timeout. Here
+    // the looper is simply never idled, which has the same shape.
+    @Test
+    fun `start returns without waiting for the main looper to run`() {
+        val owner = RecordingLifecycleOwner()
+        val monitor = StreamLifecycleMonitor(TestLogger, owner.lifecycle, newSubscriptionManager())
+        val completed = CountDownLatch(1)
+        val mainLooper = Looper.getMainLooper()
+
+        thread(start = true, name = "StreamLifecycleMonitorTest-unblocked") {
+            monitor.start().getOrThrow()
+            completed.countDown()
+        }
+
+        assertTrue(completed.await(2, TimeUnit.SECONDS), "start must not wait on the main looper")
+        assertNull(owner.addObserverThread.get(), "the registration is queued, not yet run")
+
+        Shadows.shadowOf(mainLooper).idle()
+
+        assertEquals(mainLooper.thread, owner.addObserverThread.get())
+    }
+
+    // A registration that is already queued must not be overtaken by a later call that happens
+    // to run on the main thread, or the observer ends up in the opposite state to `started`.
+    @Test
+    fun `a main thread call does not overtake a registration queued from another thread`() {
+        val owner = RecordingLifecycleOwner()
+        val monitor = StreamLifecycleMonitor(TestLogger, owner.lifecycle, newSubscriptionManager())
+        val started = CountDownLatch(1)
+        val shadowLooper = Shadows.shadowOf(Looper.getMainLooper())
+
+        thread(start = true, name = "StreamLifecycleMonitorTest-attach") {
+            monitor.start().getOrThrow()
+            started.countDown()
+        }
+        assertTrue(started.await(5, TimeUnit.SECONDS))
+
+        // The attach is still queued, so this stop() has to queue behind it rather than run
+        // inline on the main thread.
+        monitor.stop().getOrThrow()
+        shadowLooper.idle()
+
+        assertEquals(listOf("add", "remove"), owner.calls.toList())
     }
 
     private fun newSubscriptionManager(): StreamSubscriptionManager<StreamLifecycleListener> =
@@ -240,16 +283,19 @@ class StreamLifecycleMonitorTest {
         private val registry = LifecycleRegistry(this)
         val addObserverThread = AtomicReference<Thread?>()
         val removeObserverThread = AtomicReference<Thread?>()
+        val calls = CopyOnWriteArrayList<String>()
 
         override val lifecycle: Lifecycle =
             object : Lifecycle() {
                 override fun addObserver(observer: LifecycleObserver) {
                     addObserverThread.set(Thread.currentThread())
+                    calls.add("add")
                     registry.addObserver(observer)
                 }
 
                 override fun removeObserver(observer: LifecycleObserver) {
                     removeObserverThread.set(Thread.currentThread())
+                    calls.add("remove")
                     registry.removeObserver(observer)
                 }
 
