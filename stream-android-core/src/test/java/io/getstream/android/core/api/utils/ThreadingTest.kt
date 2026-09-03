@@ -17,10 +17,12 @@
 package io.getstream.android.core.api.utils
 
 import android.os.Build
+import android.os.Handler
 import android.os.HandlerThread
 import android.os.Looper
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.concurrent.thread
@@ -28,6 +30,7 @@ import kotlin.coroutines.cancellation.CancellationException
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertSame
@@ -448,6 +451,36 @@ class ThreadingTest {
             }
 
         assertTrue(exception.message?.contains("Timed out") == true)
+    }
+
+    @Test
+    fun `runOn drops the pending message when it times out`() {
+        val handlerThread = HandlerThread("ThreadingTest-busy").apply { start() }
+        try {
+            val looper = handlerThread.looper
+            val release = CountDownLatch(1)
+            val executed = AtomicBoolean(false)
+
+            // Occupy the looper for longer than runOn's five second bound.
+            Handler(looper).post { release.await(30, TimeUnit.SECONDS) }
+
+            val exception =
+                assertFailsWith<IllegalStateException> {
+                    runOn(looper) { executed.set(true) }.getOrThrow()
+                }
+            assertTrue(exception.message?.contains("Timed out") == true)
+
+            // Free the looper and let anything still queued run. The drain message is posted
+            // after the timed-out one, so it cannot overtake it.
+            release.countDown()
+            val drained = CountDownLatch(1)
+            Handler(looper).post { drained.countDown() }
+            assertTrue(drained.await(5, TimeUnit.SECONDS))
+
+            assertFalse(executed.get(), "a timed-out block must not run afterwards")
+        } finally {
+            handlerThread.quitSafely()
+        }
     }
 
     @Test
