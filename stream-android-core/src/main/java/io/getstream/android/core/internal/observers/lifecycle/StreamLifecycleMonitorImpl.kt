@@ -42,27 +42,25 @@ internal class StreamLifecycleMonitorImpl(
     /** Attach/detach messages posted to the main looper but not yet executed. */
     private val pendingOnMain = AtomicInteger(0)
 
+    /** Guards the [started] flip together with the decision to run inline or to post. */
+    private val transitionLock = Any()
+
     override fun subscribe(
         listener: StreamLifecycleListener,
         options: StreamSubscriptionManager.Options,
     ): Result<StreamSubscription> = subscriptionManager.subscribe(listener, options)
 
     override fun start(): Result<Unit> = runCatching {
-        if (!started.compareAndSet(false, true)) {
-            return@runCatching
-        }
-        onMainLooper { lifecycle.addObserver(this) }
+        transition(from = false, to = true) { lifecycle.addObserver(this) }
     }
 
     override fun stop(): Result<Unit> = runCatching {
-        if (!started.compareAndSet(true, false)) {
-            return@runCatching
-        }
-        onMainLooper { lifecycle.removeObserver(this) }
+        transition(from = true, to = false) { lifecycle.removeObserver(this) }
     }
 
     /**
-     * Runs [block] on the main looper without waiting for it to complete.
+     * Flips [started] from [from] to [to] and runs [block] on the main looper without waiting for
+     * it to complete.
      *
      * Attaching and detaching the observer has to happen on the main thread, but *waiting* for it
      * must not: a caller that already occupies the main looper — a suspend `disconnect()` bridged
@@ -72,13 +70,33 @@ internal class StreamLifecycleMonitorImpl(
      * Running inline when the caller is already on the main looper is only safe while nothing of
      * ours is queued. Otherwise this call would jump ahead of an attach/detach posted earlier from
      * another thread and invert the two, leaving [started] and the observer disagreeing.
+     *
+     * The flip and that decision are taken under [transitionLock] as one step. Apart they leave a
+     * window: a background `start()` that has won the flip but not yet posted looks like nothing is
+     * queued, so a `stop()` arriving on the main thread in between detaches inline and the attach
+     * lands after it — observer attached, [started] false. [block] itself runs outside the lock;
+     * the inline path holds the main thread, so nothing of ours can overtake it there anyway, and
+     * the lock stays clear of the listener callbacks the attach fans out to.
      */
-    private fun onMainLooper(block: () -> Unit) {
+    private fun transition(from: Boolean, to: Boolean, block: () -> Unit) {
         val mainLooper = Looper.getMainLooper() ?: error("Main looper is not initialized")
-        if (Looper.myLooper() === mainLooper && pendingOnMain.get() == 0) {
+        val runInline =
+            synchronized(transitionLock) {
+                if (!started.compareAndSet(from, to)) {
+                    return
+                }
+                val inline = Looper.myLooper() === mainLooper && pendingOnMain.get() == 0
+                if (!inline) {
+                    postToMainLooper(mainLooper, block)
+                }
+                inline
+            }
+        if (runInline) {
             block()
-            return
         }
+    }
+
+    private fun postToMainLooper(mainLooper: Looper, block: () -> Unit) {
         pendingOnMain.incrementAndGet()
         val posted =
             Handler(mainLooper).post {
