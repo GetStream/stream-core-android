@@ -269,6 +269,52 @@ class StreamLifecycleMonitorTest {
         assertEquals(listOf("add", "remove"), owner.calls.toList())
     }
 
+    // The attach lands after start() returns, so a listener subscribed in between — which is what
+    // StreamNetworkAndLifecycleMonitorImpl.start() does — is already in place for the ON_RESUME
+    // that LifecycleRegistry replays to a newly added observer. Nothing acts on that replay: the
+    // recovery evaluator needs an earlier successful connection before it will reconnect, covered
+    // by StreamConnectionRecoveryEvaluatorImplTest. The delivery itself is behaviour now, so pin it
+    // here rather than leave it to be rediscovered.
+    @Test
+    fun `a listener subscribed before start receives the replayed foreground`() {
+        val owner = TestLifecycleOwner()
+        owner.registry.handleLifecycleEvent(Lifecycle.Event.ON_CREATE)
+        owner.registry.handleLifecycleEvent(Lifecycle.Event.ON_START)
+        owner.registry.handleLifecycleEvent(Lifecycle.Event.ON_RESUME)
+
+        val monitor = StreamLifecycleMonitor(TestLogger, owner.lifecycle, newSubscriptionManager())
+        val received = CopyOnWriteArrayList<String>()
+        val listener =
+            object : StreamLifecycleListener {
+                override fun onForeground() {
+                    received += "fg"
+                }
+
+                override fun onBackground() {
+                    received += "bg"
+                }
+            }
+        val subscription =
+            monitor
+                .subscribe(listener, Options(retention = Retention.KEEP_UNTIL_CANCELLED))
+                .getOrThrow()
+
+        val completed = CountDownLatch(1)
+        thread(start = true, name = "StreamLifecycleMonitorTest-replay") {
+            monitor.start().getOrThrow()
+            completed.countDown()
+        }
+        assertTrue(completed.await(5, TimeUnit.SECONDS))
+
+        assertEquals(emptyList(), received.toList(), "the attach is still queued")
+
+        Shadows.shadowOf(Looper.getMainLooper()).idle()
+
+        assertEquals(listOf("fg"), received.toList())
+
+        subscription.cancel()
+    }
+
     private fun newSubscriptionManager(): StreamSubscriptionManager<StreamLifecycleListener> =
         StreamSubscriptionManager(TestLogger)
 
