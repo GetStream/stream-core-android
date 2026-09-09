@@ -141,25 +141,53 @@ val subscriptionManager = StreamSubscriptionManager<MyListener>(
 ### Basic Client Instantiation
 
 ```kotlin
-val singleFlight = StreamSingleFlightProcessor(scope)
-val tokenManager = StreamTokenManager(userId, tokenProvider, singleFlight)
+import io.getstream.android.core.api.StreamClient
+import io.getstream.android.core.api.authentication.StreamTokenProvider
+import io.getstream.android.core.api.model.StreamUser
+import io.getstream.android.core.api.model.config.StreamClientSerializationConfig
+import io.getstream.android.core.api.model.config.StreamSocketConfig
+import io.getstream.android.core.api.model.value.StreamApiKey
+import io.getstream.android.core.api.model.value.StreamHttpClientInfoHeader
+import io.getstream.android.core.api.model.value.StreamToken
+import io.getstream.android.core.api.model.value.StreamUserId
+import io.getstream.android.core.api.model.value.StreamWsUrl
+import io.getstream.android.core.api.serialization.StreamEventSerialization
 
-val serialQueue = StreamSerialProcessingQueue(
-    logger = logProvider.taggedLogger("SerialQueue"),
-    scope = scope
-)
+val user = StreamUser(StreamUserId.fromString("sample-user"))
+val token = StreamToken.fromString("<JWT>")
 
 val client = StreamClient(
     scope = scope,
-    apiKey = apiKey,
-    userId = userId,
-    tokenProvider = tokenProvider,
-    logProvider = logProvider,
-    tokenManager = tokenManager,
-    singleFlight = singleFlight,
-    serialQueue = serialQueue,
-    // ... other dependencies
+    context = context.applicationContext,
+    user = user,
+    products = listOf("chat"),                 // e.g. listOf("chat", "video", "feeds")
+    tokenProvider = object : StreamTokenProvider {
+        override suspend fun loadToken(userId: StreamUserId): StreamToken = token
+    },
+    serializationConfig = StreamClientSerializationConfig.default(
+        // Product SDKs supply their own event (de)serializer; Unit shown for brevity
+        object : StreamEventSerialization<Unit> {
+            override fun serialize(data: Unit): Result<String> = Result.success("")
+            override fun deserialize(raw: String): Result<Unit> = Result.success(Unit)
+        }
+    ),
+    socketConfig = StreamSocketConfig.jwt(
+        url = StreamWsUrl.fromString("wss://<region>.stream-io-api.com/api/v2/connect"),
+        apiKey = StreamApiKey.fromString("<api-key>"),
+        clientInfoHeader = StreamHttpClientInfoHeader.create(
+            product = "android-core",
+            productVersion = "1.1.0",
+            os = "Android",
+            apiLevel = Build.VERSION.SDK_INT,
+            deviceModel = "Pixel 7 Pro",
+            app = "My App",
+            appVersion = "1.0.0",
+        ),
+    ),
 )
+
+// Open the socket, authenticate, and start monitoring
+val connected = client.connect() // Result<StreamConnectedUser>
 ```
 
 ---
@@ -432,19 +460,23 @@ Deduplicates concurrent identical requests - only one in-flight operation per ke
 
 ```kotlin
 import io.getstream.android.core.api.processing.StreamSingleFlightProcessor
+import io.getstream.android.core.api.model.StreamTypedKey
 
 val singleFlight = StreamSingleFlightProcessor(scope)
 
-// Multiple concurrent calls with same key share the same result
+// Keys are StreamTypedKey<T> — equal keys (by id) share the same in-flight result
+val userKey = StreamTypedKey<User>("user-123")
+
+// Multiple concurrent calls with the same key share the same result
 launch {
-    val result = singleFlight.run("user-123") {
+    val result = singleFlight.run(userKey) {
         // Expensive operation runs only once
         fetchUserFromNetwork("user-123")
     }
 }
 
 launch {
-    val result = singleFlight.run("user-123") {
+    val result = singleFlight.run(userKey) {
         // This waits for the first call, doesn't execute
         fetchUserFromNetwork("user-123")
     }
@@ -466,19 +498,25 @@ launch {
 
 Automatic retry with linear or exponential backoff.
 
+> **Note:** `StreamRetryPolicy` is annotated `@StreamInternalApi` — using it requires
+> `@OptIn(StreamInternalApi::class)`. Policies are created via the `linear` / `exponential`
+> factory methods (the primary constructor is private).
+
 #### Linear Backoff
 
 ```kotlin
+import io.getstream.android.core.annotations.StreamInternalApi
 import io.getstream.android.core.api.processing.StreamRetryProcessor
-import io.getstream.android.core.api.model.StreamRetryPolicy
+import io.getstream.android.core.api.model.retry.StreamRetryPolicy
 
 val retryProcessor = StreamRetryProcessor(logger)
 
-val policy = StreamRetryPolicy.Linear(
+@OptIn(StreamInternalApi::class)
+val policy = StreamRetryPolicy.linear(
     minRetries = 3,
     maxRetries = 10,
-    initialDelayMillis = 1000, // 1s, 2s, 3s, ...
-    maxDelayMillis = 30000      // Cap at 30s
+    backoffStepMillis = 250,   // 250ms, 500ms, 750ms, ...
+    maxBackoffMillis = 30_000, // Cap at 30s
 )
 
 val result = retryProcessor.retry(policy) {
@@ -490,12 +528,13 @@ val result = retryProcessor.retry(policy) {
 #### Exponential Backoff
 
 ```kotlin
-val policy = StreamRetryPolicy.Exponential(
+@OptIn(StreamInternalApi::class)
+val policy = StreamRetryPolicy.exponential(
     minRetries = 3,
     maxRetries = 10,
-    initialDelayMillis = 1000, // 1s, 2s, 4s, 8s, 16s, ...
-    maxDelayMillis = 60000,     // Cap at 60s
-    giveUpFunction = { attempt, error ->
+    backoffStepMillis = 250,   // grows: 250ms, 500ms, 1s, 2s, ...
+    maxBackoffMillis = 60_000, // Cap at 60s
+    giveUp = { retry, error ->
         // Stop retrying on specific errors
         error is UnauthorizedException
     }
@@ -600,7 +639,7 @@ Rate-limits bursty values with configurable strategies.
 
 ```kotlin
 import io.getstream.android.core.api.processing.StreamThrottler
-import io.getstream.android.core.api.processing.StreamThrottlePolicy
+import io.getstream.android.core.api.model.processing.StreamThrottlePolicy
 
 // Leading: first value immediately, drop the rest until window expires
 val typing = StreamThrottler<TypingEvent>(
@@ -798,35 +837,35 @@ Handles authentication token lifecycle with automatic refresh.
 ```kotlin
 import io.getstream.android.core.api.authentication.StreamTokenManager
 import io.getstream.android.core.api.authentication.StreamTokenProvider
+import io.getstream.android.core.api.model.value.StreamToken
+import io.getstream.android.core.api.model.value.StreamUserId
 
-val tokenProvider = object : StreamTokenProvider {
-    override suspend fun getToken(): String {
-        // Fetch token from backend
-        return api.getAuthToken(userId)
-    }
+val tokenProvider = StreamTokenProvider { userId: StreamUserId ->
+    // Fetch token from backend, wrap in a StreamToken
+    StreamToken.fromString(api.getAuthToken(userId.rawValue))
 }
 
 val tokenManager = StreamTokenManager(
-    userId = userId,
+    userId = StreamUserId.fromString("user-123"),
     tokenProvider = tokenProvider,
     singleFlight = singleFlight // Prevents multiple concurrent refreshes
 )
 
-// Get current token (triggers refresh if needed)
-val token = tokenManager.getToken()
+// Load the token, fetching via the provider only if absent (triggers refresh if needed)
+val token = tokenManager.loadIfAbsent()
 ```
 
 #### Token Refresh Flow
 
 ```kotlin
 // Set initial token
-tokenManager.setToken("initial-token")
+tokenManager.setToken(StreamToken.fromString("initial-token"))
 
 // Token becomes invalid
-tokenManager.invalidateToken()
+tokenManager.invalidate()
 
-// Next call triggers refresh via tokenProvider
-val newToken = tokenManager.getToken() // Calls tokenProvider.getToken()
+// Force a refresh via tokenProvider.loadToken(...)
+val newToken = tokenManager.refresh()
 ```
 
 **Key Points**:
@@ -930,16 +969,19 @@ logger.d {
 
 #### Log Levels
 
+`LogLevel` is a sealed class of severity objects (higher `level` = more severe):
+
 ```kotlin
-enum class LogLevel {
-    VERBOSE,
-    DEBUG,
-    INFO,
-    WARN,
-    ERROR,
-    NONE
+sealed class LogLevel(val level: Int) {
+    object Verbose : LogLevel(1)
+    object Debug   : LogLevel(2)
+    object Info    : LogLevel(3)
+    object Warning : LogLevel(4)
+    object Error   : LogLevel(5)
 }
 ```
+
+Reference them as `StreamLogger.LogLevel.Verbose`, `StreamLogger.LogLevel.Debug`, etc.
 
 ---
 
@@ -1210,9 +1252,10 @@ class MyActivity : AppCompatActivity() {
 
 ```kotlin
 // ❌ WRONG - Retries 401 Unauthorized forever
-val policy = StreamRetryPolicy.Exponential(
+@OptIn(StreamInternalApi::class)
+val policy = StreamRetryPolicy.exponential(
     maxRetries = Int.MAX_VALUE,
-    initialDelayMillis = 1000
+    backoffStepMillis = 1000
 )
 
 retryProcessor.retry(policy) {
@@ -1220,14 +1263,15 @@ retryProcessor.retry(policy) {
 }
 ```
 
-**Solution**: Use `giveUpFunction` to stop on non-retryable errors:
+**Solution**: Use `giveUp` to stop on non-retryable errors:
 
 ```kotlin
 // ✅ CORRECT
-val policy = StreamRetryPolicy.Exponential(
+@OptIn(StreamInternalApi::class)
+val policy = StreamRetryPolicy.exponential(
     maxRetries = 10,
-    initialDelayMillis = 1000,
-    giveUpFunction = { attempt, error ->
+    backoffStepMillis = 1000,
+    giveUp = { attempt, error ->
         when (error) {
             is UnauthorizedException,
             is ForbiddenException,
@@ -1357,7 +1401,7 @@ stream-android-core/
 
 ## License
 
-Copyright (c) 2014-2025 Stream.io Inc. All rights reserved.
+Copyright (c) 2014-2026 Stream.io Inc. All rights reserved.
 
 Licensed under the Stream License;
 you may not use this file except in compliance with the License.
