@@ -62,9 +62,9 @@ private constructor(
         /**
          * Creates an **exponential back-off** policy.
          *
-         * Delay grows according to:
+         * Delay doubles on every retry:
          * ```text
-         * nextDelay = prevDelay + retryIndex × backoffStepMillis
+         * nextDelay = backoffStepMillis × 2^(retryIndex - 1)
          * ```
          *
          * then clamped to `[backoffStepMillis, maxBackoffMillis]`.
@@ -75,6 +75,7 @@ private constructor(
          * retry  1 → 250 ms
          * retry  2 → 500 ms
          * retry  3 → 1 000 ms
+         * retry  4 → 2 000 ms
          * …
          * ```
          *
@@ -100,10 +101,19 @@ private constructor(
                     maxBackoffMills = maxBackoffMillis,
                     initialDelayMillis = initialDelayMillis,
                     giveUpFunction = giveUp,
-                    nextBackOffDelayFunction = { retry, prev ->
-                        (prev + retry * backoffStepMillis)
-                            .coerceAtMost(maxBackoffMillis)
-                            .coerceIn(backoffStepMillis, maxBackoffMillis)
+                    nextBackOffDelayFunction = { retry, _ ->
+                        val shift = (retry - 1).coerceIn(0, Long.SIZE_BITS - 1)
+                        // Largest step that still fits under the cap once shifted; comparing
+                        // against it keeps `shl` from overflowing on high retry counts.
+                        val largestShiftableStep = maxBackoffMillis shr shift
+                        if (backoffStepMillis > largestShiftableStep) {
+                            maxBackoffMillis
+                        } else {
+                            (backoffStepMillis shl shift).coerceIn(
+                                backoffStepMillis,
+                                maxBackoffMillis,
+                            )
+                        }
                     },
                 )
                 .also { it.requireValid() }

@@ -59,17 +59,18 @@ class StreamRetryPolicyTest {
     fun `exponential backoff delay calculation increases exponentially`() {
         val policy = StreamRetryPolicy.exponential(backoffStepMillis = 100, initialDelayMillis = 0)
 
-        // First retry: prev=0 + retry=1 * 100 = 100
+        // Retry n waits 100 * 2^(n-1)
         val delay1 = policy.nextBackOffDelayFunction(1, 0)
         assertEquals(100, delay1)
 
-        // Second retry: prev=100 + retry=2 * 100 = 300
         val delay2 = policy.nextBackOffDelayFunction(2, delay1)
-        assertEquals(300, delay2)
+        assertEquals(200, delay2)
 
-        // Third retry: prev=300 + retry=3 * 100 = 600
         val delay3 = policy.nextBackOffDelayFunction(3, delay2)
-        assertEquals(600, delay3)
+        assertEquals(400, delay3)
+
+        val delay4 = policy.nextBackOffDelayFunction(4, delay3)
+        assertEquals(800, delay4)
     }
 
     @Test
@@ -77,9 +78,26 @@ class StreamRetryPolicyTest {
         val policy =
             StreamRetryPolicy.exponential(backoffStepMillis = 1000, maxBackoffMillis = 3000)
 
-        // Should exceed max: 0 + 10 * 1000 = 10000, but capped at 3000
+        // Should exceed max: 1000 * 2^9 = 512_000, but capped at 3000
         val delay = policy.nextBackOffDelayFunction(10, 0)
         assertEquals(3000, delay)
+    }
+
+    @Test
+    fun `exponential backoff delay does not overflow on very high retry counts`() {
+        val policy =
+            StreamRetryPolicy.exponential(backoffStepMillis = 1000, maxBackoffMillis = 30_000)
+
+        assertEquals(30_000, policy.nextBackOffDelayFunction(64, 0))
+        assertEquals(30_000, policy.nextBackOffDelayFunction(Int.MAX_VALUE, 0))
+    }
+
+    @Test
+    fun `exponential backoff delay ignores the previous delay`() {
+        val policy = StreamRetryPolicy.exponential(backoffStepMillis = 100)
+
+        assertEquals(400, policy.nextBackOffDelayFunction(3, 0))
+        assertEquals(400, policy.nextBackOffDelayFunction(3, 12_345))
     }
 
     @Test
