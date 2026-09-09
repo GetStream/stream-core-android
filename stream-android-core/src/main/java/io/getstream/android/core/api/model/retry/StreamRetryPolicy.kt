@@ -119,6 +119,57 @@ private constructor(
                 .also { it.requireValid() }
 
         /**
+         * Creates a **quadratic back-off** policy.
+         *
+         * Each retry adds a growing increment to the previous delay:
+         * ```text
+         * nextDelay = prevDelay + retryIndex × backoffStepMillis
+         * ```
+         *
+         * then clamped to `[backoffStepMillis, maxBackoffMillis]`. Driven from an
+         * [initialDelayMillis] of `0`, the delays are the triangular numbers scaled by the step —
+         * `backoffStepMillis × n(n + 1) / 2` — so growth sits between [linear] and [exponential].
+         *
+         * Example with defaults:
+         * ```
+         * attempt 1 → 0 ms
+         * retry  1 → 250 ms
+         * retry  2 → 750 ms
+         * retry  3 → 1 500 ms
+         * retry  4 → 2 500 ms
+         * …
+         * ```
+         *
+         * Unlike [exponential], this reads the previous delay, so the curve depends on the retry
+         * loop feeding each delay back in — which `StreamRetryProcessor` does.
+         *
+         * Parameter semantics match [exponential].
+         */
+        public fun quadratic(
+            @IntRange(from = 1) minRetries: Int = 1,
+            @IntRange(from = 1) maxRetries: Int = 5,
+            @IntRange(from = 0) backoffStepMillis: Long = 250,
+            @IntRange(from = 0) maxBackoffMillis: Long = 15_000,
+            @IntRange(from = 0) initialDelayMillis: Long = 0,
+            giveUp: (Int, Throwable) -> Boolean = { retry, _ -> retry > maxRetries },
+        ): StreamRetryPolicy =
+            StreamRetryPolicy(
+                    minRetries = minRetries,
+                    maxRetries = maxRetries,
+                    minBackoffMills = backoffStepMillis,
+                    maxBackoffMills = maxBackoffMillis,
+                    initialDelayMillis = initialDelayMillis,
+                    giveUpFunction = giveUp,
+                    nextBackOffDelayFunction = { retry, prev ->
+                        (prev + retry * backoffStepMillis).coerceIn(
+                            backoffStepMillis,
+                            maxBackoffMillis,
+                        )
+                    },
+                )
+                .also { it.requireValid() }
+
+        /**
          * Creates a **linear back-off** policy.
          *
          * Delay increases by a constant [backoffStepMillis] each retry, capped at
