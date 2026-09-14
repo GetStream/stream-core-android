@@ -78,11 +78,18 @@ class StreamCompositeEventSerializationImplTest {
 
     @Test
     fun `serialize - neither core nor product returns failure`() {
-        // Create an instance with both nulls via reflection (private ctor).
-        val k = StreamCompositeSerializationEvent::class.java.declaredConstructors.first()
-        k.isAccessible = true
+        // `external` takes a nullable T, so a null product reaches the both-null state without
+        // reflection. The cast is safe — the type parameter is erased and neither field is read
+        // as a String on this path.
         @Suppress("UNCHECKED_CAST")
-        val emptyEvt = k.newInstance(null, null, null) as StreamCompositeSerializationEvent<String>
+        val emptyEvt =
+            StreamCompositeSerializationEvent.external<String?>(null)
+                as StreamCompositeSerializationEvent<String>
+
+        // Pin the precondition — if construction stops producing both-null, fail here rather
+        // than misattributing it to the serializer.
+        assertNull(emptyEvt.core)
+        assertNull(emptyEvt.product)
 
         val sut = newSut()
         val res = sut.serialize(emptyEvt)
