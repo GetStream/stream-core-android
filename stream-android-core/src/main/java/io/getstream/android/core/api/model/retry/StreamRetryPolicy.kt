@@ -150,21 +150,16 @@ private constructor(
             @IntRange(from = 0) initialDelayMillis: Long = 0,
             giveUp: (Int, Throwable) -> Boolean = { retry, _ -> retry > maxRetries },
         ): StreamRetryPolicy =
-            StreamRetryPolicy(
-                    minRetries = minRetries,
-                    maxRetries = maxRetries,
-                    minBackoffMills = backoffStepMillis,
-                    maxBackoffMills = maxBackoffMillis,
-                    initialDelayMillis = initialDelayMillis,
-                    giveUpFunction = giveUp,
-                    nextBackOffDelayFunction = { retry, prev ->
-                        (prev + retry * backoffStepMillis).coerceIn(
-                            backoffStepMillis,
-                            maxBackoffMillis,
-                        )
-                    },
-                )
-                .also { it.requireValid() }
+            custom(
+                minRetries = minRetries,
+                maxRetries = maxRetries,
+                minBackoffMills = backoffStepMillis,
+                maxBackoffMills = maxBackoffMillis,
+                initialDelayMillis = initialDelayMillis,
+                giveUp = giveUp,
+            ) { retry, prev ->
+                prev + retry * backoffStepMillis
+            }
 
         /**
          * Creates a **linear back-off** policy.
