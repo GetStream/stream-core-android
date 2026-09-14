@@ -109,10 +109,7 @@ private constructor(
                         if (backoffStepMillis > largestShiftableStep) {
                             maxBackoffMillis
                         } else {
-                            (backoffStepMillis shl shift).coerceIn(
-                                backoffStepMillis,
-                                maxBackoffMillis,
-                            )
+                            backoffStepMillis shl shift
                         }
                     },
                 )

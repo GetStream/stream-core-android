@@ -83,6 +83,32 @@ class StreamRetryProcessorImplTest {
     }
 
     @Test
+    fun `exponential policy doubles the elapsed delay between attempts`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val scope = TestScope(dispatcher)
+
+        val policy =
+            StreamRetryPolicy.exponential(
+                minRetries = 1,
+                maxRetries = 5,
+                backoffStepMillis = 250,
+                initialDelayMillis = 0,
+            )
+
+        val counter = AtomicInteger()
+        val job =
+            scope.async { retry.retry(policy) { counter.incrementAndGet().also { error("Boom") } } }
+
+        dispatcher.scheduler.advanceUntilIdle()
+
+        assertTrue(job.await().isFailure)
+        assertEquals(5, counter.get())
+        // Four waits between five attempts: 250 + 500 + 1000 + 2000.
+        // The pre-fix policy accumulated instead, giving 250 + 750 + 1500 + 2500 = 5000.
+        assertEquals(3750, dispatcher.scheduler.currentTime)
+    }
+
+    @Test
     fun `returns failure after exhausting maxRetries`() = runTest {
         val policy = StreamRetryPolicy.linear(maxRetries = 2, minRetries = 1)
         val boom = RuntimeException("boom")
