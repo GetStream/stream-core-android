@@ -163,7 +163,8 @@ public inline fun <T> runOn(looper: Looper, crossinline block: () -> T): Result<
         } else {
             val latch = CountDownLatch(1)
             var result: Result<T>? = null
-            Handler(looper).post {
+            val handler = Handler(looper)
+            val runnable = Runnable {
                 try {
                     result = Result.success(block())
                 } catch (t: Throwable) {
@@ -172,8 +173,13 @@ public inline fun <T> runOn(looper: Looper, crossinline block: () -> T): Result<
                     latch.countDown()
                 }
             }
+            handler.post(runnable)
 
             if (!latch.await(5, TimeUnit.SECONDS)) {
+                // Drop the message instead of leaving it queued. It would otherwise run once
+                // the looper frees up, long after this call has already failed and the caller
+                // has moved on, applying [block] against state it no longer expects.
+                handler.removeCallbacks(runnable)
                 throw IllegalStateException("Timed out waiting to post to main thread")
             }
             result!!.getOrThrow()

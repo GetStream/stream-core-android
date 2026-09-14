@@ -59,6 +59,12 @@ internal class StreamConnectionRecoveryEvaluatorImpl(
             val previousLifecycle = lastLifecycleState
             val previousNetwork = lastNetworkState
             val networkAvailable = networkState is StreamNetworkState.Available
+            // Only a reported loss counts as offline. `Unknown` means no callback has fired yet,
+            // which is not the same as "no network" and must not tear a connection down — the same
+            // way an `Unknown` lifecycle state is not treated as backgrounded below.
+            val networkLost =
+                networkState is StreamNetworkState.Disconnected ||
+                    networkState is StreamNetworkState.Unavailable
             val networkBecameAvailable =
                 networkAvailable && previousNetwork !is StreamNetworkState.Available
             val lifecycleForeground = lifecycleState == StreamLifecycleState.Foreground
@@ -67,7 +73,7 @@ internal class StreamConnectionRecoveryEvaluatorImpl(
 
             val shouldDisconnect =
                 (isConnected || isConnecting) &&
-                    (!networkAvailable || lifecycleState == StreamLifecycleState.Background)
+                    (networkLost || lifecycleState == StreamLifecycleState.Background)
 
             val shouldConnect =
                 hasConnectedBefore &&

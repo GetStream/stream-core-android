@@ -211,6 +211,41 @@ class StreamConnectionRecoveryEvaluatorImplTest {
         assertNull(recovery)
     }
 
+    // `Unknown` is the state before any connectivity callback has fired, which happens when the
+    // platform reports no viable network at registration time. Tearing the in-flight connect down
+    // there turns a socket failure into a cancellation of the caller's connect().
+    @Test
+    fun `does not disconnect while connecting before the first network callback`() = runTest {
+        val evaluator = evaluator()
+
+        val recovery =
+            evaluator
+                .evaluate(
+                    connectionState = StreamConnectionState.Connecting.Opening(TEST_USER_ID),
+                    lifecycleState = StreamLifecycleState.Foreground,
+                    networkState = StreamNetworkState.Unknown,
+                )
+                .getOrThrow()
+
+        assertNull(recovery)
+    }
+
+    @Test
+    fun `disconnects when the network is reported unavailable`() = runTest {
+        val evaluator = evaluator()
+
+        val recovery =
+            evaluator
+                .evaluate(
+                    connectionState = connectedState(),
+                    lifecycleState = StreamLifecycleState.Foreground,
+                    networkState = StreamNetworkState.Unavailable,
+                )
+                .getOrThrow()
+
+        assertIs<Recovery.Disconnect<*>>(recovery)
+    }
+
     @Test
     fun `stays idle when returning foreground while already reconnecting`() = runTest {
         val evaluator = evaluator()
