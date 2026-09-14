@@ -125,7 +125,13 @@ private constructor(
          *
          * then clamped to `[backoffStepMillis, maxBackoffMillis]`. Driven from an
          * [initialDelayMillis] of `0`, the delays are the triangular numbers scaled by the step —
-         * `backoffStepMillis × n(n + 1) / 2` — so growth sits between [linear] and [exponential].
+         * `backoffStepMillis × n(n + 1) / 2`.
+         *
+         * Asymptotically this is the gentler curve, but over the range a retry loop actually covers
+         * it is the **steeper** of the two. At a 100 ms step it runs `100, 300, 600, 1000` against
+         * [exponential]'s `100, 200, 400, 800`; doubling only overtakes it at retry 5, and with the
+         * default `maxRetries = 5` the processor never computes that retry. Expect longer waits
+         * than [exponential], not shorter.
          *
          * Example with defaults:
          * ```

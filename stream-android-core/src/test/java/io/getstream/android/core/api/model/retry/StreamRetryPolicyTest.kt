@@ -169,24 +169,35 @@ class StreamRetryPolicyTest {
     }
 
     @Test
-    fun `quadratic backoff grows slower than exponential and faster than linear`() {
+    fun `quadratic backoff stays above exponential until they cross at retry 5`() {
         val step = 100L
         val linear = StreamRetryPolicy.linear(backoffStepMillis = step)
         val quadratic = StreamRetryPolicy.quadratic(backoffStepMillis = step)
         val exponential = StreamRetryPolicy.exponential(backoffStepMillis = step)
 
-        var linearDelay = 0L
-        var quadraticDelay = 0L
-        var exponentialDelay = 0L
+        val linearDelays = mutableListOf<Long>()
+        val quadraticDelays = mutableListOf<Long>()
+        val exponentialDelays = mutableListOf<Long>()
         for (retry in 1..5) {
-            linearDelay = linear.nextBackOffDelayFunction(retry, linearDelay)
-            quadraticDelay = quadratic.nextBackOffDelayFunction(retry, quadraticDelay)
-            exponentialDelay = exponential.nextBackOffDelayFunction(retry, exponentialDelay)
+            linearDelays += linear.nextBackOffDelayFunction(retry, linearDelays.lastOrNull() ?: 0)
+            quadraticDelays +=
+                quadratic.nextBackOffDelayFunction(retry, quadraticDelays.lastOrNull() ?: 0)
+            exponentialDelays +=
+                exponential.nextBackOffDelayFunction(retry, exponentialDelays.lastOrNull() ?: 0)
         }
 
-        assertEquals(500, linearDelay)
-        assertEquals(1500, quadraticDelay)
-        assertEquals(1600, exponentialDelay)
+        assertEquals(listOf(100L, 200L, 300L, 400L, 500L), linearDelays)
+        assertEquals(listOf(100L, 300L, 600L, 1000L, 1500L), quadraticDelays)
+        assertEquals(listOf(100L, 200L, 400L, 800L, 1600L), exponentialDelays)
+
+        // Quadratic is the steeper curve over retries 2..4 and only loses to doubling at retry 5.
+        // The default maxRetries = 5 stops the processor before it computes retry 5, so callers
+        // on defaults always see the quadratic delays as the longer ones.
+        for (retry in 2..4) {
+            assertTrue(quadraticDelays[retry - 1] > exponentialDelays[retry - 1])
+        }
+        assertTrue(exponentialDelays[4] > quadraticDelays[4])
+        assertTrue(quadraticDelays.drop(1).zip(linearDelays.drop(1)).all { it.first > it.second })
     }
 
     @Test
@@ -203,7 +214,10 @@ class StreamRetryPolicyTest {
         val policy =
             StreamRetryPolicy.quadratic(backoffStepMillis = 1000, maxBackoffMillis = 30_000)
 
-        assertEquals(30_000, policy.nextBackOffDelayFunction(1000, 30_000))
+        // From a zero previous delay, so this pins growth into the cap at an extreme retry index
+        // rather than restating that the cap is a fixed point.
+        assertEquals(30_000, policy.nextBackOffDelayFunction(1000, 0))
+        assertEquals(30_000, policy.nextBackOffDelayFunction(Int.MAX_VALUE, 0))
     }
 
     @Test
