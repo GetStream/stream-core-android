@@ -116,6 +116,58 @@ private constructor(
                 .also { it.requireValid() }
 
         /**
+         * Creates a **quadratic back-off** policy.
+         *
+         * Each retry adds a growing increment to the previous delay:
+         * ```text
+         * nextDelay = prevDelay + retryIndex × backoffStepMillis
+         * ```
+         *
+         * then clamped to `[backoffStepMillis, maxBackoffMillis]`. Driven from an
+         * [initialDelayMillis] of `0`, the delays are the triangular numbers scaled by the step —
+         * `backoffStepMillis × n(n + 1) / 2`.
+         *
+         * Asymptotically this is the gentler curve, but over the range a retry loop actually covers
+         * it is the **steeper** of the two. At a 100 ms step it runs `100, 300, 600, 1000` against
+         * [exponential]'s `100, 200, 400, 800`; doubling only overtakes it at retry 5, and with the
+         * default `maxRetries = 5` the processor never computes that retry. Expect longer waits
+         * than [exponential], not shorter.
+         *
+         * Example with defaults:
+         * ```
+         * attempt 1 → 0 ms
+         * retry  1 → 250 ms
+         * retry  2 → 750 ms
+         * retry  3 → 1 500 ms
+         * retry  4 → 2 500 ms
+         * …
+         * ```
+         *
+         * Unlike [exponential], this reads the previous delay, so the curve depends on the retry
+         * loop feeding each delay back in — which `StreamRetryProcessor` does.
+         *
+         * Parameter semantics match [exponential].
+         */
+        public fun quadratic(
+            @IntRange(from = 1) minRetries: Int = 1,
+            @IntRange(from = 1) maxRetries: Int = 5,
+            @IntRange(from = 0) backoffStepMillis: Long = 250,
+            @IntRange(from = 0) maxBackoffMillis: Long = 15_000,
+            @IntRange(from = 0) initialDelayMillis: Long = 0,
+            giveUp: (Int, Throwable) -> Boolean = { retry, _ -> retry > maxRetries },
+        ): StreamRetryPolicy =
+            custom(
+                minRetries = minRetries,
+                maxRetries = maxRetries,
+                minBackoffMills = backoffStepMillis,
+                maxBackoffMills = maxBackoffMillis,
+                initialDelayMillis = initialDelayMillis,
+                giveUp = giveUp,
+            ) { retry, prev ->
+                prev + retry * backoffStepMillis
+            }
+
+        /**
          * Creates a **linear back-off** policy.
          *
          * Delay increases by a constant [backoffStepMillis] each retry, capped at

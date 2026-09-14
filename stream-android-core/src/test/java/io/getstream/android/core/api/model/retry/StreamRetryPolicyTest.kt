@@ -118,6 +118,126 @@ class StreamRetryPolicyTest {
     }
 
     // ========================================
+    // Quadratic Factory Function
+    // ========================================
+
+    @Test
+    fun `quadratic creates policy with correct defaults`() {
+        val policy = StreamRetryPolicy.quadratic()
+
+        assertEquals(1, policy.minRetries)
+        assertEquals(5, policy.maxRetries)
+        assertEquals(250, policy.minBackoffMills)
+        assertEquals(15_000, policy.maxBackoffMills)
+        assertEquals(0, policy.initialDelayMillis)
+    }
+
+    @Test
+    fun `quadratic creates policy with custom parameters`() {
+        val policy =
+            StreamRetryPolicy.quadratic(
+                minRetries = 2,
+                maxRetries = 10,
+                backoffStepMillis = 500,
+                maxBackoffMillis = 30_000,
+                initialDelayMillis = 100,
+            )
+
+        assertEquals(2, policy.minRetries)
+        assertEquals(10, policy.maxRetries)
+        assertEquals(500, policy.minBackoffMills)
+        assertEquals(30_000, policy.maxBackoffMills)
+        assertEquals(100, policy.initialDelayMillis)
+    }
+
+    @Test
+    fun `quadratic backoff delay follows the triangular numbers`() {
+        val policy = StreamRetryPolicy.quadratic(backoffStepMillis = 100, initialDelayMillis = 0)
+
+        // Fed back through the retry loop, retry n waits 100 * n(n+1)/2
+        val delay1 = policy.nextBackOffDelayFunction(1, 0)
+        assertEquals(100, delay1)
+
+        val delay2 = policy.nextBackOffDelayFunction(2, delay1)
+        assertEquals(300, delay2)
+
+        val delay3 = policy.nextBackOffDelayFunction(3, delay2)
+        assertEquals(600, delay3)
+
+        val delay4 = policy.nextBackOffDelayFunction(4, delay3)
+        assertEquals(1000, delay4)
+    }
+
+    @Test
+    fun `quadratic backoff stays above exponential until they cross at retry 5`() {
+        val step = 100L
+        val linear = StreamRetryPolicy.linear(backoffStepMillis = step)
+        val quadratic = StreamRetryPolicy.quadratic(backoffStepMillis = step)
+        val exponential = StreamRetryPolicy.exponential(backoffStepMillis = step)
+
+        val linearDelays = mutableListOf<Long>()
+        val quadraticDelays = mutableListOf<Long>()
+        val exponentialDelays = mutableListOf<Long>()
+        for (retry in 1..5) {
+            linearDelays += linear.nextBackOffDelayFunction(retry, linearDelays.lastOrNull() ?: 0)
+            quadraticDelays +=
+                quadratic.nextBackOffDelayFunction(retry, quadraticDelays.lastOrNull() ?: 0)
+            exponentialDelays +=
+                exponential.nextBackOffDelayFunction(retry, exponentialDelays.lastOrNull() ?: 0)
+        }
+
+        assertEquals(listOf(100L, 200L, 300L, 400L, 500L), linearDelays)
+        assertEquals(listOf(100L, 300L, 600L, 1000L, 1500L), quadraticDelays)
+        assertEquals(listOf(100L, 200L, 400L, 800L, 1600L), exponentialDelays)
+
+        // Quadratic is the steeper curve over retries 2..4 and only loses to doubling at retry 5.
+        // The default maxRetries = 5 stops the processor before it computes retry 5, so callers
+        // on defaults always see the quadratic delays as the longer ones.
+        for (retry in 2..4) {
+            assertTrue(quadraticDelays[retry - 1] > exponentialDelays[retry - 1])
+        }
+        assertTrue(exponentialDelays[4] > quadraticDelays[4])
+        assertTrue(quadraticDelays.drop(1).zip(linearDelays.drop(1)).all { it.first > it.second })
+    }
+
+    @Test
+    fun `quadratic backoff delay is capped at maxBackoffMillis`() {
+        val policy = StreamRetryPolicy.quadratic(backoffStepMillis = 1000, maxBackoffMillis = 3000)
+
+        // Should exceed max: 0 + 10 * 1000 = 10_000, but capped at 3000
+        val delay = policy.nextBackOffDelayFunction(10, 0)
+        assertEquals(3000, delay)
+    }
+
+    @Test
+    fun `quadratic backoff delay saturates at the cap on high retry counts`() {
+        val policy =
+            StreamRetryPolicy.quadratic(backoffStepMillis = 1000, maxBackoffMillis = 30_000)
+
+        // From a zero previous delay, so this pins growth into the cap at an extreme retry index
+        // rather than restating that the cap is a fixed point.
+        assertEquals(30_000, policy.nextBackOffDelayFunction(1000, 0))
+        assertEquals(30_000, policy.nextBackOffDelayFunction(Int.MAX_VALUE, 0))
+    }
+
+    @Test
+    fun `quadratic backoff delay is clamped to minimum`() {
+        val policy = StreamRetryPolicy.quadratic(backoffStepMillis = 100)
+
+        // Delay should never be less than backoffStepMillis
+        val delay = policy.nextBackOffDelayFunction(1, 0)
+        assertTrue(delay >= 100)
+    }
+
+    @Test
+    fun `quadratic giveUp function respects maxRetries`() {
+        val policy = StreamRetryPolicy.quadratic(maxRetries = 3)
+
+        val error = RuntimeException("test")
+        assertTrue(policy.giveUpFunction(4, error)) // retry 4 > maxRetries 3
+    }
+
+    // ========================================
     // Linear Factory Function
     // ========================================
 
@@ -268,6 +388,31 @@ class StreamRetryPolicyTest {
     @Test(expected = IllegalArgumentException::class)
     fun `exponential throws when initialDelayMillis is negative`() {
         StreamRetryPolicy.exponential(initialDelayMillis = -100)
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun `quadratic throws when minRetries is zero`() {
+        StreamRetryPolicy.quadratic(minRetries = 0)
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun `quadratic throws when maxRetries is less than minRetries`() {
+        StreamRetryPolicy.quadratic(minRetries = 10, maxRetries = 5)
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun `quadratic throws when minBackoffMills is negative`() {
+        StreamRetryPolicy.quadratic(backoffStepMillis = -50)
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun `quadratic throws when maxBackoffMillis is less than minBackoffMills`() {
+        StreamRetryPolicy.quadratic(backoffStepMillis = 2000, maxBackoffMillis = 1000)
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun `quadratic throws when initialDelayMillis is negative`() {
+        StreamRetryPolicy.quadratic(initialDelayMillis = -500)
     }
 
     @Test(expected = IllegalArgumentException::class)
