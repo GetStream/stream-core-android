@@ -517,11 +517,26 @@ launch {
 
 ### Retry Processor
 
-Automatic retry with linear or exponential backoff.
+Automatic retry with a choice of back-off curves.
 
 > **Note:** `StreamRetryPolicy` is annotated `@StreamInternalApi` — using it requires
-> `@OptIn(StreamInternalApi::class)`. Policies are created via the `linear` / `exponential`
-> factory methods (the primary constructor is private).
+> `@OptIn(StreamInternalApi::class)`. Policies are created via the `linear` / `quadratic` /
+> `exponential` / `fixed` / `custom` factory methods (the primary constructor is private).
+
+Delays for the first four retries at `backoffStepMillis = 250` (`fixed` shown at its own
+`delayMillis = 500` default):
+
+| Retry | `linear` | `exponential` | `quadratic` | `fixed` |
+|---|---|---|---|---|
+| 1 | 250 ms | 250 ms | 250 ms | 500 ms |
+| 2 | 500 ms | 500 ms | 750 ms | 500 ms |
+| 3 | 750 ms | 1 000 ms | 1 500 ms | 500 ms |
+| 4 | 1 000 ms | 2 000 ms | 2 500 ms | 500 ms |
+
+The table stops at four deliberately: the processor gives up on the last attempt *before* asking
+the policy for another delay, so with the default `maxRetries = 5` a fifth delay is never
+computed. That matters for `quadratic` in particular — doubling only overtakes it at retry 5, so
+in practice `quadratic` always waits longer than `exponential`, not less.
 
 #### Linear Backoff
 
@@ -560,6 +575,63 @@ val policy = StreamRetryPolicy.exponential(
         error is UnauthorizedException
     }
 )
+```
+
+#### Quadratic Backoff
+
+Adds a growing increment to the previous delay, so the waits follow the triangular numbers scaled
+by the step (`backoffStepMillis × n(n + 1) / 2`).
+
+```kotlin
+@OptIn(StreamInternalApi::class)
+val policy = StreamRetryPolicy.quadratic(
+    minRetries = 3,
+    maxRetries = 10,
+    backoffStepMillis = 250,   // grows: 250ms, 750ms, 1.5s, 2.5s, ...
+    maxBackoffMillis = 60_000, // Cap at 60s
+)
+```
+
+Unlike `exponential`, this curve reads the previous delay, so it only behaves as described when
+delays are fed back in — which `StreamRetryProcessor` does.
+
+#### Fixed Delay
+
+Every retry waits the same amount.
+
+```kotlin
+@OptIn(StreamInternalApi::class)
+val policy = StreamRetryPolicy.fixed(
+    minRetries = 1,
+    maxRetries = 5,
+    delayMillis = 500,         // 500ms before every retry
+    maxBackoffMillis = 15_000,
+)
+```
+
+#### Custom Backoff
+
+Supply the curve yourself. Every parameter is explicit, and the result is still clamped to
+`[minBackoffMills, maxBackoffMills]` and validated against the same invariants as the built-ins.
+
+```kotlin
+import io.getstream.android.core.annotations.StreamInternalApi
+import io.getstream.android.core.api.model.retry.StreamRetryPolicy
+import kotlin.random.Random
+
+@OptIn(StreamInternalApi::class)
+val jitterPolicy = StreamRetryPolicy.custom(
+    minRetries = 2,
+    maxRetries = 6,
+    minBackoffMills = 200,
+    maxBackoffMills = 10_000,
+    initialDelayMillis = 100,
+    giveUp = { _, cause -> cause is UnauthorizedException },
+) { retry, previousDelay ->
+    // 1-based retry index, previous delay in ms — add ±20% jitter to a doubling curve
+    val base = previousDelay * 2
+    (base * Random.nextDouble(0.8, 1.2)).toLong()
+}
 ```
 
 #### Use Cases
