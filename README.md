@@ -113,11 +113,27 @@ Stream Android Core uses annotations to distinguish between stable public APIs a
 
 ## Quick Start
 
+> **Before you copy anything below:** nearly every type in this library is annotated
+> `@StreamInternalApi`, whose opt-in level is `ERROR` — including `StreamClient` itself,
+> `StreamUser`, `StreamSocketConfig`, `StreamLogger`, and the processing utilities. Only a handful
+> of value types (`StreamApiKey`, `StreamUserId`, `StreamToken`) are `@StreamPublishedApi`. Add a
+> file-level opt-in once and every snippet on this page compiles:
+>
+> ```kotlin
+> @file:OptIn(StreamInternalApi::class)
+>
+> import io.getstream.android.core.annotations.StreamInternalApi
+> ```
+>
+> A few snippets below still show `@OptIn(...)` inline where it is worth calling out; the
+> file-level form above covers all of them.
+
 ### Minimal Setup
 
 Here's a minimal example to get started with Stream Android Core:
 
 ```kotlin
+import io.getstream.android.core.api.log.StreamLogger
 import io.getstream.android.core.api.log.StreamLoggerProvider
 import io.getstream.android.core.api.subscribe.StreamSubscriptionManager
 import kotlinx.coroutines.CoroutineScope
@@ -141,6 +157,7 @@ val subscriptionManager = StreamSubscriptionManager<MyListener>(
 ### Basic Client Instantiation
 
 ```kotlin
+import android.os.Build
 import io.getstream.android.core.api.StreamClient
 import io.getstream.android.core.api.authentication.StreamTokenProvider
 import io.getstream.android.core.api.model.StreamUser
@@ -268,8 +285,10 @@ Monitor app lifecycle (foreground/background) and network connectivity changes.
 #### Lifecycle Monitoring
 
 ```kotlin
-import io.getstream.android.core.api.observers.lifecycle.StreamLifecycleMonitor
+import io.getstream.android.core.api.model.connection.lifecycle.StreamLifecycleState
 import io.getstream.android.core.api.observers.lifecycle.StreamLifecycleListener
+import io.getstream.android.core.api.observers.lifecycle.StreamLifecycleMonitor
+import io.getstream.android.core.api.subscribe.StreamSubscriptionManager
 
 // Create the monitor
 val lifecycleMonitor = StreamLifecycleMonitor(
@@ -306,8 +325,10 @@ when (state) {
 #### Network Monitoring
 
 ```kotlin
+import io.getstream.android.core.api.model.connection.network.StreamNetworkInfo
 import io.getstream.android.core.api.observers.network.StreamNetworkMonitor
 import io.getstream.android.core.api.observers.network.StreamNetworkMonitorListener
+import io.getstream.android.core.api.subscribe.StreamSubscriptionManager
 
 val networkMonitor = StreamNetworkMonitor(
     context = context,
@@ -882,6 +903,7 @@ Reliable WebSocket connections with health monitoring.
 #### Creating a WebSocket
 
 ```kotlin
+import io.getstream.android.core.api.socket.StreamWebSocket
 import io.getstream.android.core.api.socket.StreamWebSocketFactory
 import io.getstream.android.core.api.socket.listeners.StreamWebSocketListener
 
@@ -969,19 +991,23 @@ logger.d {
 
 #### Log Levels
 
-`LogLevel` is a sealed class of severity objects (higher `level` = more severe):
+`LogLevel` is a sealed class of severity objects nested inside `StreamLogger` (higher `level` =
+more severe):
 
 ```kotlin
-sealed class LogLevel(val level: Int) {
-    object Verbose : LogLevel(1)
-    object Debug   : LogLevel(2)
-    object Info    : LogLevel(3)
-    object Warning : LogLevel(4)
-    object Error   : LogLevel(5)
+interface StreamLogger {
+    sealed class LogLevel(val level: Int) {
+        object Verbose : LogLevel(1)
+        object Debug   : LogLevel(2)
+        object Info    : LogLevel(3)
+        object Warning : LogLevel(4)
+        object Error   : LogLevel(5)
+    }
 }
 ```
 
-Reference them as `StreamLogger.LogLevel.Verbose`, `StreamLogger.LogLevel.Debug`, etc.
+Because it is nested, always reference it through the outer type — `StreamLogger.LogLevel.Verbose`,
+`StreamLogger.LogLevel.Debug`, and so on.
 
 ---
 
