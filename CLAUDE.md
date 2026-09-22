@@ -64,6 +64,10 @@ Stream Android Core is an **internal foundational library** that powers all of S
 
 # Run lint
 ./gradlew :stream-android-core:lint
+
+# Check the public API against the committed api/*.api dumps, or refresh the dumps
+./gradlew apiCheck
+./gradlew apiDump
 ```
 
 ### Publishing

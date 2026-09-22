@@ -14,10 +14,7 @@
  * limitations under the License.
  */
 
-@file:OptIn(ExperimentalAbiValidation::class)
-
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-import org.jetbrains.kotlin.gradle.dsl.abi.ExperimentalAbiValidation
 
 plugins {
     alias(libs.plugins.stream.android.library)
