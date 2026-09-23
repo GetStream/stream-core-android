@@ -30,6 +30,7 @@ plugins {
     alias(libs.plugins.kotlin.compose) apply false
     alias(libs.plugins.ksp) apply false
     alias(libs.plugins.arturbosch.detekt) apply true
+    alias(libs.plugins.kotlinx.binary.compatibility.validator)
 }
 
 streamProject {
@@ -46,6 +47,11 @@ streamProject {
     publishing {
         description = "Stream Core official Android SDK"
     }
+}
+
+apiValidation {
+    // The sample app is not published and the lint jar has no consumer-facing API.
+    ignoredProjects += listOf("app", "stream-android-core-lint")
 }
 
 detekt {

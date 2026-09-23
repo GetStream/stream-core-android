@@ -29,4 +29,4 @@ jobs:
       BUILD_CACHE_AWS_SECRET_KEY: ${{ secrets.BUILD_CACHE_AWS_SECRET_KEY }}
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
     with:
-      api-check: false
+      api-check: true
