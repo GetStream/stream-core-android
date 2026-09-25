@@ -1,0 +1,1453 @@
+public abstract interface class io/getstream/android/core/api/StreamClient : io/getstream/android/core/api/subscribe/StreamObservable {
+	public abstract fun connect-IoAF18A (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun disconnect-IoAF18A (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun getConnectionState ()Lkotlinx/coroutines/flow/StateFlow;
+}
+
+public final class io/getstream/android/core/api/StreamClientKt {
+	public static final fun StreamClient (Lkotlinx/coroutines/CoroutineScope;Landroid/content/Context;Lio/getstream/android/core/api/model/StreamUser;Lio/getstream/android/core/api/authentication/StreamTokenProvider;Ljava/util/List;Lio/getstream/android/core/api/model/config/StreamSocketConfig;Lio/getstream/android/core/api/model/config/StreamClientSerializationConfig;Lio/getstream/android/core/api/model/config/StreamHttpConfig;Lio/getstream/android/core/api/model/config/StreamComponentProvider;)Lio/getstream/android/core/api/StreamClient;
+	public static synthetic fun StreamClient$default (Lkotlinx/coroutines/CoroutineScope;Landroid/content/Context;Lio/getstream/android/core/api/model/StreamUser;Lio/getstream/android/core/api/authentication/StreamTokenProvider;Ljava/util/List;Lio/getstream/android/core/api/model/config/StreamSocketConfig;Lio/getstream/android/core/api/model/config/StreamClientSerializationConfig;Lio/getstream/android/core/api/model/config/StreamHttpConfig;Lio/getstream/android/core/api/model/config/StreamComponentProvider;ILjava/lang/Object;)Lio/getstream/android/core/api/StreamClient;
+}
+
+public abstract interface class io/getstream/android/core/api/authentication/StreamTokenManager {
+	public abstract fun getToken ()Lkotlinx/coroutines/flow/StateFlow;
+	public abstract fun invalidate-d1pmJ48 ()Ljava/lang/Object;
+	public abstract fun loadIfAbsent-IoAF18A (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun refresh-IoAF18A (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun setProvider-IoAF18A (Lio/getstream/android/core/api/authentication/StreamTokenProvider;)Ljava/lang/Object;
+	public abstract fun setToken-Iid1msg (Ljava/lang/String;)Ljava/lang/Object;
+}
+
+public final class io/getstream/android/core/api/authentication/StreamTokenManagerKt {
+	public static final fun StreamTokenManager--mYC8LM (Ljava/lang/String;Lio/getstream/android/core/api/authentication/StreamTokenProvider;Lio/getstream/android/core/api/processing/StreamSingleFlightProcessor;)Lio/getstream/android/core/api/authentication/StreamTokenManager;
+}
+
+public abstract interface class io/getstream/android/core/api/authentication/StreamTokenProvider {
+	public abstract fun loadToken-2QHSzL4 (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public abstract interface class io/getstream/android/core/api/components/StreamAndroidComponentsProvider {
+	public abstract fun connectivityManager-d1pmJ48 ()Ljava/lang/Object;
+	public abstract fun lifecycle ()Landroidx/lifecycle/Lifecycle;
+	public abstract fun telephonyManager-d1pmJ48 ()Ljava/lang/Object;
+	public abstract fun wifiManager-d1pmJ48 ()Ljava/lang/Object;
+}
+
+public final class io/getstream/android/core/api/components/StreamAndroidComponentsProviderKt {
+	public static final fun StreamAndroidComponentsProvider (Landroid/content/Context;)Lio/getstream/android/core/api/components/StreamAndroidComponentsProvider;
+}
+
+public abstract interface class io/getstream/android/core/api/filter/Filter {
+}
+
+public abstract interface class io/getstream/android/core/api/filter/FilterField {
+	public abstract fun getLocalValue ()Lkotlin/jvm/functions/Function1;
+	public abstract fun getRemote ()Ljava/lang/String;
+}
+
+public final class io/getstream/android/core/api/filter/FilterKt {
+	public static final fun matches (Lio/getstream/android/core/api/filter/Filter;Ljava/lang/Object;)Z
+	public static final fun toRequest (Lio/getstream/android/core/api/filter/Filter;)Ljava/util/Map;
+}
+
+public final class io/getstream/android/core/api/filter/Filters {
+	public static final field INSTANCE Lio/getstream/android/core/api/filter/Filters;
+	public final fun and ([Lio/getstream/android/core/api/filter/Filter;)Lio/getstream/android/core/api/filter/Filter;
+	public final fun or ([Lio/getstream/android/core/api/filter/Filter;)Lio/getstream/android/core/api/filter/Filter;
+}
+
+public final class io/getstream/android/core/api/filter/FiltersKt {
+	public static final fun autocomplete (Lio/getstream/android/core/api/filter/FilterField;Ljava/lang/String;)Lio/getstream/android/core/api/filter/Filter;
+	public static final fun contains (Lio/getstream/android/core/api/filter/FilterField;Ljava/lang/Object;)Lio/getstream/android/core/api/filter/Filter;
+	public static final fun doesNotExist (Lio/getstream/android/core/api/filter/FilterField;)Lio/getstream/android/core/api/filter/Filter;
+	public static final fun equal (Lio/getstream/android/core/api/filter/FilterField;Ljava/lang/Object;)Lio/getstream/android/core/api/filter/Filter;
+	public static final fun exists (Lio/getstream/android/core/api/filter/FilterField;)Lio/getstream/android/core/api/filter/Filter;
+	public static final fun greater (Lio/getstream/android/core/api/filter/FilterField;Ljava/lang/Object;)Lio/getstream/android/core/api/filter/Filter;
+	public static final fun greaterOrEqual (Lio/getstream/android/core/api/filter/FilterField;Ljava/lang/Object;)Lio/getstream/android/core/api/filter/Filter;
+	public static final fun in (Lio/getstream/android/core/api/filter/FilterField;Ljava/util/List;)Lio/getstream/android/core/api/filter/Filter;
+	public static final fun in (Lio/getstream/android/core/api/filter/FilterField;[Ljava/lang/Object;)Lio/getstream/android/core/api/filter/Filter;
+	public static final fun less (Lio/getstream/android/core/api/filter/FilterField;Ljava/lang/Object;)Lio/getstream/android/core/api/filter/Filter;
+	public static final fun lessOrEqual (Lio/getstream/android/core/api/filter/FilterField;Ljava/lang/Object;)Lio/getstream/android/core/api/filter/Filter;
+	public static final fun pathExists (Lio/getstream/android/core/api/filter/FilterField;Ljava/lang/String;)Lio/getstream/android/core/api/filter/Filter;
+	public static final fun query (Lio/getstream/android/core/api/filter/FilterField;Ljava/lang/String;)Lio/getstream/android/core/api/filter/Filter;
+}
+
+public final class io/getstream/android/core/api/http/StreamOkHttpInterceptors {
+	public static final field INSTANCE Lio/getstream/android/core/api/http/StreamOkHttpInterceptors;
+	public final fun apiKey-Bi9udP4 (Ljava/lang/String;)Lokhttp3/Interceptor;
+	public final fun auth (Ljava/lang/String;Lio/getstream/android/core/api/authentication/StreamTokenManager;Lio/getstream/android/core/api/serialization/StreamJsonSerialization;)Lokhttp3/Interceptor;
+	public final fun clientInfo-bEsU0uI (Ljava/lang/String;)Lokhttp3/Interceptor;
+	public final fun connectionId (Lio/getstream/android/core/api/socket/StreamConnectionIdHolder;)Lokhttp3/Interceptor;
+	public final fun error (Lio/getstream/android/core/api/serialization/StreamJsonSerialization;)Lokhttp3/Interceptor;
+}
+
+public abstract interface class io/getstream/android/core/api/log/StreamLogger {
+	public fun d (Lkotlin/jvm/functions/Function0;)V
+	public fun e (Ljava/lang/Throwable;Lkotlin/jvm/functions/Function0;)V
+	public fun e (Lkotlin/jvm/functions/Function0;)V
+	public fun i (Lkotlin/jvm/functions/Function0;)V
+	public abstract fun log (Lio/getstream/android/core/api/log/StreamLogger$LogLevel;Ljava/lang/Throwable;Lkotlin/jvm/functions/Function0;)V
+	public fun v (Lkotlin/jvm/functions/Function0;)V
+	public fun w (Lkotlin/jvm/functions/Function0;)V
+}
+
+public final class io/getstream/android/core/api/log/StreamLogger$DefaultImpls {
+	public static fun d (Lio/getstream/android/core/api/log/StreamLogger;Lkotlin/jvm/functions/Function0;)V
+	public static fun e (Lio/getstream/android/core/api/log/StreamLogger;Ljava/lang/Throwable;Lkotlin/jvm/functions/Function0;)V
+	public static fun e (Lio/getstream/android/core/api/log/StreamLogger;Lkotlin/jvm/functions/Function0;)V
+	public static fun i (Lio/getstream/android/core/api/log/StreamLogger;Lkotlin/jvm/functions/Function0;)V
+	public static fun v (Lio/getstream/android/core/api/log/StreamLogger;Lkotlin/jvm/functions/Function0;)V
+	public static fun w (Lio/getstream/android/core/api/log/StreamLogger;Lkotlin/jvm/functions/Function0;)V
+}
+
+public abstract class io/getstream/android/core/api/log/StreamLogger$LogLevel {
+	public synthetic fun <init> (ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getLevel ()I
+}
+
+public final class io/getstream/android/core/api/log/StreamLogger$LogLevel$Debug : io/getstream/android/core/api/log/StreamLogger$LogLevel {
+	public static final field INSTANCE Lio/getstream/android/core/api/log/StreamLogger$LogLevel$Debug;
+}
+
+public final class io/getstream/android/core/api/log/StreamLogger$LogLevel$Error : io/getstream/android/core/api/log/StreamLogger$LogLevel {
+	public static final field INSTANCE Lio/getstream/android/core/api/log/StreamLogger$LogLevel$Error;
+}
+
+public final class io/getstream/android/core/api/log/StreamLogger$LogLevel$Info : io/getstream/android/core/api/log/StreamLogger$LogLevel {
+	public static final field INSTANCE Lio/getstream/android/core/api/log/StreamLogger$LogLevel$Info;
+}
+
+public final class io/getstream/android/core/api/log/StreamLogger$LogLevel$Verbose : io/getstream/android/core/api/log/StreamLogger$LogLevel {
+	public static final field INSTANCE Lio/getstream/android/core/api/log/StreamLogger$LogLevel$Verbose;
+}
+
+public final class io/getstream/android/core/api/log/StreamLogger$LogLevel$Warning : io/getstream/android/core/api/log/StreamLogger$LogLevel {
+	public static final field INSTANCE Lio/getstream/android/core/api/log/StreamLogger$LogLevel$Warning;
+}
+
+public abstract interface class io/getstream/android/core/api/log/StreamLoggerProvider {
+	public static final field Companion Lio/getstream/android/core/api/log/StreamLoggerProvider$Companion;
+	public static fun defaultAndroidLogger (Lio/getstream/android/core/api/log/StreamLogger$LogLevel;Z)Lio/getstream/android/core/api/log/StreamLoggerProvider;
+	public abstract fun taggedLogger (Ljava/lang/String;)Lio/getstream/android/core/api/log/StreamLogger;
+}
+
+public final class io/getstream/android/core/api/log/StreamLoggerProvider$Companion {
+	public final fun defaultAndroidLogger (Lio/getstream/android/core/api/log/StreamLogger$LogLevel;Z)Lio/getstream/android/core/api/log/StreamLoggerProvider;
+	public static synthetic fun defaultAndroidLogger$default (Lio/getstream/android/core/api/log/StreamLoggerProvider$Companion;Lio/getstream/android/core/api/log/StreamLogger$LogLevel;ZILjava/lang/Object;)Lio/getstream/android/core/api/log/StreamLoggerProvider;
+}
+
+public final class io/getstream/android/core/api/model/StreamTypedKey {
+	public static final field Companion Lio/getstream/android/core/api/model/StreamTypedKey$Companion;
+	public fun <init> (Ljava/lang/Object;)V
+	public final fun component1 ()Ljava/lang/Object;
+	public final fun copy (Ljava/lang/Object;)Lio/getstream/android/core/api/model/StreamTypedKey;
+	public static synthetic fun copy$default (Lio/getstream/android/core/api/model/StreamTypedKey;Ljava/lang/Object;ILjava/lang/Object;)Lio/getstream/android/core/api/model/StreamTypedKey;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getId ()Ljava/lang/Object;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/getstream/android/core/api/model/StreamTypedKey$Companion {
+	public final fun randomExecutionKey ()Lio/getstream/android/core/api/model/StreamTypedKey;
+}
+
+public final class io/getstream/android/core/api/model/StreamUser {
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1-4ogTEdQ ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/util/Map;
+	public final fun copy-4T9wJyw (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;)Lio/getstream/android/core/api/model/StreamUser;
+	public static synthetic fun copy-4T9wJyw$default (Lio/getstream/android/core/api/model/StreamUser;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;ILjava/lang/Object;)Lio/getstream/android/core/api/model/StreamUser;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCustomData ()Ljava/util/Map;
+	public final fun getId-4ogTEdQ ()Ljava/lang/String;
+	public final fun getImageURL ()Ljava/lang/String;
+	public final fun getName ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/getstream/android/core/api/model/config/StreamClientSerializationConfig {
+	public static final field Companion Lio/getstream/android/core/api/model/config/StreamClientSerializationConfig$Companion;
+	public final fun component1 ()Lio/getstream/android/core/api/serialization/StreamJsonSerialization;
+	public final fun component2 ()Lio/getstream/android/core/api/serialization/StreamEventSerialization;
+	public final fun component3 ()Lio/getstream/android/core/api/serialization/StreamEventSerialization;
+	public final fun component4 ()Ljava/util/Set;
+	public final fun component5 ()Ljava/util/Set;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAlsoExternal ()Ljava/util/Set;
+	public final fun getEventParser ()Lio/getstream/android/core/api/serialization/StreamEventSerialization;
+	public final fun getInternalTypes ()Ljava/util/Set;
+	public final fun getJson ()Lio/getstream/android/core/api/serialization/StreamJsonSerialization;
+	public final fun getProductEventSerializers ()Lio/getstream/android/core/api/serialization/StreamEventSerialization;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/getstream/android/core/api/model/config/StreamClientSerializationConfig$Companion {
+	public final fun default (Lio/getstream/android/core/api/serialization/StreamEventSerialization;Ljava/util/Set;)Lio/getstream/android/core/api/model/config/StreamClientSerializationConfig;
+	public static synthetic fun default$default (Lio/getstream/android/core/api/model/config/StreamClientSerializationConfig$Companion;Lio/getstream/android/core/api/serialization/StreamEventSerialization;Ljava/util/Set;ILjava/lang/Object;)Lio/getstream/android/core/api/model/config/StreamClientSerializationConfig;
+	public final fun event (Lio/getstream/android/core/api/serialization/StreamEventSerialization;Lio/getstream/android/core/api/serialization/StreamEventSerialization;Ljava/util/Set;)Lio/getstream/android/core/api/model/config/StreamClientSerializationConfig;
+	public static synthetic fun event$default (Lio/getstream/android/core/api/model/config/StreamClientSerializationConfig$Companion;Lio/getstream/android/core/api/serialization/StreamEventSerialization;Lio/getstream/android/core/api/serialization/StreamEventSerialization;Ljava/util/Set;ILjava/lang/Object;)Lio/getstream/android/core/api/model/config/StreamClientSerializationConfig;
+	public final fun json (Lio/getstream/android/core/api/serialization/StreamJsonSerialization;Lio/getstream/android/core/api/serialization/StreamEventSerialization;Ljava/util/Set;)Lio/getstream/android/core/api/model/config/StreamClientSerializationConfig;
+	public static synthetic fun json$default (Lio/getstream/android/core/api/model/config/StreamClientSerializationConfig$Companion;Lio/getstream/android/core/api/serialization/StreamJsonSerialization;Lio/getstream/android/core/api/serialization/StreamEventSerialization;Ljava/util/Set;ILjava/lang/Object;)Lio/getstream/android/core/api/model/config/StreamClientSerializationConfig;
+}
+
+public final class io/getstream/android/core/api/model/config/StreamComponentProvider {
+	public fun <init> ()V
+	public fun <init> (Lio/getstream/android/core/api/log/StreamLoggerProvider;Lio/getstream/android/core/api/processing/StreamSingleFlightProcessor;Lio/getstream/android/core/api/processing/StreamSerialProcessingQueue;Lio/getstream/android/core/api/authentication/StreamTokenManager;Lio/getstream/android/core/api/socket/StreamConnectionIdHolder;Lio/getstream/android/core/api/socket/StreamWebSocketFactory;Lio/getstream/android/core/api/processing/StreamEventAggregator;Lio/getstream/android/core/api/socket/monitor/StreamHealthMonitor;Lio/getstream/android/core/api/observers/network/StreamNetworkMonitor;Lio/getstream/android/core/api/observers/lifecycle/StreamLifecycleMonitor;Lio/getstream/android/core/api/recovery/StreamConnectionRecoveryEvaluator;Lio/getstream/android/core/api/subscribe/StreamSubscriptionManager;Lio/getstream/android/core/api/components/StreamAndroidComponentsProvider;Lio/getstream/android/core/api/telemetry/StreamTelemetry;)V
+	public synthetic fun <init> (Lio/getstream/android/core/api/log/StreamLoggerProvider;Lio/getstream/android/core/api/processing/StreamSingleFlightProcessor;Lio/getstream/android/core/api/processing/StreamSerialProcessingQueue;Lio/getstream/android/core/api/authentication/StreamTokenManager;Lio/getstream/android/core/api/socket/StreamConnectionIdHolder;Lio/getstream/android/core/api/socket/StreamWebSocketFactory;Lio/getstream/android/core/api/processing/StreamEventAggregator;Lio/getstream/android/core/api/socket/monitor/StreamHealthMonitor;Lio/getstream/android/core/api/observers/network/StreamNetworkMonitor;Lio/getstream/android/core/api/observers/lifecycle/StreamLifecycleMonitor;Lio/getstream/android/core/api/recovery/StreamConnectionRecoveryEvaluator;Lio/getstream/android/core/api/subscribe/StreamSubscriptionManager;Lio/getstream/android/core/api/components/StreamAndroidComponentsProvider;Lio/getstream/android/core/api/telemetry/StreamTelemetry;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lio/getstream/android/core/api/log/StreamLoggerProvider;
+	public final fun component10 ()Lio/getstream/android/core/api/observers/lifecycle/StreamLifecycleMonitor;
+	public final fun component11 ()Lio/getstream/android/core/api/recovery/StreamConnectionRecoveryEvaluator;
+	public final fun component12 ()Lio/getstream/android/core/api/subscribe/StreamSubscriptionManager;
+	public final fun component13 ()Lio/getstream/android/core/api/components/StreamAndroidComponentsProvider;
+	public final fun component14 ()Lio/getstream/android/core/api/telemetry/StreamTelemetry;
+	public final fun component2 ()Lio/getstream/android/core/api/processing/StreamSingleFlightProcessor;
+	public final fun component3 ()Lio/getstream/android/core/api/processing/StreamSerialProcessingQueue;
+	public final fun component4 ()Lio/getstream/android/core/api/authentication/StreamTokenManager;
+	public final fun component5 ()Lio/getstream/android/core/api/socket/StreamConnectionIdHolder;
+	public final fun component6 ()Lio/getstream/android/core/api/socket/StreamWebSocketFactory;
+	public final fun component7 ()Lio/getstream/android/core/api/processing/StreamEventAggregator;
+	public final fun component8 ()Lio/getstream/android/core/api/socket/monitor/StreamHealthMonitor;
+	public final fun component9 ()Lio/getstream/android/core/api/observers/network/StreamNetworkMonitor;
+	public final fun copy (Lio/getstream/android/core/api/log/StreamLoggerProvider;Lio/getstream/android/core/api/processing/StreamSingleFlightProcessor;Lio/getstream/android/core/api/processing/StreamSerialProcessingQueue;Lio/getstream/android/core/api/authentication/StreamTokenManager;Lio/getstream/android/core/api/socket/StreamConnectionIdHolder;Lio/getstream/android/core/api/socket/StreamWebSocketFactory;Lio/getstream/android/core/api/processing/StreamEventAggregator;Lio/getstream/android/core/api/socket/monitor/StreamHealthMonitor;Lio/getstream/android/core/api/observers/network/StreamNetworkMonitor;Lio/getstream/android/core/api/observers/lifecycle/StreamLifecycleMonitor;Lio/getstream/android/core/api/recovery/StreamConnectionRecoveryEvaluator;Lio/getstream/android/core/api/subscribe/StreamSubscriptionManager;Lio/getstream/android/core/api/components/StreamAndroidComponentsProvider;Lio/getstream/android/core/api/telemetry/StreamTelemetry;)Lio/getstream/android/core/api/model/config/StreamComponentProvider;
+	public static synthetic fun copy$default (Lio/getstream/android/core/api/model/config/StreamComponentProvider;Lio/getstream/android/core/api/log/StreamLoggerProvider;Lio/getstream/android/core/api/processing/StreamSingleFlightProcessor;Lio/getstream/android/core/api/processing/StreamSerialProcessingQueue;Lio/getstream/android/core/api/authentication/StreamTokenManager;Lio/getstream/android/core/api/socket/StreamConnectionIdHolder;Lio/getstream/android/core/api/socket/StreamWebSocketFactory;Lio/getstream/android/core/api/processing/StreamEventAggregator;Lio/getstream/android/core/api/socket/monitor/StreamHealthMonitor;Lio/getstream/android/core/api/observers/network/StreamNetworkMonitor;Lio/getstream/android/core/api/observers/lifecycle/StreamLifecycleMonitor;Lio/getstream/android/core/api/recovery/StreamConnectionRecoveryEvaluator;Lio/getstream/android/core/api/subscribe/StreamSubscriptionManager;Lio/getstream/android/core/api/components/StreamAndroidComponentsProvider;Lio/getstream/android/core/api/telemetry/StreamTelemetry;ILjava/lang/Object;)Lio/getstream/android/core/api/model/config/StreamComponentProvider;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAndroidComponentsProvider ()Lio/getstream/android/core/api/components/StreamAndroidComponentsProvider;
+	public final fun getClientSubscriptionManager ()Lio/getstream/android/core/api/subscribe/StreamSubscriptionManager;
+	public final fun getConnectionIdHolder ()Lio/getstream/android/core/api/socket/StreamConnectionIdHolder;
+	public final fun getConnectionRecoveryEvaluator ()Lio/getstream/android/core/api/recovery/StreamConnectionRecoveryEvaluator;
+	public final fun getEventAggregator ()Lio/getstream/android/core/api/processing/StreamEventAggregator;
+	public final fun getHealthMonitor ()Lio/getstream/android/core/api/socket/monitor/StreamHealthMonitor;
+	public final fun getLifecycleMonitor ()Lio/getstream/android/core/api/observers/lifecycle/StreamLifecycleMonitor;
+	public final fun getLogProvider ()Lio/getstream/android/core/api/log/StreamLoggerProvider;
+	public final fun getNetworkMonitor ()Lio/getstream/android/core/api/observers/network/StreamNetworkMonitor;
+	public final fun getSerialQueue ()Lio/getstream/android/core/api/processing/StreamSerialProcessingQueue;
+	public final fun getSingleFlight ()Lio/getstream/android/core/api/processing/StreamSingleFlightProcessor;
+	public final fun getSocketFactory ()Lio/getstream/android/core/api/socket/StreamWebSocketFactory;
+	public final fun getTelemetry ()Lio/getstream/android/core/api/telemetry/StreamTelemetry;
+	public final fun getTokenManager ()Lio/getstream/android/core/api/authentication/StreamTokenManager;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/getstream/android/core/api/model/config/StreamHttpConfig {
+	public fun <init> (Lokhttp3/OkHttpClient$Builder;ZLjava/util/Set;)V
+	public synthetic fun <init> (Lokhttp3/OkHttpClient$Builder;ZLjava/util/Set;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lokhttp3/OkHttpClient$Builder;
+	public final fun component2 ()Z
+	public final fun component3 ()Ljava/util/Set;
+	public final fun copy (Lokhttp3/OkHttpClient$Builder;ZLjava/util/Set;)Lio/getstream/android/core/api/model/config/StreamHttpConfig;
+	public static synthetic fun copy$default (Lio/getstream/android/core/api/model/config/StreamHttpConfig;Lokhttp3/OkHttpClient$Builder;ZLjava/util/Set;ILjava/lang/Object;)Lio/getstream/android/core/api/model/config/StreamHttpConfig;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAutomaticInterceptors ()Z
+	public final fun getConfiguredInterceptors ()Ljava/util/Set;
+	public final fun getHttpBuilder ()Lokhttp3/OkHttpClient$Builder;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/getstream/android/core/api/model/config/StreamSocketConfig {
+	public static final field Companion Lio/getstream/android/core/api/model/config/StreamSocketConfig$Companion;
+	public static final field DEFAULT_AGGREGATION_DISPATCH_QUEUE_CAPACITY I
+	public static final field DEFAULT_AGGREGATION_MAX_WINDOW_MS J
+	public static final field DEFAULT_AGGREGATION_THRESHOLD I
+	public static final field DEFAULT_CONNECTION_TIMEOUT_MS J
+	public static final field DEFAULT_HEALTH_INTERVAL_MS J
+	public static final field DEFAULT_LIVENESS_MS J
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;JJJIJILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1-g85r4uc ()Ljava/lang/String;
+	public final fun component10 ()I
+	public final fun component2-i8_L6so ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4-Z1MRp6Q ()Ljava/lang/String;
+	public final fun component5 ()J
+	public final fun component6 ()J
+	public final fun component7 ()J
+	public final fun component8 ()I
+	public final fun component9 ()J
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAggregationDispatchQueueCapacity ()I
+	public final fun getAggregationMaxWindowMs ()J
+	public final fun getAggregationThreshold ()I
+	public final fun getApiKey-i8_L6so ()Ljava/lang/String;
+	public final fun getAuthType ()Ljava/lang/String;
+	public final fun getClientInfoHeader-Z1MRp6Q ()Ljava/lang/String;
+	public final fun getConnectionTimeoutMs ()J
+	public final fun getHealthCheckIntervalMs ()J
+	public final fun getLivenessThresholdMs ()J
+	public final fun getUrl-g85r4uc ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/getstream/android/core/api/model/config/StreamSocketConfig$Companion {
+	public final fun anonymous-F_RICGQ (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;JJJIJI)Lio/getstream/android/core/api/model/config/StreamSocketConfig;
+	public static synthetic fun anonymous-F_RICGQ$default (Lio/getstream/android/core/api/model/config/StreamSocketConfig$Companion;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;JJJIJIILjava/lang/Object;)Lio/getstream/android/core/api/model/config/StreamSocketConfig;
+	public final fun custom-R7gOx6c (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;JJJIJI)Lio/getstream/android/core/api/model/config/StreamSocketConfig;
+	public static synthetic fun custom-R7gOx6c$default (Lio/getstream/android/core/api/model/config/StreamSocketConfig$Companion;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;JJJIJIILjava/lang/Object;)Lio/getstream/android/core/api/model/config/StreamSocketConfig;
+	public final fun jwt-F_RICGQ (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;JJJIJI)Lio/getstream/android/core/api/model/config/StreamSocketConfig;
+	public static synthetic fun jwt-F_RICGQ$default (Lio/getstream/android/core/api/model/config/StreamSocketConfig$Companion;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;JJJIJIILjava/lang/Object;)Lio/getstream/android/core/api/model/config/StreamSocketConfig;
+}
+
+public final class io/getstream/android/core/api/model/config/StreamTelemetryConfig {
+	public fun <init> (Ljava/io/File;Ljava/lang/String;Ljava/lang/String;IJLio/getstream/android/core/api/telemetry/StreamSignalRedactor;)V
+	public synthetic fun <init> (Ljava/io/File;Ljava/lang/String;Ljava/lang/String;IJLio/getstream/android/core/api/telemetry/StreamSignalRedactor;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/io/File;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()I
+	public final fun component5 ()J
+	public final fun component6 ()Lio/getstream/android/core/api/telemetry/StreamSignalRedactor;
+	public final fun copy (Ljava/io/File;Ljava/lang/String;Ljava/lang/String;IJLio/getstream/android/core/api/telemetry/StreamSignalRedactor;)Lio/getstream/android/core/api/model/config/StreamTelemetryConfig;
+	public static synthetic fun copy$default (Lio/getstream/android/core/api/model/config/StreamTelemetryConfig;Ljava/io/File;Ljava/lang/String;Ljava/lang/String;IJLio/getstream/android/core/api/telemetry/StreamSignalRedactor;ILjava/lang/Object;)Lio/getstream/android/core/api/model/config/StreamTelemetryConfig;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBasePath ()Ljava/lang/String;
+	public final fun getDiskCapacity ()J
+	public final fun getMemoryCapacity ()I
+	public final fun getRedactor ()Lio/getstream/android/core/api/telemetry/StreamSignalRedactor;
+	public final fun getRoot ()Ljava/io/File;
+	public final fun getVersion ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/getstream/android/core/api/model/connection/StreamConnectedUser {
+	public fun <init> (Ljava/util/Date;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/Date;Ljava/util/List;Ljava/util/List;Ljava/util/Map;Ljava/util/Date;Ljava/util/Date;Ljava/lang/String;Ljava/util/Date;Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/util/Date;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/Date;Ljava/util/List;Ljava/util/List;Ljava/util/Map;Ljava/util/Date;Ljava/util/Date;Ljava/lang/String;Ljava/util/Date;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getBlockedUserIds ()Ljava/util/List;
+	public final fun getCreatedAt ()Ljava/util/Date;
+	public final fun getCustom ()Ljava/util/Map;
+	public final fun getDeactivatedAt ()Ljava/util/Date;
+	public final fun getDeletedAt ()Ljava/util/Date;
+	public final fun getId ()Ljava/lang/String;
+	public final fun getImage ()Ljava/lang/String;
+	public final fun getLanguage ()Ljava/lang/String;
+	public final fun getLastActive ()Ljava/util/Date;
+	public final fun getName ()Ljava/lang/String;
+	public final fun getRole ()Ljava/lang/String;
+	public final fun getTeams ()Ljava/util/List;
+	public final fun getUpdatedAt ()Ljava/util/Date;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/getstream/android/core/api/model/connection/StreamConnectedUserJsonAdapter : com/squareup/moshi/JsonAdapter {
+	public fun <init> (Lcom/squareup/moshi/Moshi;)V
+	public fun fromJson (Lcom/squareup/moshi/JsonReader;)Lio/getstream/android/core/api/model/connection/StreamConnectedUser;
+	public synthetic fun fromJson (Lcom/squareup/moshi/JsonReader;)Ljava/lang/Object;
+	public fun toJson (Lcom/squareup/moshi/JsonWriter;Lio/getstream/android/core/api/model/connection/StreamConnectedUser;)V
+	public synthetic fun toJson (Lcom/squareup/moshi/JsonWriter;Ljava/lang/Object;)V
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract class io/getstream/android/core/api/model/connection/StreamConnectionState {
+}
+
+public final class io/getstream/android/core/api/model/connection/StreamConnectionState$Connected : io/getstream/android/core/api/model/connection/StreamConnectionState {
+	public fun <init> (Lio/getstream/android/core/api/model/connection/StreamConnectedUser;Ljava/lang/String;)V
+	public final fun component1 ()Lio/getstream/android/core/api/model/connection/StreamConnectedUser;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun copy (Lio/getstream/android/core/api/model/connection/StreamConnectedUser;Ljava/lang/String;)Lio/getstream/android/core/api/model/connection/StreamConnectionState$Connected;
+	public static synthetic fun copy$default (Lio/getstream/android/core/api/model/connection/StreamConnectionState$Connected;Lio/getstream/android/core/api/model/connection/StreamConnectedUser;Ljava/lang/String;ILjava/lang/Object;)Lio/getstream/android/core/api/model/connection/StreamConnectionState$Connected;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getConnectedUser ()Lio/getstream/android/core/api/model/connection/StreamConnectedUser;
+	public final fun getConnectionId ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract class io/getstream/android/core/api/model/connection/StreamConnectionState$Connecting : io/getstream/android/core/api/model/connection/StreamConnectionState {
+}
+
+public final class io/getstream/android/core/api/model/connection/StreamConnectionState$Connecting$Authenticating : io/getstream/android/core/api/model/connection/StreamConnectionState$Connecting {
+	public fun <init> (Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;)Lio/getstream/android/core/api/model/connection/StreamConnectionState$Connecting$Authenticating;
+	public static synthetic fun copy$default (Lio/getstream/android/core/api/model/connection/StreamConnectionState$Connecting$Authenticating;Ljava/lang/String;ILjava/lang/Object;)Lio/getstream/android/core/api/model/connection/StreamConnectionState$Connecting$Authenticating;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getUserId ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/getstream/android/core/api/model/connection/StreamConnectionState$Connecting$Opening : io/getstream/android/core/api/model/connection/StreamConnectionState$Connecting {
+	public fun <init> (Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;)Lio/getstream/android/core/api/model/connection/StreamConnectionState$Connecting$Opening;
+	public static synthetic fun copy$default (Lio/getstream/android/core/api/model/connection/StreamConnectionState$Connecting$Opening;Ljava/lang/String;ILjava/lang/Object;)Lio/getstream/android/core/api/model/connection/StreamConnectionState$Connecting$Opening;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getUserId ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/getstream/android/core/api/model/connection/StreamConnectionState$Disconnected : io/getstream/android/core/api/model/connection/StreamConnectionState {
+	public fun <init> ()V
+	public fun <init> (Ljava/lang/Throwable;)V
+	public synthetic fun <init> (Ljava/lang/Throwable;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/Throwable;
+	public final fun copy (Ljava/lang/Throwable;)Lio/getstream/android/core/api/model/connection/StreamConnectionState$Disconnected;
+	public static synthetic fun copy$default (Lio/getstream/android/core/api/model/connection/StreamConnectionState$Disconnected;Ljava/lang/Throwable;ILjava/lang/Object;)Lio/getstream/android/core/api/model/connection/StreamConnectionState$Disconnected;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCause ()Ljava/lang/Throwable;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/getstream/android/core/api/model/connection/StreamConnectionState$Idle : io/getstream/android/core/api/model/connection/StreamConnectionState {
+	public static final field INSTANCE Lio/getstream/android/core/api/model/connection/StreamConnectionState$Idle;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract class io/getstream/android/core/api/model/connection/lifecycle/StreamLifecycleState {
+}
+
+public final class io/getstream/android/core/api/model/connection/lifecycle/StreamLifecycleState$Background : io/getstream/android/core/api/model/connection/lifecycle/StreamLifecycleState {
+	public static final field INSTANCE Lio/getstream/android/core/api/model/connection/lifecycle/StreamLifecycleState$Background;
+}
+
+public final class io/getstream/android/core/api/model/connection/lifecycle/StreamLifecycleState$Foreground : io/getstream/android/core/api/model/connection/lifecycle/StreamLifecycleState {
+	public static final field INSTANCE Lio/getstream/android/core/api/model/connection/lifecycle/StreamLifecycleState$Foreground;
+}
+
+public final class io/getstream/android/core/api/model/connection/lifecycle/StreamLifecycleState$Unknown : io/getstream/android/core/api/model/connection/lifecycle/StreamLifecycleState {
+	public static final field INSTANCE Lio/getstream/android/core/api/model/connection/lifecycle/StreamLifecycleState$Unknown;
+}
+
+public final class io/getstream/android/core/api/model/connection/network/StreamNetworkInfo {
+	public fun <init> ()V
+}
+
+public final class io/getstream/android/core/api/model/connection/network/StreamNetworkInfo$Bandwidth {
+	public fun <init> (Ljava/lang/Integer;Ljava/lang/Integer;)V
+	public final fun component1 ()Ljava/lang/Integer;
+	public final fun component2 ()Ljava/lang/Integer;
+	public final fun copy (Ljava/lang/Integer;Ljava/lang/Integer;)Lio/getstream/android/core/api/model/connection/network/StreamNetworkInfo$Bandwidth;
+	public static synthetic fun copy$default (Lio/getstream/android/core/api/model/connection/network/StreamNetworkInfo$Bandwidth;Ljava/lang/Integer;Ljava/lang/Integer;ILjava/lang/Object;)Lio/getstream/android/core/api/model/connection/network/StreamNetworkInfo$Bandwidth;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getDownKbps ()Ljava/lang/Integer;
+	public final fun getUpKbps ()Ljava/lang/Integer;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/getstream/android/core/api/model/connection/network/StreamNetworkInfo$Link {
+	public fun <init> (Ljava/lang/String;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/lang/Integer;Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/util/List;
+	public final fun component3 ()Ljava/util/List;
+	public final fun component4 ()Ljava/util/List;
+	public final fun component5 ()Ljava/lang/Integer;
+	public final fun component6 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/lang/Integer;Ljava/lang/String;)Lio/getstream/android/core/api/model/connection/network/StreamNetworkInfo$Link;
+	public static synthetic fun copy$default (Lio/getstream/android/core/api/model/connection/network/StreamNetworkInfo$Link;Ljava/lang/String;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/lang/Integer;Ljava/lang/String;ILjava/lang/Object;)Lio/getstream/android/core/api/model/connection/network/StreamNetworkInfo$Link;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAddresses ()Ljava/util/List;
+	public final fun getDnsServers ()Ljava/util/List;
+	public final fun getDomains ()Ljava/util/List;
+	public final fun getHttpProxy ()Ljava/lang/String;
+	public final fun getInterfaceName ()Ljava/lang/String;
+	public final fun getMtu ()Ljava/lang/Integer;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/getstream/android/core/api/model/connection/network/StreamNetworkInfo$Metered : java/lang/Enum {
+	public static final field NOT_METERED Lio/getstream/android/core/api/model/connection/network/StreamNetworkInfo$Metered;
+	public static final field TEMPORARILY_NOT_METERED Lio/getstream/android/core/api/model/connection/network/StreamNetworkInfo$Metered;
+	public static final field UNKNOWN_OR_METERED Lio/getstream/android/core/api/model/connection/network/StreamNetworkInfo$Metered;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lio/getstream/android/core/api/model/connection/network/StreamNetworkInfo$Metered;
+	public static fun values ()[Lio/getstream/android/core/api/model/connection/network/StreamNetworkInfo$Metered;
+}
+
+public final class io/getstream/android/core/api/model/connection/network/StreamNetworkInfo$PriorityHint : java/lang/Enum {
+	public static final field BANDWIDTH Lio/getstream/android/core/api/model/connection/network/StreamNetworkInfo$PriorityHint;
+	public static final field LATENCY Lio/getstream/android/core/api/model/connection/network/StreamNetworkInfo$PriorityHint;
+	public static final field NONE Lio/getstream/android/core/api/model/connection/network/StreamNetworkInfo$PriorityHint;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lio/getstream/android/core/api/model/connection/network/StreamNetworkInfo$PriorityHint;
+	public static fun values ()[Lio/getstream/android/core/api/model/connection/network/StreamNetworkInfo$PriorityHint;
+}
+
+public abstract interface class io/getstream/android/core/api/model/connection/network/StreamNetworkInfo$Signal {
+	public fun getLevel0to4 ()Ljava/lang/Integer;
+	public fun getStrengthDbm ()Ljava/lang/Integer;
+}
+
+public final class io/getstream/android/core/api/model/connection/network/StreamNetworkInfo$Signal$Cellular : io/getstream/android/core/api/model/connection/network/StreamNetworkInfo$Signal {
+	public fun <init> (Ljava/lang/String;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Integer;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Integer;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/Integer;
+	public final fun component3 ()Ljava/lang/Integer;
+	public final fun component4 ()Ljava/lang/Integer;
+	public final fun component5 ()Ljava/lang/Integer;
+	public final fun component6 ()Ljava/lang/Integer;
+	public final fun copy (Ljava/lang/String;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Integer;)Lio/getstream/android/core/api/model/connection/network/StreamNetworkInfo$Signal$Cellular;
+	public static synthetic fun copy$default (Lio/getstream/android/core/api/model/connection/network/StreamNetworkInfo$Signal$Cellular;Ljava/lang/String;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Integer;ILjava/lang/Object;)Lio/getstream/android/core/api/model/connection/network/StreamNetworkInfo$Signal$Cellular;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getLevel0to4 ()Ljava/lang/Integer;
+	public final fun getRat ()Ljava/lang/String;
+	public final fun getRsrpDbm ()Ljava/lang/Integer;
+	public final fun getRsrqDb ()Ljava/lang/Integer;
+	public final fun getSinrDb ()Ljava/lang/Integer;
+	public fun getStrengthDbm ()Ljava/lang/Integer;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/getstream/android/core/api/model/connection/network/StreamNetworkInfo$Signal$DefaultImpls {
+	public static fun getLevel0to4 (Lio/getstream/android/core/api/model/connection/network/StreamNetworkInfo$Signal;)Ljava/lang/Integer;
+	public static fun getStrengthDbm (Lio/getstream/android/core/api/model/connection/network/StreamNetworkInfo$Signal;)Ljava/lang/Integer;
+}
+
+public final class io/getstream/android/core/api/model/connection/network/StreamNetworkInfo$Signal$Generic : io/getstream/android/core/api/model/connection/network/StreamNetworkInfo$Signal {
+	public fun <init> (ILjava/lang/Integer;)V
+	public synthetic fun <init> (ILjava/lang/Integer;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()I
+	public final fun component2 ()Ljava/lang/Integer;
+	public final fun copy (ILjava/lang/Integer;)Lio/getstream/android/core/api/model/connection/network/StreamNetworkInfo$Signal$Generic;
+	public static synthetic fun copy$default (Lio/getstream/android/core/api/model/connection/network/StreamNetworkInfo$Signal$Generic;ILjava/lang/Integer;ILjava/lang/Object;)Lio/getstream/android/core/api/model/connection/network/StreamNetworkInfo$Signal$Generic;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getLevel0to4 ()Ljava/lang/Integer;
+	public fun getStrengthDbm ()Ljava/lang/Integer;
+	public final fun getValue ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/getstream/android/core/api/model/connection/network/StreamNetworkInfo$Signal$Wifi : io/getstream/android/core/api/model/connection/network/StreamNetworkInfo$Signal {
+	public fun <init> (Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Integer;Ljava/lang/Integer;)V
+	public synthetic fun <init> (Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Integer;Ljava/lang/Integer;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/Integer;
+	public final fun component2 ()Ljava/lang/Integer;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun component5 ()Ljava/lang/Integer;
+	public final fun component6 ()Ljava/lang/Integer;
+	public final fun copy (Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Integer;Ljava/lang/Integer;)Lio/getstream/android/core/api/model/connection/network/StreamNetworkInfo$Signal$Wifi;
+	public static synthetic fun copy$default (Lio/getstream/android/core/api/model/connection/network/StreamNetworkInfo$Signal$Wifi;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Integer;Ljava/lang/Integer;ILjava/lang/Object;)Lio/getstream/android/core/api/model/connection/network/StreamNetworkInfo$Signal$Wifi;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBssid ()Ljava/lang/String;
+	public final fun getFrequencyMhz ()Ljava/lang/Integer;
+	public fun getLevel0to4 ()Ljava/lang/Integer;
+	public final fun getRssiDbm ()Ljava/lang/Integer;
+	public final fun getSsid ()Ljava/lang/String;
+	public fun getStrengthDbm ()Ljava/lang/Integer;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/getstream/android/core/api/model/connection/network/StreamNetworkInfo$Snapshot {
+	public fun <init> ()V
+	public fun <init> (Lkotlin/time/Instant;Ljava/util/Set;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Lio/getstream/android/core/api/model/connection/network/StreamNetworkInfo$Metered;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Lio/getstream/android/core/api/model/connection/network/StreamNetworkInfo$Bandwidth;Lio/getstream/android/core/api/model/connection/network/StreamNetworkInfo$PriorityHint;Lio/getstream/android/core/api/model/connection/network/StreamNetworkInfo$Signal;Lio/getstream/android/core/api/model/connection/network/StreamNetworkInfo$Link;)V
+	public synthetic fun <init> (Lkotlin/time/Instant;Ljava/util/Set;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Lio/getstream/android/core/api/model/connection/network/StreamNetworkInfo$Metered;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Lio/getstream/android/core/api/model/connection/network/StreamNetworkInfo$Bandwidth;Lio/getstream/android/core/api/model/connection/network/StreamNetworkInfo$PriorityHint;Lio/getstream/android/core/api/model/connection/network/StreamNetworkInfo$Signal;Lio/getstream/android/core/api/model/connection/network/StreamNetworkInfo$Link;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lkotlin/time/Instant;
+	public final fun component10 ()Ljava/lang/Boolean;
+	public final fun component11 ()Ljava/lang/Boolean;
+	public final fun component12 ()Ljava/lang/Boolean;
+	public final fun component13 ()Ljava/lang/Boolean;
+	public final fun component14 ()Lio/getstream/android/core/api/model/connection/network/StreamNetworkInfo$Bandwidth;
+	public final fun component15 ()Lio/getstream/android/core/api/model/connection/network/StreamNetworkInfo$PriorityHint;
+	public final fun component16 ()Lio/getstream/android/core/api/model/connection/network/StreamNetworkInfo$Signal;
+	public final fun component17 ()Lio/getstream/android/core/api/model/connection/network/StreamNetworkInfo$Link;
+	public final fun component2 ()Ljava/util/Set;
+	public final fun component3 ()Ljava/lang/Boolean;
+	public final fun component4 ()Ljava/lang/Boolean;
+	public final fun component5 ()Ljava/lang/Boolean;
+	public final fun component6 ()Ljava/lang/Boolean;
+	public final fun component7 ()Ljava/lang/Boolean;
+	public final fun component8 ()Ljava/lang/Boolean;
+	public final fun component9 ()Lio/getstream/android/core/api/model/connection/network/StreamNetworkInfo$Metered;
+	public final fun copy (Lkotlin/time/Instant;Ljava/util/Set;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Lio/getstream/android/core/api/model/connection/network/StreamNetworkInfo$Metered;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Lio/getstream/android/core/api/model/connection/network/StreamNetworkInfo$Bandwidth;Lio/getstream/android/core/api/model/connection/network/StreamNetworkInfo$PriorityHint;Lio/getstream/android/core/api/model/connection/network/StreamNetworkInfo$Signal;Lio/getstream/android/core/api/model/connection/network/StreamNetworkInfo$Link;)Lio/getstream/android/core/api/model/connection/network/StreamNetworkInfo$Snapshot;
+	public static synthetic fun copy$default (Lio/getstream/android/core/api/model/connection/network/StreamNetworkInfo$Snapshot;Lkotlin/time/Instant;Ljava/util/Set;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Lio/getstream/android/core/api/model/connection/network/StreamNetworkInfo$Metered;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Lio/getstream/android/core/api/model/connection/network/StreamNetworkInfo$Bandwidth;Lio/getstream/android/core/api/model/connection/network/StreamNetworkInfo$PriorityHint;Lio/getstream/android/core/api/model/connection/network/StreamNetworkInfo$Signal;Lio/getstream/android/core/api/model/connection/network/StreamNetworkInfo$Link;ILjava/lang/Object;)Lio/getstream/android/core/api/model/connection/network/StreamNetworkInfo$Snapshot;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBandwidthConstrained ()Ljava/lang/Boolean;
+	public final fun getBandwidthKbps ()Lio/getstream/android/core/api/model/connection/network/StreamNetworkInfo$Bandwidth;
+	public final fun getCaptivePortal ()Ljava/lang/Boolean;
+	public final fun getCongested ()Ljava/lang/Boolean;
+	public final fun getInternet ()Ljava/lang/Boolean;
+	public final fun getLink ()Lio/getstream/android/core/api/model/connection/network/StreamNetworkInfo$Link;
+	public final fun getLocalOnly ()Ljava/lang/Boolean;
+	public final fun getMetered ()Lio/getstream/android/core/api/model/connection/network/StreamNetworkInfo$Metered;
+	public final fun getPriority ()Lio/getstream/android/core/api/model/connection/network/StreamNetworkInfo$PriorityHint;
+	public final fun getRoaming ()Ljava/lang/Boolean;
+	public final fun getSignal ()Lio/getstream/android/core/api/model/connection/network/StreamNetworkInfo$Signal;
+	public final fun getSuspended ()Ljava/lang/Boolean;
+	public final fun getTimestamp ()Lkotlin/time/Instant;
+	public final fun getTransports ()Ljava/util/Set;
+	public final fun getTrusted ()Ljava/lang/Boolean;
+	public final fun getValidated ()Ljava/lang/Boolean;
+	public final fun getVpn ()Ljava/lang/Boolean;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/getstream/android/core/api/model/connection/network/StreamNetworkInfo$Transport : java/lang/Enum {
+	public static final field BLUETOOTH Lio/getstream/android/core/api/model/connection/network/StreamNetworkInfo$Transport;
+	public static final field CELLULAR Lio/getstream/android/core/api/model/connection/network/StreamNetworkInfo$Transport;
+	public static final field ETHERNET Lio/getstream/android/core/api/model/connection/network/StreamNetworkInfo$Transport;
+	public static final field LOW_PAN Lio/getstream/android/core/api/model/connection/network/StreamNetworkInfo$Transport;
+	public static final field SATELLITE Lio/getstream/android/core/api/model/connection/network/StreamNetworkInfo$Transport;
+	public static final field THREAD Lio/getstream/android/core/api/model/connection/network/StreamNetworkInfo$Transport;
+	public static final field UNKNOWN Lio/getstream/android/core/api/model/connection/network/StreamNetworkInfo$Transport;
+	public static final field USB Lio/getstream/android/core/api/model/connection/network/StreamNetworkInfo$Transport;
+	public static final field VPN Lio/getstream/android/core/api/model/connection/network/StreamNetworkInfo$Transport;
+	public static final field WIFI Lio/getstream/android/core/api/model/connection/network/StreamNetworkInfo$Transport;
+	public static final field WIFI_AWARE Lio/getstream/android/core/api/model/connection/network/StreamNetworkInfo$Transport;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lio/getstream/android/core/api/model/connection/network/StreamNetworkInfo$Transport;
+	public static fun values ()[Lio/getstream/android/core/api/model/connection/network/StreamNetworkInfo$Transport;
+}
+
+public abstract class io/getstream/android/core/api/model/connection/network/StreamNetworkState {
+}
+
+public final class io/getstream/android/core/api/model/connection/network/StreamNetworkState$Available : io/getstream/android/core/api/model/connection/network/StreamNetworkState {
+	public fun <init> (Lio/getstream/android/core/api/model/connection/network/StreamNetworkInfo$Snapshot;)V
+	public final fun component1 ()Lio/getstream/android/core/api/model/connection/network/StreamNetworkInfo$Snapshot;
+	public final fun copy (Lio/getstream/android/core/api/model/connection/network/StreamNetworkInfo$Snapshot;)Lio/getstream/android/core/api/model/connection/network/StreamNetworkState$Available;
+	public static synthetic fun copy$default (Lio/getstream/android/core/api/model/connection/network/StreamNetworkState$Available;Lio/getstream/android/core/api/model/connection/network/StreamNetworkInfo$Snapshot;ILjava/lang/Object;)Lio/getstream/android/core/api/model/connection/network/StreamNetworkState$Available;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getSnapshot ()Lio/getstream/android/core/api/model/connection/network/StreamNetworkInfo$Snapshot;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/getstream/android/core/api/model/connection/network/StreamNetworkState$Disconnected : io/getstream/android/core/api/model/connection/network/StreamNetworkState {
+	public static final field INSTANCE Lio/getstream/android/core/api/model/connection/network/StreamNetworkState$Disconnected;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/getstream/android/core/api/model/connection/network/StreamNetworkState$Unavailable : io/getstream/android/core/api/model/connection/network/StreamNetworkState {
+	public static final field INSTANCE Lio/getstream/android/core/api/model/connection/network/StreamNetworkState$Unavailable;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/getstream/android/core/api/model/connection/network/StreamNetworkState$Unknown : io/getstream/android/core/api/model/connection/network/StreamNetworkState {
+	public static final field INSTANCE Lio/getstream/android/core/api/model/connection/network/StreamNetworkState$Unknown;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract class io/getstream/android/core/api/model/connection/recovery/Recovery {
+}
+
+public final class io/getstream/android/core/api/model/connection/recovery/Recovery$Connect : io/getstream/android/core/api/model/connection/recovery/Recovery {
+	public fun <init> (Ljava/lang/Object;)V
+	public final fun component1 ()Ljava/lang/Object;
+	public final fun copy (Ljava/lang/Object;)Lio/getstream/android/core/api/model/connection/recovery/Recovery$Connect;
+	public static synthetic fun copy$default (Lio/getstream/android/core/api/model/connection/recovery/Recovery$Connect;Ljava/lang/Object;ILjava/lang/Object;)Lio/getstream/android/core/api/model/connection/recovery/Recovery$Connect;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getWhy ()Ljava/lang/Object;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/getstream/android/core/api/model/connection/recovery/Recovery$Disconnect : io/getstream/android/core/api/model/connection/recovery/Recovery {
+	public fun <init> (Ljava/lang/Object;)V
+	public final fun component1 ()Ljava/lang/Object;
+	public final fun copy (Ljava/lang/Object;)Lio/getstream/android/core/api/model/connection/recovery/Recovery$Disconnect;
+	public static synthetic fun copy$default (Lio/getstream/android/core/api/model/connection/recovery/Recovery$Disconnect;Ljava/lang/Object;ILjava/lang/Object;)Lio/getstream/android/core/api/model/connection/recovery/Recovery$Disconnect;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getWhy ()Ljava/lang/Object;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/getstream/android/core/api/model/connection/recovery/Recovery$Error : io/getstream/android/core/api/model/connection/recovery/Recovery {
+	public fun <init> (Ljava/lang/Throwable;)V
+	public final fun component1 ()Ljava/lang/Throwable;
+	public final fun copy (Ljava/lang/Throwable;)Lio/getstream/android/core/api/model/connection/recovery/Recovery$Error;
+	public static synthetic fun copy$default (Lio/getstream/android/core/api/model/connection/recovery/Recovery$Error;Ljava/lang/Throwable;ILjava/lang/Object;)Lio/getstream/android/core/api/model/connection/recovery/Recovery$Error;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getError ()Ljava/lang/Throwable;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract interface class io/getstream/android/core/api/model/event/StreamClientWsEvent {
+}
+
+public final class io/getstream/android/core/api/model/exceptions/StreamAggregateException : io/getstream/android/core/api/model/exceptions/StreamClientException {
+	public fun <init> (Ljava/lang/String;Ljava/util/List;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getCauses ()Ljava/util/List;
+}
+
+public class io/getstream/android/core/api/model/exceptions/StreamClientException : java/lang/Exception {
+	public fun <init> ()V
+	public fun <init> (Ljava/lang/String;Ljava/lang/Throwable;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/Throwable;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+}
+
+public final class io/getstream/android/core/api/model/exceptions/StreamEndpointErrorData {
+	public fun <init> (ILjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Integer;Ljava/util/List;Ljava/lang/Boolean;Ljava/util/Map;)V
+	public synthetic fun <init> (ILjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Integer;Ljava/util/List;Ljava/lang/Boolean;Ljava/util/Map;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()I
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun component5 ()Ljava/lang/Integer;
+	public final fun component6 ()Ljava/util/List;
+	public final fun component7 ()Ljava/lang/Boolean;
+	public final fun component8 ()Ljava/util/Map;
+	public final fun copy (ILjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Integer;Ljava/util/List;Ljava/lang/Boolean;Ljava/util/Map;)Lio/getstream/android/core/api/model/exceptions/StreamEndpointErrorData;
+	public static synthetic fun copy$default (Lio/getstream/android/core/api/model/exceptions/StreamEndpointErrorData;ILjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Integer;Ljava/util/List;Ljava/lang/Boolean;Ljava/util/Map;ILjava/lang/Object;)Lio/getstream/android/core/api/model/exceptions/StreamEndpointErrorData;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCode ()I
+	public final fun getDetails ()Ljava/util/List;
+	public final fun getDuration ()Ljava/lang/String;
+	public final fun getExceptionFields ()Ljava/util/Map;
+	public final fun getMessage ()Ljava/lang/String;
+	public final fun getMoreInfo ()Ljava/lang/String;
+	public final fun getStatusCode ()Ljava/lang/Integer;
+	public final fun getUnrecoverable ()Ljava/lang/Boolean;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/getstream/android/core/api/model/exceptions/StreamEndpointErrorDataJsonAdapter : com/squareup/moshi/JsonAdapter {
+	public fun <init> (Lcom/squareup/moshi/Moshi;)V
+	public fun fromJson (Lcom/squareup/moshi/JsonReader;)Lio/getstream/android/core/api/model/exceptions/StreamEndpointErrorData;
+	public synthetic fun fromJson (Lcom/squareup/moshi/JsonReader;)Ljava/lang/Object;
+	public fun toJson (Lcom/squareup/moshi/JsonWriter;Lio/getstream/android/core/api/model/exceptions/StreamEndpointErrorData;)V
+	public synthetic fun toJson (Lcom/squareup/moshi/JsonWriter;Ljava/lang/Object;)V
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/getstream/android/core/api/model/exceptions/StreamEndpointException : java/io/IOException {
+	public fun <init> ()V
+	public fun <init> (Ljava/lang/String;Lio/getstream/android/core/api/model/exceptions/StreamEndpointErrorData;Ljava/lang/Throwable;)V
+	public synthetic fun <init> (Ljava/lang/String;Lio/getstream/android/core/api/model/exceptions/StreamEndpointErrorData;Ljava/lang/Throwable;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getApiError ()Lio/getstream/android/core/api/model/exceptions/StreamEndpointErrorData;
+}
+
+public final class io/getstream/android/core/api/model/location/BoundingBox {
+	public fun <init> (Lio/getstream/android/core/api/model/location/LocationCoordinate;Lio/getstream/android/core/api/model/location/LocationCoordinate;)V
+	public final fun component1 ()Lio/getstream/android/core/api/model/location/LocationCoordinate;
+	public final fun component2 ()Lio/getstream/android/core/api/model/location/LocationCoordinate;
+	public final fun copy (Lio/getstream/android/core/api/model/location/LocationCoordinate;Lio/getstream/android/core/api/model/location/LocationCoordinate;)Lio/getstream/android/core/api/model/location/BoundingBox;
+	public static synthetic fun copy$default (Lio/getstream/android/core/api/model/location/BoundingBox;Lio/getstream/android/core/api/model/location/LocationCoordinate;Lio/getstream/android/core/api/model/location/LocationCoordinate;ILjava/lang/Object;)Lio/getstream/android/core/api/model/location/BoundingBox;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getNortheast ()Lio/getstream/android/core/api/model/location/LocationCoordinate;
+	public final fun getSouthwest ()Lio/getstream/android/core/api/model/location/LocationCoordinate;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/getstream/android/core/api/model/location/CircularRegion {
+	public synthetic fun <init> (Lio/getstream/android/core/api/model/location/LocationCoordinate;DLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lio/getstream/android/core/api/model/location/LocationCoordinate;
+	public final fun component2-Tciux44 ()D
+	public final fun copy-hRfpTI0 (Lio/getstream/android/core/api/model/location/LocationCoordinate;D)Lio/getstream/android/core/api/model/location/CircularRegion;
+	public static synthetic fun copy-hRfpTI0$default (Lio/getstream/android/core/api/model/location/CircularRegion;Lio/getstream/android/core/api/model/location/LocationCoordinate;DILjava/lang/Object;)Lio/getstream/android/core/api/model/location/CircularRegion;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCenter ()Lio/getstream/android/core/api/model/location/LocationCoordinate;
+	public final fun getRadius-Tciux44 ()D
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/getstream/android/core/api/model/location/Distance {
+	public static final synthetic fun box-impl (D)Lio/getstream/android/core/api/model/location/Distance;
+	public fun equals (Ljava/lang/Object;)Z
+	public static fun equals-impl (DLjava/lang/Object;)Z
+	public static final fun equals-impl0 (DD)Z
+	public static final fun getInKilometers-impl (D)D
+	public final fun getInMeters ()D
+	public fun hashCode ()I
+	public static fun hashCode-impl (D)I
+	public fun toString ()Ljava/lang/String;
+	public static fun toString-impl (D)Ljava/lang/String;
+	public final synthetic fun unbox-impl ()D
+}
+
+public final class io/getstream/android/core/api/model/location/DistanceKt {
+	public static final fun getKilometers (D)D
+	public static final fun getKilometers (I)D
+	public static final fun getMeters (D)D
+	public static final fun getMeters (I)D
+}
+
+public final class io/getstream/android/core/api/model/location/LocationCoordinate {
+	public fun <init> (DD)V
+	public final fun component1 ()D
+	public final fun component2 ()D
+	public final fun copy (DD)Lio/getstream/android/core/api/model/location/LocationCoordinate;
+	public static synthetic fun copy$default (Lio/getstream/android/core/api/model/location/LocationCoordinate;DDILjava/lang/Object;)Lio/getstream/android/core/api/model/location/LocationCoordinate;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getLatitude ()D
+	public final fun getLongitude ()D
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract interface class io/getstream/android/core/api/model/processing/StreamThrottlePolicy {
+	public static final field Companion Lio/getstream/android/core/api/model/processing/StreamThrottlePolicy$Companion;
+	public static final field DEFAULT_WINDOW_MS J
+	public abstract fun getWindowMs ()J
+}
+
+public final class io/getstream/android/core/api/model/processing/StreamThrottlePolicy$Companion {
+	public static final field DEFAULT_WINDOW_MS J
+	public final fun leading (J)Lio/getstream/android/core/api/model/processing/StreamThrottlePolicy;
+	public static synthetic fun leading$default (Lio/getstream/android/core/api/model/processing/StreamThrottlePolicy$Companion;JILjava/lang/Object;)Lio/getstream/android/core/api/model/processing/StreamThrottlePolicy;
+	public final fun leadingAndTrailing (J)Lio/getstream/android/core/api/model/processing/StreamThrottlePolicy;
+	public static synthetic fun leadingAndTrailing$default (Lio/getstream/android/core/api/model/processing/StreamThrottlePolicy$Companion;JILjava/lang/Object;)Lio/getstream/android/core/api/model/processing/StreamThrottlePolicy;
+	public final fun trailing (J)Lio/getstream/android/core/api/model/processing/StreamThrottlePolicy;
+	public static synthetic fun trailing$default (Lio/getstream/android/core/api/model/processing/StreamThrottlePolicy$Companion;JILjava/lang/Object;)Lio/getstream/android/core/api/model/processing/StreamThrottlePolicy;
+}
+
+public final class io/getstream/android/core/api/model/processing/StreamThrottlePolicy$Leading : io/getstream/android/core/api/model/processing/StreamThrottlePolicy {
+	public fun <init> ()V
+	public final fun component1 ()J
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getWindowMs ()J
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/getstream/android/core/api/model/processing/StreamThrottlePolicy$LeadingAndTrailing : io/getstream/android/core/api/model/processing/StreamThrottlePolicy {
+	public fun <init> ()V
+	public final fun component1 ()J
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getWindowMs ()J
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/getstream/android/core/api/model/processing/StreamThrottlePolicy$Trailing : io/getstream/android/core/api/model/processing/StreamThrottlePolicy {
+	public fun <init> ()V
+	public final fun component1 ()J
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getWindowMs ()J
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/getstream/android/core/api/model/retry/StreamRetryAttemptInfo {
+	public fun <init> (IJLjava/lang/Throwable;Lio/getstream/android/core/api/model/retry/StreamRetryPolicy;)V
+	public synthetic fun <init> (IJLjava/lang/Throwable;Lio/getstream/android/core/api/model/retry/StreamRetryPolicy;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()I
+	public final fun component2 ()J
+	public final fun component3 ()Ljava/lang/Throwable;
+	public final fun component4 ()Lio/getstream/android/core/api/model/retry/StreamRetryPolicy;
+	public final fun copy (IJLjava/lang/Throwable;Lio/getstream/android/core/api/model/retry/StreamRetryPolicy;)Lio/getstream/android/core/api/model/retry/StreamRetryAttemptInfo;
+	public static synthetic fun copy$default (Lio/getstream/android/core/api/model/retry/StreamRetryAttemptInfo;IJLjava/lang/Throwable;Lio/getstream/android/core/api/model/retry/StreamRetryPolicy;ILjava/lang/Object;)Lio/getstream/android/core/api/model/retry/StreamRetryAttemptInfo;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAttempt ()I
+	public final fun getCurrentDelay ()J
+	public final fun getPolicy ()Lio/getstream/android/core/api/model/retry/StreamRetryPolicy;
+	public final fun getPreviousAttemptError ()Ljava/lang/Throwable;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/getstream/android/core/api/model/retry/StreamRetryPolicy {
+	public static final field Companion Lio/getstream/android/core/api/model/retry/StreamRetryPolicy$Companion;
+	public synthetic fun <init> (IIJJJLkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()I
+	public final fun component2 ()I
+	public final fun component3 ()J
+	public final fun component4 ()J
+	public final fun component5 ()J
+	public final fun component6 ()Lkotlin/jvm/functions/Function2;
+	public final fun component7 ()Lkotlin/jvm/functions/Function2;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getGiveUpFunction ()Lkotlin/jvm/functions/Function2;
+	public final fun getInitialDelayMillis ()J
+	public final fun getMaxBackoffMills ()J
+	public final fun getMaxRetries ()I
+	public final fun getMinBackoffMills ()J
+	public final fun getMinRetries ()I
+	public final fun getNextBackOffDelayFunction ()Lkotlin/jvm/functions/Function2;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/getstream/android/core/api/model/retry/StreamRetryPolicy$Companion {
+	public final fun custom (IIJJJLkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;)Lio/getstream/android/core/api/model/retry/StreamRetryPolicy;
+	public static synthetic fun custom$default (Lio/getstream/android/core/api/model/retry/StreamRetryPolicy$Companion;IIJJJLkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lio/getstream/android/core/api/model/retry/StreamRetryPolicy;
+	public final fun exponential (IIJJJLkotlin/jvm/functions/Function2;)Lio/getstream/android/core/api/model/retry/StreamRetryPolicy;
+	public static synthetic fun exponential$default (Lio/getstream/android/core/api/model/retry/StreamRetryPolicy$Companion;IIJJJLkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lio/getstream/android/core/api/model/retry/StreamRetryPolicy;
+	public final fun fixed (IIJJJLkotlin/jvm/functions/Function2;)Lio/getstream/android/core/api/model/retry/StreamRetryPolicy;
+	public static synthetic fun fixed$default (Lio/getstream/android/core/api/model/retry/StreamRetryPolicy$Companion;IIJJJLkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lio/getstream/android/core/api/model/retry/StreamRetryPolicy;
+	public final fun linear (IIJJJLkotlin/jvm/functions/Function2;)Lio/getstream/android/core/api/model/retry/StreamRetryPolicy;
+	public static synthetic fun linear$default (Lio/getstream/android/core/api/model/retry/StreamRetryPolicy$Companion;IIJJJLkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lio/getstream/android/core/api/model/retry/StreamRetryPolicy;
+	public final fun quadratic (IIJJJLkotlin/jvm/functions/Function2;)Lio/getstream/android/core/api/model/retry/StreamRetryPolicy;
+	public static synthetic fun quadratic$default (Lio/getstream/android/core/api/model/retry/StreamRetryPolicy$Companion;IIJJJLkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lio/getstream/android/core/api/model/retry/StreamRetryPolicy;
+}
+
+public final class io/getstream/android/core/api/model/telemetry/StreamSignal {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;J)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()J
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;J)Lio/getstream/android/core/api/model/telemetry/StreamSignal;
+	public static synthetic fun copy$default (Lio/getstream/android/core/api/model/telemetry/StreamSignal;Ljava/lang/String;Ljava/lang/String;JILjava/lang/Object;)Lio/getstream/android/core/api/model/telemetry/StreamSignal;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getData ()Ljava/lang/String;
+	public final fun getTag ()Ljava/lang/String;
+	public final fun getTimestamp ()J
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/getstream/android/core/api/model/value/StreamApiKey {
+	public static final field Companion Lio/getstream/android/core/api/model/value/StreamApiKey$Companion;
+	public static final synthetic fun box-impl (Ljava/lang/String;)Lio/getstream/android/core/api/model/value/StreamApiKey;
+	public fun equals (Ljava/lang/Object;)Z
+	public static fun equals-impl (Ljava/lang/String;Ljava/lang/Object;)Z
+	public static final fun equals-impl0 (Ljava/lang/String;Ljava/lang/String;)Z
+	public final fun getRawValue ()Ljava/lang/String;
+	public fun hashCode ()I
+	public static fun hashCode-impl (Ljava/lang/String;)I
+	public fun toString ()Ljava/lang/String;
+	public static fun toString-impl (Ljava/lang/String;)Ljava/lang/String;
+	public final synthetic fun unbox-impl ()Ljava/lang/String;
+}
+
+public final class io/getstream/android/core/api/model/value/StreamApiKey$Companion {
+	public final fun fromString-Us_DaIY (Ljava/lang/String;)Ljava/lang/String;
+}
+
+public final class io/getstream/android/core/api/model/value/StreamHttpClientInfoHeader {
+	public static final field Companion Lio/getstream/android/core/api/model/value/StreamHttpClientInfoHeader$Companion;
+	public static final synthetic fun box-impl (Ljava/lang/String;)Lio/getstream/android/core/api/model/value/StreamHttpClientInfoHeader;
+	public static final fun create-kyTtpXs (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/String;Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
+	public fun equals (Ljava/lang/Object;)Z
+	public static fun equals-impl (Ljava/lang/String;Ljava/lang/Object;)Z
+	public static final fun equals-impl0 (Ljava/lang/String;Ljava/lang/String;)Z
+	public final fun getRawValue ()Ljava/lang/String;
+	public fun hashCode ()I
+	public static fun hashCode-impl (Ljava/lang/String;)I
+	public fun toString ()Ljava/lang/String;
+	public static fun toString-impl (Ljava/lang/String;)Ljava/lang/String;
+	public final synthetic fun unbox-impl ()Ljava/lang/String;
+}
+
+public final class io/getstream/android/core/api/model/value/StreamHttpClientInfoHeader$Companion {
+	public final fun create-kyTtpXs (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/String;Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
+	public static synthetic fun create-kyTtpXs$default (Lio/getstream/android/core/api/model/value/StreamHttpClientInfoHeader$Companion;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Ljava/lang/String;
+}
+
+public final class io/getstream/android/core/api/model/value/StreamHttpUrl {
+	public static final field Companion Lio/getstream/android/core/api/model/value/StreamHttpUrl$Companion;
+	public static final synthetic fun box-impl (Ljava/lang/String;)Lio/getstream/android/core/api/model/value/StreamHttpUrl;
+	public static fun constructor-impl (Ljava/lang/String;)Ljava/lang/String;
+	public fun equals (Ljava/lang/Object;)Z
+	public static fun equals-impl (Ljava/lang/String;Ljava/lang/Object;)Z
+	public static final fun equals-impl0 (Ljava/lang/String;Ljava/lang/String;)Z
+	public final fun getRawValue ()Ljava/lang/String;
+	public fun hashCode ()I
+	public static fun hashCode-impl (Ljava/lang/String;)I
+	public fun toString ()Ljava/lang/String;
+	public static fun toString-impl (Ljava/lang/String;)Ljava/lang/String;
+	public final synthetic fun unbox-impl ()Ljava/lang/String;
+}
+
+public final class io/getstream/android/core/api/model/value/StreamHttpUrl$Companion {
+	public final fun fromString-Hstar-8 (Ljava/lang/String;)Ljava/lang/String;
+}
+
+public final class io/getstream/android/core/api/model/value/StreamToken {
+	public static final field Companion Lio/getstream/android/core/api/model/value/StreamToken$Companion;
+	public static final synthetic fun box-impl (Ljava/lang/String;)Lio/getstream/android/core/api/model/value/StreamToken;
+	public fun equals (Ljava/lang/Object;)Z
+	public static fun equals-impl (Ljava/lang/String;Ljava/lang/Object;)Z
+	public static final fun equals-impl0 (Ljava/lang/String;Ljava/lang/String;)Z
+	public final fun getRawValue ()Ljava/lang/String;
+	public fun hashCode ()I
+	public static fun hashCode-impl (Ljava/lang/String;)I
+	public fun toString ()Ljava/lang/String;
+	public static fun toString-impl (Ljava/lang/String;)Ljava/lang/String;
+	public final synthetic fun unbox-impl ()Ljava/lang/String;
+}
+
+public final class io/getstream/android/core/api/model/value/StreamToken$Companion {
+	public final fun fromString-3uCjx0I (Ljava/lang/String;)Ljava/lang/String;
+}
+
+public final class io/getstream/android/core/api/model/value/StreamUserId {
+	public static final field Companion Lio/getstream/android/core/api/model/value/StreamUserId$Companion;
+	public static final synthetic fun box-impl (Ljava/lang/String;)Lio/getstream/android/core/api/model/value/StreamUserId;
+	public fun equals (Ljava/lang/Object;)Z
+	public static fun equals-impl (Ljava/lang/String;Ljava/lang/Object;)Z
+	public static final fun equals-impl0 (Ljava/lang/String;Ljava/lang/String;)Z
+	public final fun getRawValue ()Ljava/lang/String;
+	public fun hashCode ()I
+	public static fun hashCode-impl (Ljava/lang/String;)I
+	public fun toString ()Ljava/lang/String;
+	public static fun toString-impl (Ljava/lang/String;)Ljava/lang/String;
+	public final synthetic fun unbox-impl ()Ljava/lang/String;
+}
+
+public final class io/getstream/android/core/api/model/value/StreamUserId$Companion {
+	public final fun fromString-toCOKqY (Ljava/lang/String;)Ljava/lang/String;
+}
+
+public final class io/getstream/android/core/api/model/value/StreamWsUrl {
+	public static final field Companion Lio/getstream/android/core/api/model/value/StreamWsUrl$Companion;
+	public static final synthetic fun box-impl (Ljava/lang/String;)Lio/getstream/android/core/api/model/value/StreamWsUrl;
+	public fun equals (Ljava/lang/Object;)Z
+	public static fun equals-impl (Ljava/lang/String;Ljava/lang/Object;)Z
+	public static final fun equals-impl0 (Ljava/lang/String;Ljava/lang/String;)Z
+	public final fun getRawValue ()Ljava/lang/String;
+	public fun hashCode ()I
+	public static fun hashCode-impl (Ljava/lang/String;)I
+	public fun toString ()Ljava/lang/String;
+	public static fun toString-impl (Ljava/lang/String;)Ljava/lang/String;
+	public final synthetic fun unbox-impl ()Ljava/lang/String;
+}
+
+public final class io/getstream/android/core/api/model/value/StreamWsUrl$Companion {
+	public final fun fromString-QO1v-tA (Ljava/lang/String;)Ljava/lang/String;
+}
+
+public abstract interface class io/getstream/android/core/api/observers/StreamStartableComponent {
+	public abstract fun start-d1pmJ48 ()Ljava/lang/Object;
+	public abstract fun stop-d1pmJ48 ()Ljava/lang/Object;
+}
+
+public abstract interface class io/getstream/android/core/api/observers/lifecycle/StreamLifecycleListener {
+	public fun onBackground ()V
+	public fun onForeground ()V
+}
+
+public final class io/getstream/android/core/api/observers/lifecycle/StreamLifecycleListener$DefaultImpls {
+	public static fun onBackground (Lio/getstream/android/core/api/observers/lifecycle/StreamLifecycleListener;)V
+	public static fun onForeground (Lio/getstream/android/core/api/observers/lifecycle/StreamLifecycleListener;)V
+}
+
+public abstract interface class io/getstream/android/core/api/observers/lifecycle/StreamLifecycleMonitor : io/getstream/android/core/api/observers/StreamStartableComponent, io/getstream/android/core/api/subscribe/StreamObservable {
+	public abstract fun getCurrentState ()Lio/getstream/android/core/api/model/connection/lifecycle/StreamLifecycleState;
+}
+
+public final class io/getstream/android/core/api/observers/lifecycle/StreamLifecycleMonitorKt {
+	public static final fun StreamLifecycleMonitor (Lio/getstream/android/core/api/log/StreamLogger;Landroidx/lifecycle/Lifecycle;Lio/getstream/android/core/api/subscribe/StreamSubscriptionManager;)Lio/getstream/android/core/api/observers/lifecycle/StreamLifecycleMonitor;
+}
+
+public abstract interface class io/getstream/android/core/api/observers/network/StreamNetworkMonitor : io/getstream/android/core/api/observers/StreamStartableComponent, io/getstream/android/core/api/subscribe/StreamObservable {
+}
+
+public final class io/getstream/android/core/api/observers/network/StreamNetworkMonitorKt {
+	public static final fun StreamNetworkMonitor (Lio/getstream/android/core/api/log/StreamLogger;Lkotlinx/coroutines/CoroutineScope;Lio/getstream/android/core/api/subscribe/StreamSubscriptionManager;Landroid/net/wifi/WifiManager;Landroid/telephony/TelephonyManager;Landroid/net/ConnectivityManager;)Lio/getstream/android/core/api/observers/network/StreamNetworkMonitor;
+}
+
+public abstract interface class io/getstream/android/core/api/observers/network/StreamNetworkMonitorListener {
+	public fun onNetworkConnected (Lio/getstream/android/core/api/model/connection/network/StreamNetworkInfo$Snapshot;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun onNetworkConnected$suspendImpl (Lio/getstream/android/core/api/observers/network/StreamNetworkMonitorListener;Lio/getstream/android/core/api/model/connection/network/StreamNetworkInfo$Snapshot;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun onNetworkLost (ZLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun onNetworkLost$default (Lio/getstream/android/core/api/observers/network/StreamNetworkMonitorListener;ZLkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public static synthetic fun onNetworkLost$suspendImpl (Lio/getstream/android/core/api/observers/network/StreamNetworkMonitorListener;ZLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun onNetworkPropertiesChanged (Lio/getstream/android/core/api/model/connection/network/StreamNetworkInfo$Snapshot;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun onNetworkPropertiesChanged$suspendImpl (Lio/getstream/android/core/api/observers/network/StreamNetworkMonitorListener;Lio/getstream/android/core/api/model/connection/network/StreamNetworkInfo$Snapshot;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class io/getstream/android/core/api/observers/network/StreamNetworkMonitorListener$DefaultImpls {
+	public static fun onNetworkConnected (Lio/getstream/android/core/api/observers/network/StreamNetworkMonitorListener;Lio/getstream/android/core/api/model/connection/network/StreamNetworkInfo$Snapshot;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static fun onNetworkLost (Lio/getstream/android/core/api/observers/network/StreamNetworkMonitorListener;ZLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun onNetworkLost$default (Lio/getstream/android/core/api/observers/network/StreamNetworkMonitorListener;ZLkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public static fun onNetworkPropertiesChanged (Lio/getstream/android/core/api/observers/network/StreamNetworkMonitorListener;Lio/getstream/android/core/api/model/connection/network/StreamNetworkInfo$Snapshot;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class io/getstream/android/core/api/processing/StreamAggregatedEvent {
+	public fun <init> (Ljava/util/List;)V
+	public final fun getEvents ()Ljava/util/List;
+}
+
+public abstract interface class io/getstream/android/core/api/processing/StreamBatcher {
+	public abstract fun enqueue-gIAlu-s (Ljava/lang/Object;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun offer (Ljava/lang/Object;)Z
+	public abstract fun onBatch (Lkotlin/jvm/functions/Function4;)V
+	public abstract fun start-IoAF18A (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun stop-d1pmJ48 ()Ljava/lang/Object;
+}
+
+public final class io/getstream/android/core/api/processing/StreamBatcherKt {
+	public static final fun StreamBatcher (Lkotlinx/coroutines/CoroutineScope;IJJZI)Lio/getstream/android/core/api/processing/StreamBatcher;
+	public static synthetic fun StreamBatcher$default (Lkotlinx/coroutines/CoroutineScope;IJJZIILjava/lang/Object;)Lio/getstream/android/core/api/processing/StreamBatcher;
+}
+
+public abstract interface class io/getstream/android/core/api/processing/StreamDebouncer {
+	public abstract fun cancel ()V
+	public abstract fun onValue (Lkotlin/jvm/functions/Function2;)V
+	public abstract fun submit (Ljava/lang/Object;)V
+}
+
+public final class io/getstream/android/core/api/processing/StreamDebouncerKt {
+	public static final fun StreamDebouncer (Lkotlinx/coroutines/CoroutineScope;Lio/getstream/android/core/api/log/StreamLogger;J)Lio/getstream/android/core/api/processing/StreamDebouncer;
+	public static synthetic fun StreamDebouncer$default (Lkotlinx/coroutines/CoroutineScope;Lio/getstream/android/core/api/log/StreamLogger;JILjava/lang/Object;)Lio/getstream/android/core/api/processing/StreamDebouncer;
+}
+
+public final class io/getstream/android/core/api/processing/StreamEventAggregationPolicy {
+	public static final field Companion Lio/getstream/android/core/api/processing/StreamEventAggregationPolicy$Companion;
+	public static final field DEFAULT_AGGREGATION_THRESHOLD I
+	public static final field DEFAULT_DISPATCH_QUEUE_CAPACITY I
+	public static final field DEFAULT_MAX_WINDOW_MS J
+	public synthetic fun <init> (Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;IJILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lkotlin/jvm/functions/Function1;
+	public final fun component2 ()Lkotlin/jvm/functions/Function1;
+	public final fun component3 ()I
+	public final fun component4 ()J
+	public final fun component5 ()I
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAggregationThreshold ()I
+	public final fun getDeserialize ()Lkotlin/jvm/functions/Function1;
+	public final fun getDispatchQueueCapacity ()I
+	public final fun getExtractType ()Lkotlin/jvm/functions/Function1;
+	public final fun getMaxWindowMs ()J
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/getstream/android/core/api/processing/StreamEventAggregationPolicy$Companion {
+	public final fun from (Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;IJI)Lio/getstream/android/core/api/processing/StreamEventAggregationPolicy;
+	public static synthetic fun from$default (Lio/getstream/android/core/api/processing/StreamEventAggregationPolicy$Companion;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;IJIILjava/lang/Object;)Lio/getstream/android/core/api/processing/StreamEventAggregationPolicy;
+}
+
+public abstract interface class io/getstream/android/core/api/processing/StreamEventAggregator {
+	public abstract fun offer (Ljava/lang/String;)Z
+	public abstract fun onEvent (Lkotlin/jvm/functions/Function2;)V
+	public abstract fun start-d1pmJ48 ()Ljava/lang/Object;
+	public abstract fun stop-d1pmJ48 ()Ljava/lang/Object;
+}
+
+public final class io/getstream/android/core/api/processing/StreamEventAggregatorKt {
+	public static final fun StreamEventAggregator (Lkotlinx/coroutines/CoroutineScope;Lio/getstream/android/core/api/processing/StreamEventAggregationPolicy;ILio/getstream/android/core/api/log/StreamLogger;)Lio/getstream/android/core/api/processing/StreamEventAggregator;
+	public static synthetic fun StreamEventAggregator$default (Lkotlinx/coroutines/CoroutineScope;Lio/getstream/android/core/api/processing/StreamEventAggregationPolicy;ILio/getstream/android/core/api/log/StreamLogger;ILjava/lang/Object;)Lio/getstream/android/core/api/processing/StreamEventAggregator;
+}
+
+public abstract interface class io/getstream/android/core/api/processing/StreamRetryProcessor {
+	public abstract fun retry-0E7RQCE (Lio/getstream/android/core/api/model/retry/StreamRetryPolicy;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class io/getstream/android/core/api/processing/StreamRetryProcessorKt {
+	public static final fun StreamRetryProcessor (Lio/getstream/android/core/api/log/StreamLogger;)Lio/getstream/android/core/api/processing/StreamRetryProcessor;
+}
+
+public abstract interface class io/getstream/android/core/api/processing/StreamSerialProcessingQueue {
+	public abstract fun start-IoAF18A (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun stop-gIAlu-s (Ljava/lang/Long;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun stop-gIAlu-s$default (Lio/getstream/android/core/api/processing/StreamSerialProcessingQueue;Ljava/lang/Long;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public abstract fun submit-gIAlu-s (Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class io/getstream/android/core/api/processing/StreamSerialProcessingQueue$DefaultImpls {
+	public static synthetic fun stop-gIAlu-s$default (Lio/getstream/android/core/api/processing/StreamSerialProcessingQueue;Ljava/lang/Long;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+}
+
+public final class io/getstream/android/core/api/processing/StreamSerialProcessingQueueKt {
+	public static final fun StreamSerialProcessingQueue (Lio/getstream/android/core/api/log/StreamLogger;Lkotlinx/coroutines/CoroutineScope;ZLkotlinx/coroutines/CoroutineStart;I)Lio/getstream/android/core/api/processing/StreamSerialProcessingQueue;
+	public static synthetic fun StreamSerialProcessingQueue$default (Lio/getstream/android/core/api/log/StreamLogger;Lkotlinx/coroutines/CoroutineScope;ZLkotlinx/coroutines/CoroutineStart;IILjava/lang/Object;)Lio/getstream/android/core/api/processing/StreamSerialProcessingQueue;
+}
+
+public abstract interface class io/getstream/android/core/api/processing/StreamSingleFlightProcessor {
+	public abstract fun cancel-IoAF18A (Lio/getstream/android/core/api/model/StreamTypedKey;)Ljava/lang/Object;
+	public abstract fun clear-IoAF18A (Z)Ljava/lang/Object;
+	public static synthetic fun clear-IoAF18A$default (Lio/getstream/android/core/api/processing/StreamSingleFlightProcessor;ZILjava/lang/Object;)Ljava/lang/Object;
+	public abstract fun has (Lio/getstream/android/core/api/model/StreamTypedKey;)Z
+	public abstract fun run-0E7RQCE (Lio/getstream/android/core/api/model/StreamTypedKey;Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun stop-d1pmJ48 ()Ljava/lang/Object;
+}
+
+public final class io/getstream/android/core/api/processing/StreamSingleFlightProcessor$DefaultImpls {
+	public static synthetic fun clear-IoAF18A$default (Lio/getstream/android/core/api/processing/StreamSingleFlightProcessor;ZILjava/lang/Object;)Ljava/lang/Object;
+}
+
+public final class io/getstream/android/core/api/processing/StreamSingleFlightProcessorKt {
+	public static final fun StreamSingleFlightProcessor (Lkotlinx/coroutines/CoroutineScope;)Lio/getstream/android/core/api/processing/StreamSingleFlightProcessor;
+}
+
+public abstract interface class io/getstream/android/core/api/processing/StreamThrottler {
+	public abstract fun onValue (Lkotlin/jvm/functions/Function2;)V
+	public abstract fun reset ()V
+	public abstract fun submit (Ljava/lang/Object;)Z
+}
+
+public final class io/getstream/android/core/api/processing/StreamThrottlerKt {
+	public static final fun StreamThrottler (Lkotlinx/coroutines/CoroutineScope;Lio/getstream/android/core/api/log/StreamLogger;Lio/getstream/android/core/api/model/processing/StreamThrottlePolicy;)Lio/getstream/android/core/api/processing/StreamThrottler;
+	public static synthetic fun StreamThrottler$default (Lkotlinx/coroutines/CoroutineScope;Lio/getstream/android/core/api/log/StreamLogger;Lio/getstream/android/core/api/model/processing/StreamThrottlePolicy;ILjava/lang/Object;)Lio/getstream/android/core/api/processing/StreamThrottler;
+}
+
+public abstract interface class io/getstream/android/core/api/recovery/StreamConnectionRecoveryEvaluator {
+	public abstract fun evaluate-BWLJW6A (Lio/getstream/android/core/api/model/connection/StreamConnectionState;Lio/getstream/android/core/api/model/connection/lifecycle/StreamLifecycleState;Lio/getstream/android/core/api/model/connection/network/StreamNetworkState;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class io/getstream/android/core/api/recovery/StreamConnectionRecoveryEvaluatorKt {
+	public static final fun StreamConnectionRecoveryEvaluator (Lio/getstream/android/core/api/log/StreamLogger;Lio/getstream/android/core/api/processing/StreamSingleFlightProcessor;)Lio/getstream/android/core/api/recovery/StreamConnectionRecoveryEvaluator;
+}
+
+public abstract interface class io/getstream/android/core/api/serialization/StreamEventSerialization {
+	public abstract fun deserialize-IoAF18A (Ljava/lang/String;)Ljava/lang/Object;
+	public abstract fun serialize-IoAF18A (Ljava/lang/Object;)Ljava/lang/Object;
+}
+
+public final class io/getstream/android/core/api/serialization/StreamEventSerializationKt {
+	public static final fun StreamEventSerialization (Lio/getstream/android/core/api/serialization/StreamJsonSerialization;)Lio/getstream/android/core/api/serialization/StreamEventSerialization;
+}
+
+public abstract interface class io/getstream/android/core/api/serialization/StreamJsonSerialization {
+	public abstract fun fromJson-gIAlu-s (Ljava/lang/String;Ljava/lang/Class;)Ljava/lang/Object;
+	public abstract fun toJson-IoAF18A (Ljava/lang/Object;)Ljava/lang/Object;
+}
+
+public abstract interface class io/getstream/android/core/api/socket/StreamConnectionIdHolder {
+	public abstract fun clear-d1pmJ48 ()Ljava/lang/Object;
+	public abstract fun getConnectionId-d1pmJ48 ()Ljava/lang/Object;
+	public abstract fun setConnectionId-IoAF18A (Ljava/lang/String;)Ljava/lang/Object;
+}
+
+public final class io/getstream/android/core/api/socket/StreamConnectionIdHolderKt {
+	public static final fun StreamConnectionIdHolder ()Lio/getstream/android/core/api/socket/StreamConnectionIdHolder;
+}
+
+public abstract interface class io/getstream/android/core/api/socket/StreamWebSocket : io/getstream/android/core/api/subscribe/StreamSubscriptionManager {
+	public abstract fun close-gIAlu-s (ILjava/lang/String;)Ljava/lang/Object;
+	public static synthetic fun close-gIAlu-s$default (Lio/getstream/android/core/api/socket/StreamWebSocket;ILjava/lang/String;ILjava/lang/Object;)Ljava/lang/Object;
+	public abstract fun open-IoAF18A (Lio/getstream/android/core/api/model/config/StreamSocketConfig;)Ljava/lang/Object;
+	public abstract fun send-IoAF18A (Ljava/lang/String;)Ljava/lang/Object;
+	public abstract fun send-IoAF18A ([B)Ljava/lang/Object;
+}
+
+public final class io/getstream/android/core/api/socket/StreamWebSocket$DefaultImpls {
+	public static synthetic fun close-gIAlu-s$default (Lio/getstream/android/core/api/socket/StreamWebSocket;ILjava/lang/String;ILjava/lang/Object;)Ljava/lang/Object;
+}
+
+public abstract interface class io/getstream/android/core/api/socket/StreamWebSocketFactory {
+	public abstract fun create-gIAlu-s (Lio/getstream/android/core/api/model/config/StreamSocketConfig;Lokhttp3/WebSocketListener;)Ljava/lang/Object;
+}
+
+public final class io/getstream/android/core/api/socket/StreamWebSocketFactoryKt {
+	public static final fun StreamWebSocketFactory (Lokhttp3/OkHttpClient;Lio/getstream/android/core/api/log/StreamLogger;)Lio/getstream/android/core/api/socket/StreamWebSocketFactory;
+	public static synthetic fun StreamWebSocketFactory$default (Lokhttp3/OkHttpClient;Lio/getstream/android/core/api/log/StreamLogger;ILjava/lang/Object;)Lio/getstream/android/core/api/socket/StreamWebSocketFactory;
+}
+
+public final class io/getstream/android/core/api/socket/StreamWebSocketKt {
+	public static final fun StreamWebSocket (Lio/getstream/android/core/api/log/StreamLogger;Lio/getstream/android/core/api/socket/StreamWebSocketFactory;Lio/getstream/android/core/api/subscribe/StreamSubscriptionManager;)Lio/getstream/android/core/api/socket/StreamWebSocket;
+}
+
+public abstract interface class io/getstream/android/core/api/socket/listeners/StreamClientListener {
+	public fun onError (Ljava/lang/Throwable;)V
+	public fun onEvent (Ljava/lang/Object;)V
+	public fun onRecovery (Lio/getstream/android/core/api/model/connection/recovery/Recovery;)V
+	public fun onState (Lio/getstream/android/core/api/model/connection/StreamConnectionState;)V
+}
+
+public final class io/getstream/android/core/api/socket/listeners/StreamClientListener$DefaultImpls {
+	public static fun onError (Lio/getstream/android/core/api/socket/listeners/StreamClientListener;Ljava/lang/Throwable;)V
+	public static fun onEvent (Lio/getstream/android/core/api/socket/listeners/StreamClientListener;Ljava/lang/Object;)V
+	public static fun onRecovery (Lio/getstream/android/core/api/socket/listeners/StreamClientListener;Lio/getstream/android/core/api/model/connection/recovery/Recovery;)V
+	public static fun onState (Lio/getstream/android/core/api/socket/listeners/StreamClientListener;Lio/getstream/android/core/api/model/connection/StreamConnectionState;)V
+}
+
+public abstract interface class io/getstream/android/core/api/socket/listeners/StreamWebSocketListener {
+	public fun onClosed (ILjava/lang/String;)V
+	public fun onClosing (ILjava/lang/String;)V
+	public fun onFailure (Ljava/lang/Throwable;Lokhttp3/Response;)V
+	public fun onMessage (Ljava/lang/String;)V
+	public fun onMessage (Lokio/ByteString;)V
+	public fun onOpen (Lokhttp3/Response;)V
+}
+
+public final class io/getstream/android/core/api/socket/listeners/StreamWebSocketListener$DefaultImpls {
+	public static fun onClosed (Lio/getstream/android/core/api/socket/listeners/StreamWebSocketListener;ILjava/lang/String;)V
+	public static fun onClosing (Lio/getstream/android/core/api/socket/listeners/StreamWebSocketListener;ILjava/lang/String;)V
+	public static fun onFailure (Lio/getstream/android/core/api/socket/listeners/StreamWebSocketListener;Ljava/lang/Throwable;Lokhttp3/Response;)V
+	public static fun onMessage (Lio/getstream/android/core/api/socket/listeners/StreamWebSocketListener;Ljava/lang/String;)V
+	public static fun onMessage (Lio/getstream/android/core/api/socket/listeners/StreamWebSocketListener;Lokio/ByteString;)V
+	public static fun onOpen (Lio/getstream/android/core/api/socket/listeners/StreamWebSocketListener;Lokhttp3/Response;)V
+}
+
+public abstract interface class io/getstream/android/core/api/socket/monitor/StreamHealthMonitor : io/getstream/android/core/api/observers/StreamStartableComponent {
+	public abstract fun acknowledgeHeartbeat ()V
+	public abstract fun onHeartbeat (Lkotlin/jvm/functions/Function1;)V
+	public abstract fun onUnhealthy (Lkotlin/jvm/functions/Function1;)V
+}
+
+public final class io/getstream/android/core/api/socket/monitor/StreamHealthMonitorKt {
+	public static final fun StreamHealthMonitor (Lio/getstream/android/core/api/log/StreamLogger;Lkotlinx/coroutines/CoroutineScope;JJ)Lio/getstream/android/core/api/socket/monitor/StreamHealthMonitor;
+	public static synthetic fun StreamHealthMonitor$default (Lio/getstream/android/core/api/log/StreamLogger;Lkotlinx/coroutines/CoroutineScope;JJILjava/lang/Object;)Lio/getstream/android/core/api/socket/monitor/StreamHealthMonitor;
+}
+
+public final class io/getstream/android/core/api/sort/AnySortComparator {
+	public fun <init> (Lio/getstream/android/core/api/sort/SortComparator;)V
+	public fun <init> (Lkotlin/jvm/functions/Function3;)V
+	public final fun compare (Ljava/lang/Object;Ljava/lang/Object;Lio/getstream/android/core/api/sort/SortDirection;)I
+}
+
+public final class io/getstream/android/core/api/sort/CompositeComparator : java/util/Comparator {
+	public fun <init> (Ljava/util/List;)V
+	public fun compare (Ljava/lang/Object;Ljava/lang/Object;)I
+}
+
+public class io/getstream/android/core/api/sort/Sort : java/util/Comparator {
+	public fun <init> (Lio/getstream/android/core/api/sort/SortField;Lio/getstream/android/core/api/sort/SortDirection;)V
+	public fun compare (Ljava/lang/Object;Ljava/lang/Object;)I
+	public final fun getDirection ()Lio/getstream/android/core/api/sort/SortDirection;
+	public final fun getField ()Lio/getstream/android/core/api/sort/SortField;
+	public final fun toDto ()Ljava/util/Map;
+}
+
+public final class io/getstream/android/core/api/sort/SortComparator {
+	public fun <init> (Lkotlin/jvm/functions/Function1;)V
+	public final fun compare (Ljava/lang/Object;Ljava/lang/Object;Lio/getstream/android/core/api/sort/SortDirection;)I
+	public final fun getValue ()Lkotlin/jvm/functions/Function1;
+	public final fun toAny ()Lio/getstream/android/core/api/sort/AnySortComparator;
+}
+
+public final class io/getstream/android/core/api/sort/SortComparatorKt {
+	public static final fun sortedWith (Ljava/util/List;Ljava/util/List;)Ljava/util/List;
+}
+
+public final class io/getstream/android/core/api/sort/SortDirection : java/lang/Enum {
+	public static final field FORWARD Lio/getstream/android/core/api/sort/SortDirection;
+	public static final field REVERSE Lio/getstream/android/core/api/sort/SortDirection;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public final fun getValue ()I
+	public static fun valueOf (Ljava/lang/String;)Lio/getstream/android/core/api/sort/SortDirection;
+	public static fun values ()[Lio/getstream/android/core/api/sort/SortDirection;
+}
+
+public abstract interface class io/getstream/android/core/api/sort/SortField {
+	public static final field Companion Lio/getstream/android/core/api/sort/SortField$Companion;
+	public abstract fun getComparator ()Lio/getstream/android/core/api/sort/AnySortComparator;
+	public abstract fun getRemote ()Ljava/lang/String;
+}
+
+public final class io/getstream/android/core/api/sort/SortField$Companion {
+	public final fun create (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)Lio/getstream/android/core/api/sort/SortField;
+}
+
+public abstract interface class io/getstream/android/core/api/subscribe/StreamObservable {
+	public abstract fun subscribe-gIAlu-s (Ljava/lang/Object;Lio/getstream/android/core/api/subscribe/StreamSubscriptionManager$Options;)Ljava/lang/Object;
+	public static synthetic fun subscribe-gIAlu-s$default (Lio/getstream/android/core/api/subscribe/StreamObservable;Ljava/lang/Object;Lio/getstream/android/core/api/subscribe/StreamSubscriptionManager$Options;ILjava/lang/Object;)Ljava/lang/Object;
+}
+
+public final class io/getstream/android/core/api/subscribe/StreamObservable$DefaultImpls {
+	public static synthetic fun subscribe-gIAlu-s$default (Lio/getstream/android/core/api/subscribe/StreamObservable;Ljava/lang/Object;Lio/getstream/android/core/api/subscribe/StreamSubscriptionManager$Options;ILjava/lang/Object;)Ljava/lang/Object;
+}
+
+public abstract interface class io/getstream/android/core/api/subscribe/StreamSubscription {
+	public abstract fun cancel ()V
+}
+
+public abstract interface class io/getstream/android/core/api/subscribe/StreamSubscriptionManager : io/getstream/android/core/api/subscribe/StreamObservable {
+	public abstract fun clear-d1pmJ48 ()Ljava/lang/Object;
+	public abstract fun forEach-IoAF18A (Lkotlin/jvm/functions/Function1;)Ljava/lang/Object;
+}
+
+public final class io/getstream/android/core/api/subscribe/StreamSubscriptionManager$Options {
+	public fun <init> ()V
+	public fun <init> (Lio/getstream/android/core/api/subscribe/StreamSubscriptionManager$Options$Retention;)V
+	public synthetic fun <init> (Lio/getstream/android/core/api/subscribe/StreamSubscriptionManager$Options$Retention;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lio/getstream/android/core/api/subscribe/StreamSubscriptionManager$Options$Retention;
+	public final fun copy (Lio/getstream/android/core/api/subscribe/StreamSubscriptionManager$Options$Retention;)Lio/getstream/android/core/api/subscribe/StreamSubscriptionManager$Options;
+	public static synthetic fun copy$default (Lio/getstream/android/core/api/subscribe/StreamSubscriptionManager$Options;Lio/getstream/android/core/api/subscribe/StreamSubscriptionManager$Options$Retention;ILjava/lang/Object;)Lio/getstream/android/core/api/subscribe/StreamSubscriptionManager$Options;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getRetention ()Lio/getstream/android/core/api/subscribe/StreamSubscriptionManager$Options$Retention;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/getstream/android/core/api/subscribe/StreamSubscriptionManager$Options$Retention : java/lang/Enum {
+	public static final field AUTO_REMOVE Lio/getstream/android/core/api/subscribe/StreamSubscriptionManager$Options$Retention;
+	public static final field KEEP_UNTIL_CANCELLED Lio/getstream/android/core/api/subscribe/StreamSubscriptionManager$Options$Retention;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lio/getstream/android/core/api/subscribe/StreamSubscriptionManager$Options$Retention;
+	public static fun values ()[Lio/getstream/android/core/api/subscribe/StreamSubscriptionManager$Options$Retention;
+}
+
+public final class io/getstream/android/core/api/subscribe/StreamSubscriptionManagerKt {
+	public static final fun StreamSubscriptionManager (Lio/getstream/android/core/api/log/StreamLogger;II)Lio/getstream/android/core/api/subscribe/StreamSubscriptionManager;
+	public static synthetic fun StreamSubscriptionManager$default (Lio/getstream/android/core/api/log/StreamLogger;IIILjava/lang/Object;)Lio/getstream/android/core/api/subscribe/StreamSubscriptionManager;
+}
+
+public abstract interface class io/getstream/android/core/api/telemetry/StreamSignalRedactor {
+	public abstract fun redact (Lio/getstream/android/core/api/model/telemetry/StreamSignal;)Lio/getstream/android/core/api/model/telemetry/StreamSignal;
+}
+
+public abstract interface class io/getstream/android/core/api/telemetry/StreamTelemetry {
+	public abstract fun cleanStaleVersions-IoAF18A (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun scope (Ljava/lang/String;)Lio/getstream/android/core/api/telemetry/StreamTelemetryScope;
+}
+
+public final class io/getstream/android/core/api/telemetry/StreamTelemetryKt {
+	public static final fun StreamTelemetry (Landroid/content/Context;Lio/getstream/android/core/api/model/config/StreamTelemetryConfig;Lkotlinx/coroutines/CoroutineScope;)Lio/getstream/android/core/api/telemetry/StreamTelemetry;
+}
+
+public final class io/getstream/android/core/api/telemetry/StreamTelemetryNoOp : io/getstream/android/core/api/telemetry/StreamTelemetry {
+	public static final field INSTANCE Lio/getstream/android/core/api/telemetry/StreamTelemetryNoOp;
+	public fun cleanStaleVersions-IoAF18A (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun scope (Ljava/lang/String;)Lio/getstream/android/core/api/telemetry/StreamTelemetryScope;
+}
+
+public abstract interface class io/getstream/android/core/api/telemetry/StreamTelemetryScope {
+	public abstract fun drain-IoAF18A (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun emit-gIAlu-s (Ljava/lang/String;Ljava/lang/String;)Ljava/lang/Object;
+	public static synthetic fun emit-gIAlu-s$default (Lio/getstream/android/core/api/telemetry/StreamTelemetryScope;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Ljava/lang/Object;
+	public abstract fun getName ()Ljava/lang/String;
+}
+
+public final class io/getstream/android/core/api/telemetry/StreamTelemetryScope$DefaultImpls {
+	public static synthetic fun emit-gIAlu-s$default (Lio/getstream/android/core/api/telemetry/StreamTelemetryScope;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Ljava/lang/Object;
+}
+
+public final class io/getstream/android/core/api/utils/AlgebraKt {
+	public static final fun plus (Ljava/lang/Throwable;Ljava/lang/Throwable;)Lio/getstream/android/core/api/model/exceptions/StreamAggregateException;
+	public static final fun times (Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+}
+
+public final class io/getstream/android/core/api/utils/CatchingKt {
+	public static final fun runCatchingCancellable (Lkotlin/jvm/functions/Function0;)Ljava/lang/Object;
+}
+
+public final class io/getstream/android/core/api/utils/FlowsKt {
+	public static final fun update (Lkotlinx/coroutines/flow/MutableStateFlow;Ljava/lang/Object;)V
+}
+
+public final class io/getstream/android/core/api/utils/MapKt {
+	public static final fun streamComputeIfAbsent (Ljava/util/concurrent/ConcurrentMap;Ljava/lang/Object;Lkotlin/jvm/functions/Function0;)Ljava/lang/Object;
+}
+
+public final class io/getstream/android/core/api/utils/ResponseKt {
+	public static final fun toErrorData (Lokhttp3/Response;Lio/getstream/android/core/api/serialization/StreamJsonSerialization;)Ljava/lang/Object;
+}
+
+public final class io/getstream/android/core/api/utils/ResultKt {
+	public static final fun flatMap (Ljava/lang/Object;Lkotlin/jvm/functions/Function1;)Ljava/lang/Object;
+	public static final fun onTokenError (Ljava/lang/Object;Lkotlin/jvm/functions/Function3;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class io/getstream/android/core/api/utils/ThreadingKt {
+	public static final fun runOn (Landroid/os/Looper;Lkotlin/jvm/functions/Function0;)Ljava/lang/Object;
+	public static final fun runOnMainLooper (Lkotlin/jvm/functions/Function0;)Ljava/lang/Object;
+}
+
+public abstract interface class io/getstream/android/core/api/watcher/StreamRewatchListener {
+	public abstract fun onRewatch (Ljava/util/Set;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public abstract interface class io/getstream/android/core/api/watcher/StreamWatcher : io/getstream/android/core/api/observers/StreamStartableComponent, io/getstream/android/core/api/subscribe/StreamObservable {
+	public abstract fun clear-d1pmJ48 ()Ljava/lang/Object;
+	public abstract fun stopWatching-IoAF18A (Ljava/lang/Object;)Ljava/lang/Object;
+	public abstract fun watch-IoAF18A (Ljava/lang/Object;)Ljava/lang/Object;
+}
+
+public final class io/getstream/android/core/api/watcher/StreamWatcherKt {
+	public static final fun StreamWatcher (Lkotlinx/coroutines/CoroutineScope;Lio/getstream/android/core/api/log/StreamLogger;Lkotlinx/coroutines/flow/StateFlow;)Lio/getstream/android/core/api/watcher/StreamWatcher;
+}
+

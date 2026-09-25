@@ -1,0 +1,13 @@
+public abstract interface annotation class io/getstream/android/core/annotations/StreamDelicateApi : java/lang/annotation/Annotation {
+	public abstract fun message ()Ljava/lang/String;
+}
+
+public abstract interface annotation class io/getstream/android/core/annotations/StreamDsl : java/lang/annotation/Annotation {
+}
+
+public abstract interface annotation class io/getstream/android/core/annotations/StreamInternalApi : java/lang/annotation/Annotation {
+}
+
+public abstract interface annotation class io/getstream/android/core/annotations/StreamPublishedApi : java/lang/annotation/Annotation {
+}
+

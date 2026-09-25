@@ -29,6 +29,7 @@ This project houses **Stream Android Core**, the shared runtime used by Stream C
 - Format & headers: `./gradlew spotlessApply`
 - Static analysis: `./gradlew detektAll` (or module-specific `:module:detekt`)
 - JVM/unit tests (core module): `./gradlew :stream-android-core:test`
+- Public API surface: `./gradlew apiCheck` fails when the `api/*.api` dumps are stale; refresh them with `./gradlew apiDump` in a separate invocation and commit the result
 - Full verification: `./gradlew check`
 - Sample app install: `./gradlew :app:installDebug` (requires device/emulator)
 - Coverage: `./gradlew koverHtmlReport`
