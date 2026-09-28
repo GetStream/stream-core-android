@@ -41,7 +41,7 @@ streamProject {
     }
 
     coverage {
-        includedModules = setOf("stream-android-core")
+        includedModules = setOf("stream-android-core", "stream-android-core-ui")
     }
 
     publishing {

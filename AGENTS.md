@@ -16,6 +16,7 @@ This project houses **Stream Android Core**, the shared runtime used by Stream C
 
 ## Project structure
 - `stream-android-core/` – main library (models, socket/session, token handling, processors, batching, retry, queueing)
+- `stream-android-core-ui/` – shared design tokens (`StreamDesign`, `StreamTokens`) as immutable Compose classes, consumed by the Chat and Video Compose themes; no dependency on `stream-android-core`
 - `stream-android-core-annotations/` – annotations + KSP helpers consumed by core
 - `stream-android-core-lint/` – lint checks shipped with the library
 - `app/` – demo/debug client used for manual verification

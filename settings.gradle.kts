@@ -44,3 +44,4 @@ rootProject.name = "stream-android-core"
 include(":app")
 include(":stream-android-core-lint")
 include(":stream-android-core")
+include(":stream-android-core-ui")

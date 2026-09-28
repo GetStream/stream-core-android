@@ -53,6 +53,13 @@ Rather than duplicating infrastructure code across multiple SDKs, Stream Android
 └─────────────────────────────────────────────────────────┘
 ```
 
+### Modules
+
+| Artifact | Contents |
+| --- | --- |
+| `io.getstream:stream-android-core` | The runtime described in this README: connectivity, tokens, state, reliability. |
+| `io.getstream:stream-android-core-ui` | The shared design tokens (`StreamDesign`, `StreamTokens`) as immutable Compose classes, consumed by the Chat and Video Compose themes. It does not depend on `stream-android-core`. |
+
 ## Overview
 
 **Stream Android Core** provides shared primitives and infrastructure for Stream's Android SDKs:
