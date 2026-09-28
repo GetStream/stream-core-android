@@ -27,7 +27,7 @@ ksp = "2.2.0-2.0.2"
 robolectric = "4.15.1"
 detekt = "1.23.8"
 binaryCompatibilityValidator = "0.16.3"
-streamConventions = "0.14.0"
+streamConventions = "0.14.1"
 annotationJvm = "1.9.1"
 
 [libraries]
