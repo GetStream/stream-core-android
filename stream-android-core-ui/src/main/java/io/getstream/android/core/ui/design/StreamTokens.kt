@@ -16,12 +16,12 @@
 
 package io.getstream.android.core.ui.design
 
-import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import io.getstream.android.core.annotations.StreamPublishedApi
 
 /**
  * Layout, radius, typography and component primitives from the design system foundations. Semantic
@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.sp
  */
 // Each token name states its role and its step in the scale, so the names are the documentation.
 @Suppress("MagicNumber", "UndocumentedPublicProperty")
+@StreamPublishedApi
 public object StreamTokens {
 
     // Spacing
@@ -44,17 +45,17 @@ public object StreamTokens {
     public val spacing3xl: Dp = 40.dp
 
     // Radius
-    public val radiusNone: CornerSize = CornerSize(0.dp)
-    public val radius2xs: CornerSize = CornerSize(2.dp)
-    public val radiusXs: CornerSize = CornerSize(4.dp)
-    public val radiusSm: CornerSize = CornerSize(6.dp)
-    public val radiusMd: CornerSize = CornerSize(8.dp)
-    public val radiusLg: CornerSize = CornerSize(12.dp)
-    public val radiusXl: CornerSize = CornerSize(16.dp)
-    public val radius2xl: CornerSize = CornerSize(20.dp)
-    public val radius3xl: CornerSize = CornerSize(24.dp)
-    public val radius4xl: CornerSize = CornerSize(32.dp)
-    public val radiusMax: CornerSize = CornerSize(percent = 50)
+    public val radiusNone: Dp = 0.dp
+    public val radius2xs: Dp = 2.dp
+    public val radiusXs: Dp = 4.dp
+    public val radiusSm: Dp = 6.dp
+    public val radiusMd: Dp = 8.dp
+    public val radiusLg: Dp = 12.dp
+    public val radiusXl: Dp = 16.dp
+    public val radius2xl: Dp = 20.dp
+    public val radius3xl: Dp = 24.dp
+    public val radius4xl: Dp = 32.dp
+    public val radiusMax: Dp = 9999.dp
 
     // Sizes
     public val size2: Dp = 2.dp
@@ -116,13 +117,13 @@ public object StreamTokens {
     public val lineHeightRelaxed: TextUnit = 24.sp
 
     // Components
-    public val deviceRadius: CornerSize = CornerSize(32.dp)
+    public val deviceRadius: Dp = 32.dp
     public val deviceSafeAreaBottom: Dp = 40.dp
     public val deviceSafeAreaTop: Dp = 52.dp
-    public val buttonRadiusLg: CornerSize = CornerSize(percent = 50)
-    public val buttonRadiusMd: CornerSize = CornerSize(percent = 50)
-    public val buttonRadiusSm: CornerSize = CornerSize(percent = 50)
-    public val buttonRadiusFull: CornerSize = CornerSize(percent = 50)
+    public val buttonRadiusLg: Dp = 9999.dp
+    public val buttonRadiusMd: Dp = 9999.dp
+    public val buttonRadiusSm: Dp = 9999.dp
+    public val buttonRadiusFull: Dp = 9999.dp
     public val buttonVisualHeightSm: Dp = 32.dp
     public val buttonVisualHeightMd: Dp = 40.dp
     public val buttonVisualHeightLg: Dp = 48.dp
@@ -153,8 +154,8 @@ public object StreamTokens {
     public val emojiLg: TextUnit = 32.sp
     public val emojiXl: TextUnit = 48.sp
     public val emoji2xl: TextUnit = 64.sp
-    public val inputRadiusTextInput: CornerSize = CornerSize(16.dp)
-    public val inputRadiusSelectInput: CornerSize = CornerSize(16.dp)
-    public val inputRadiusSearchInput: CornerSize = CornerSize(percent = 50)
-    public val inputRadiusOptionCard: CornerSize = CornerSize(24.dp)
+    public val inputRadiusTextInput: Dp = 16.dp
+    public val inputRadiusSelectInput: Dp = 16.dp
+    public val inputRadiusSearchInput: Dp = 9999.dp
+    public val inputRadiusOptionCard: Dp = 24.dp
 }

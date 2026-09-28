@@ -27,6 +27,7 @@ kotlin {
     explicitApi()
     compilerOptions {
         jvmTarget.set(JvmTarget.JVM_11)
+        freeCompilerArgs.add("-opt-in=io.getstream.android.core.annotations.StreamInternalApi")
     }
 }
 
@@ -50,11 +51,12 @@ dependencies {
 
     detektPlugins(libs.detekt.formatting)
 
+    api(project(":stream-android-core-annotations"))
+
     // Compose. The token classes expose these types in their public API, so consumers get them
-    // transitively. The BOM is published as an imported BOM in the POM and sets the version floor.
-    implementation(platform(libs.androidx.compose.bom))
+    // transitively. The BOM is in the api scope so it also sets the version floor for consumers.
+    api(platform(libs.androidx.compose.bom))
     api(libs.androidx.compose.runtime)
-    api(libs.androidx.compose.foundation)
     api(libs.androidx.ui.graphics)
     api(libs.androidx.ui.text)
     api(libs.androidx.ui.unit)

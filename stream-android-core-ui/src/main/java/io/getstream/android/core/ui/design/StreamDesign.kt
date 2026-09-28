@@ -23,6 +23,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
+import io.getstream.android.core.annotations.StreamInternalApi
+import io.getstream.android.core.annotations.StreamPublishedApi
 import io.getstream.android.core.ui.design.StreamDesign.Colors.Companion.default
 import io.getstream.android.core.ui.design.StreamDesign.Colors.Companion.defaultDark
 
@@ -43,6 +45,7 @@ import io.getstream.android.core.ui.design.StreamDesign.Colors.Companion.default
  * ) { content() }
  * ```
  */
+@StreamPublishedApi
 public object StreamDesign {
 
     /**
@@ -75,9 +78,9 @@ public object StreamDesign {
      *   within text content.
      * @param backgroundCoreApp The outermost application background. Sits behind all surfaces and
      *   is generally not overridden directly.
-     * @param backgroundCoreElevation0 The base layer. Always white, used as the reference point for
-     *   the elevation scale. Steps above this gain depth in dark mode through progressively lighter
-     *   backgrounds.
+     * @param backgroundCoreElevation0 The base layer. White in light mode and black in dark mode,
+     *   used as the reference point for the elevation scale. Steps above this gain depth in dark
+     *   mode through progressively lighter backgrounds.
      * @param backgroundCoreElevation1 Slightly raised surfaces. Used for content containers that
      *   sit directly on the base layer, such as the message list and channel list.
      * @param backgroundCoreElevation2 Floating and modal surfaces. Used for popovers, dropdowns,
@@ -104,8 +107,8 @@ public object StreamDesign {
      * @param backgroundCoreOverlayDark A dark semi-transparent layer. Used for image overlays.
      * @param backgroundCoreScrim A heavy semi-transparent layer. Used behind sheets, drawers, and
      *   modals to separate them from content.
-     * @param backgroundCoreOverlayDarkStrong A dark semi-transparent layer. Used for image
-     *   overlays.
+     * @param backgroundCoreOverlayDarkStrong A stronger version of [backgroundCoreOverlayDark],
+     *   with higher opacity. Used for image overlays.
      * @param backgroundUtilityHover A semi-transparent overlay applied on pointer hover. Sits on
      *   top of any surface without replacing it.
      * @param backgroundUtilityPressed A slightly stronger overlay applied during an active press or
@@ -165,6 +168,7 @@ public object StreamDesign {
      * @param systemCaret system caret
      * @param systemScrollbar system scrollbar
      */
+    @StreamPublishedApi
     @Immutable
     public data class Colors(
         public val brand: ColorScale,
@@ -234,220 +238,219 @@ public object StreamDesign {
     ) {
 
         /** Main text inside an input field. */
-        public val inputTextDefault: Color = textPrimary
+        @StreamInternalApi public val inputTextDefault: Color = textPrimary
 
         /** Placeholder text for the input. Lower emphasis than main text. */
-        public val inputTextPlaceholder: Color = textTertiary
+        @StreamInternalApi public val inputTextPlaceholder: Color = textTertiary
 
-        /** Placeholder text for the input. Lower emphasis than main text. */
-        public val inputTextDisabled: Color = textDisabled
+        /** Text inside the input when it is disabled. */
+        @StreamInternalApi public val inputTextDisabled: Color = textDisabled
 
         /**
-         * Icons inside the input area (attach, emoji, camera, send when idle). Matches secondary
+         * Icons inside the input area (attach, emoji, camera, send when idle). Matches tertiary
          * text strength.
          */
-        public val inputTextIcon: Color = textTertiary
+        @StreamInternalApi public val inputTextIcon: Color = textTertiary
 
         /**
          * Icons inside the input area in their active state. Steps up from the resting icon colour
          * to primary text.
          */
-        public val inputTextIconActive: Color = textPrimary
+        @StreamInternalApi public val inputTextIconActive: Color = textPrimary
 
         /** Background of the primary button. */
-        public val buttonPrimaryBg: Color = accentPrimary
+        @StreamInternalApi public val buttonPrimaryBg: Color = accentPrimary
 
         /** Background of the primary button in its liquid glass variant. */
-        public val buttonPrimaryBgLiquidGlass: Color = Color.Transparent
+        @StreamInternalApi public val buttonPrimaryBgLiquidGlass: Color = Color.Transparent
 
         /** Text of the primary button when it sits on a neutral background. */
-        public val buttonPrimaryText: Color = accentPrimary
+        @StreamInternalApi public val buttonPrimaryText: Color = accentPrimary
 
         /** Text of the primary button when it sits on an accent background. */
-        public val buttonPrimaryTextOnAccent: Color = textOnAccent
+        @StreamInternalApi public val buttonPrimaryTextOnAccent: Color = textOnAccent
 
         /** Text of the primary button when it sits on a dark background. */
-        public val buttonPrimaryTextOnDark: Color = textOnInverse
+        @StreamInternalApi public val buttonPrimaryTextOnDark: Color = textOnInverse
 
         /** Border of the primary button. */
-        public val buttonPrimaryBorder: Color = brand.s200
+        @StreamInternalApi public val buttonPrimaryBorder: Color = brand.s200
 
         /** Border of the primary button when it sits on a dark background. */
-        public val buttonPrimaryBorderOnDark: Color = borderCoreOnInverse
+        @StreamInternalApi public val buttonPrimaryBorderOnDark: Color = borderCoreOnInverse
 
         /** Background of the secondary button. */
-        public val buttonSecondaryBg: Color = backgroundCoreSurfaceDefault
+        @StreamInternalApi public val buttonSecondaryBg: Color = backgroundCoreSurfaceDefault
 
         /** Background of the secondary button in its liquid glass variant. */
-        public val buttonSecondaryBgLiquidGlass: Color = backgroundCoreElevation0
+        @StreamInternalApi public val buttonSecondaryBgLiquidGlass: Color = backgroundCoreElevation0
 
         /** Text of the secondary button. */
-        public val buttonSecondaryText: Color = textPrimary
+        @StreamInternalApi public val buttonSecondaryText: Color = textPrimary
 
         /** Text of the secondary button when it sits on an accent background. */
-        public val buttonSecondaryTextOnAccent: Color = textPrimary
+        @StreamInternalApi public val buttonSecondaryTextOnAccent: Color = textPrimary
 
         /** Text of the secondary button when it sits on a dark background. */
-        public val buttonSecondaryTextOnDark: Color = textOnInverse
+        @StreamInternalApi public val buttonSecondaryTextOnDark: Color = textOnInverse
 
         /** Border of the secondary button. */
-        public val buttonSecondaryBorder: Color = borderCoreDefault
+        @StreamInternalApi public val buttonSecondaryBorder: Color = borderCoreDefault
 
         /** Border of the secondary button when it sits on a dark background. */
-        public val buttonSecondaryBorderOnDark: Color = borderCoreOnInverse
+        @StreamInternalApi public val buttonSecondaryBorderOnDark: Color = borderCoreOnInverse
 
         /** Background of the destructive button. */
-        public val buttonDestructiveBg: Color = accentError
+        @StreamInternalApi public val buttonDestructiveBg: Color = accentError
 
         /** Background of the destructive button in its liquid glass variant. */
+        @StreamInternalApi
         public val buttonDestructiveBgLiquidGlass: Color = backgroundCoreElevation0
 
         /** Text of the destructive button when it sits on a neutral background. */
-        public val buttonDestructiveText: Color = accentError
+        @StreamInternalApi public val buttonDestructiveText: Color = accentError
 
         /** Text of the destructive button when it sits on an accent background. */
-        public val buttonDestructiveTextOnAccent: Color = textOnAccent
+        @StreamInternalApi public val buttonDestructiveTextOnAccent: Color = textOnAccent
 
         /** Text of the destructive button when it sits on a dark background. */
-        public val buttonDestructiveTextOnDark: Color = textOnInverse
+        @StreamInternalApi public val buttonDestructiveTextOnDark: Color = textOnInverse
 
         /** Border of the destructive button. */
-        public val buttonDestructiveBorder: Color = accentError
+        @StreamInternalApi public val buttonDestructiveBorder: Color = accentError
 
         /** Border of the destructive button when it sits on a dark background. */
-        public val buttonDestructiveBorderOnDark: Color = textOnInverse
+        @StreamInternalApi public val buttonDestructiveBorderOnDark: Color = textOnInverse
 
         /**
          * The green online indicator. Uses success accent in normal themes. In high-contrast, color
          * is dropped and replaced with strong black for maximum clarity.
          */
-        public val avatarPresenceBgOnline: Color = accentSuccess
+        @StreamInternalApi public val avatarPresenceBgOnline: Color = accentSuccess
 
-        /**
-         * The green online indicator. Uses success accent in normal themes. In high-contrast, color
-         * is dropped and replaced with strong black for maximum clarity.
-         */
-        public val avatarPresenceBgOffline: Color = accentNeutral
+        /** The gray offline indicator. Uses the neutral accent. */
+        @StreamInternalApi public val avatarPresenceBgOffline: Color = accentNeutral
 
         /** Text of system-level UI elements. */
-        public val systemText: Color = chrome.s1000
+        @StreamInternalApi public val systemText: Color = chrome.s1000
 
         /** Background of the default badge. */
-        public val badgeBgDefault: Color = backgroundCoreElevation3
+        @StreamInternalApi public val badgeBgDefault: Color = backgroundCoreElevation3
 
         /** Background of the primary badge. */
-        public val badgeBgPrimary: Color = accentPrimary
+        @StreamInternalApi public val badgeBgPrimary: Color = accentPrimary
 
         /** Background of the neutral badge. */
-        public val badgeBgNeutral: Color = accentNeutral
+        @StreamInternalApi public val badgeBgNeutral: Color = accentNeutral
 
         /** Background of the error badge. */
-        public val badgeBgError: Color = accentError
+        @StreamInternalApi public val badgeBgError: Color = accentError
 
         /** Background of the inverse badge. */
-        public val badgeBgInverse: Color = chrome.s1000
+        @StreamInternalApi public val badgeBgInverse: Color = chrome.s1000
 
         /** Background of the overlay badge. */
-        public val badgeBgOverlay: Color = Color(0xBF000000)
+        @StreamInternalApi public val badgeBgOverlay: Color = Color(0xBF000000)
 
         /** Text of the default badge. */
-        public val badgeText: Color = textPrimary
+        @StreamInternalApi public val badgeText: Color = textPrimary
 
         /** Text of the inverse badge. */
-        public val badgeTextOnInverse: Color = textOnInverse
+        @StreamInternalApi public val badgeTextOnInverse: Color = textOnInverse
 
         /** Text of a badge on an accent background. */
-        public val badgeTextOnAccent: Color = textOnAccent
+        @StreamInternalApi public val badgeTextOnAccent: Color = textOnAccent
 
         /** Border of the badge. */
-        public val badgeBorder: Color = borderCoreOnInverse
+        @StreamInternalApi public val badgeBorder: Color = borderCoreOnInverse
 
         /** Fill of the progress bar. */
-        public val controlProgressBarFill: Color = accentNeutral
+        @StreamInternalApi public val controlProgressBarFill: Color = accentNeutral
 
         /** Track of the progress bar. */
-        public val controlProgressBarTrack: Color = backgroundCoreSurfaceStrong
+        @StreamInternalApi public val controlProgressBarTrack: Color = backgroundCoreSurfaceStrong
 
         /** Progress fill for audio playback, distinct from the neutral fill used elsewhere. */
-        public val controlProgressBarFillAudio: Color = accentPrimary
+        @StreamInternalApi public val controlProgressBarFillAudio: Color = accentPrimary
 
         /** Background of the toggle switch when it is off. */
-        public val controlToggleSwitchBg: Color = accentNeutral
+        @StreamInternalApi public val controlToggleSwitchBg: Color = accentNeutral
 
         /** Background of the toggle switch when it is on. */
-        public val controlToggleSwitchBgSelected: Color = accentPrimary
+        @StreamInternalApi public val controlToggleSwitchBgSelected: Color = accentPrimary
 
         /** Background of the toggle switch when it is disabled. */
+        @StreamInternalApi
         public val controlToggleSwitchBgDisabled: Color = backgroundUtilityDisabled
 
         /** Knob of the toggle switch. */
-        public val controlToggleSwitchKnob: Color = backgroundCoreOnAccent
+        @StreamInternalApi public val controlToggleSwitchKnob: Color = backgroundCoreOnAccent
 
         /** Background of the checkbox when it is unchecked. */
-        public val controlCheckboxBg: Color = Color.Transparent
+        @StreamInternalApi public val controlCheckboxBg: Color = Color.Transparent
 
         /** Border of the checkbox. */
-        public val controlCheckboxBorder: Color = borderCoreDefault
+        @StreamInternalApi public val controlCheckboxBorder: Color = borderCoreDefault
 
         /** Background of the checkbox when it is checked. */
-        public val controlCheckboxBgSelected: Color = accentPrimary
+        @StreamInternalApi public val controlCheckboxBgSelected: Color = accentPrimary
 
         /** Check mark of the checkbox. */
-        public val controlCheckboxIcon: Color = textOnAccent
+        @StreamInternalApi public val controlCheckboxIcon: Color = textOnAccent
 
         /** Background of the radio button when it is unselected. */
-        public val controlRadioButtonBg: Color = Color.Transparent
+        @StreamInternalApi public val controlRadioButtonBg: Color = Color.Transparent
 
         /** Border of the radio button. */
-        public val controlRadioButtonBorder: Color = borderCoreDefault
+        @StreamInternalApi public val controlRadioButtonBorder: Color = borderCoreDefault
 
         /** Background of the radio button when it is selected. */
-        public val controlRadioButtonBgSelected: Color = accentPrimary
+        @StreamInternalApi public val controlRadioButtonBgSelected: Color = accentPrimary
 
         /** Indicator dot of the selected radio button. */
-        public val controlRadioButtonIndicator: Color = textOnAccent
+        @StreamInternalApi public val controlRadioButtonIndicator: Color = textOnAccent
 
         /** Background of the radio check when it is unselected. */
-        public val controlRadioCheckBg: Color = Color.Transparent
+        @StreamInternalApi public val controlRadioCheckBg: Color = Color.Transparent
 
         /** Border of the radio check. */
-        public val controlRadioCheckBorder: Color = borderCoreDefault
+        @StreamInternalApi public val controlRadioCheckBorder: Color = borderCoreDefault
 
         /** Background of the radio check when it is selected. */
-        public val controlRadioCheckBgSelected: Color = accentPrimary
+        @StreamInternalApi public val controlRadioCheckBgSelected: Color = accentPrimary
 
         /** Check mark of the selected radio check. */
-        public val controlRadioCheckIcon: Color = textOnAccent
+        @StreamInternalApi public val controlRadioCheckIcon: Color = textOnAccent
 
         /** Border of the chip. */
-        public val controlChipBorder: Color = borderCoreDefault
+        @StreamInternalApi public val controlChipBorder: Color = borderCoreDefault
 
         /** Text of the chip. */
-        public val controlChipText: Color = textPrimary
+        @StreamInternalApi public val controlChipText: Color = textPrimary
 
         /** Background for a neutral label. */
-        public val labelBgNeutral: Color = chrome.s150
+        @StreamInternalApi public val labelBgNeutral: Color = chrome.s150
 
         /** Background for a primary label. */
-        public val labelBgPrimary: Color = brand.s150
+        @StreamInternalApi public val labelBgPrimary: Color = brand.s150
 
         /** Text on a neutral label. */
-        public val labelTextNeutral: Color = textPrimary
+        @StreamInternalApi public val labelTextNeutral: Color = textPrimary
 
         /** Text on a primary label. */
-        public val labelTextPrimary: Color = brand.s900
+        @StreamInternalApi public val labelTextPrimary: Color = brand.s900
 
         /** The underline on the selected tab. */
-        public val tabIndicator: Color = accentPrimary
+        @StreamInternalApi public val tabIndicator: Color = accentPrimary
 
         /** Label colour of an unselected tab. */
-        public val tabText: Color = textSecondary
+        @StreamInternalApi public val tabText: Color = textSecondary
 
         /** Label colour of the selected tab. */
-        public val tabTextSelected: Color = accentPrimary
+        @StreamInternalApi public val tabTextSelected: Color = accentPrimary
 
         /** The line running under the tab bar. */
-        public val tabTrack: Color = borderCoreDefault
+        @StreamInternalApi public val tabTrack: Color = borderCoreDefault
 
         /** Factories for the default light and dark color sets. */
         public companion object {
@@ -631,6 +634,7 @@ public object StreamDesign {
      * @param s800 The 800 stop.
      * @param s900 The darkest stop in the natural order.
      */
+    @StreamPublishedApi
     @Immutable
     public data class ColorScale(
         public val s50: Color,
@@ -744,6 +748,7 @@ public object StreamDesign {
      * @param s900 The 900 stop.
      * @param s1000 The last endpoint: black in light themes, white in dark themes.
      */
+    @StreamPublishedApi
     @Immutable
     public data class ChromeScale(
         public val s0: Color,
@@ -824,6 +829,7 @@ public object StreamDesign {
      * @param numericLarge Large numeric indicators.
      * @param numericExtraLarge Extra large numeric indicators.
      */
+    @StreamPublishedApi
     @Immutable
     public data class Typography(
         public val bodyDefault: TextStyle,

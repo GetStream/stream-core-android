@@ -372,15 +372,15 @@ public final class io/getstream/android/core/ui/design/StreamTokens {
 	public final fun getButtonPaddingYMd-D9Ej5fM ()F
 	public final fun getButtonPaddingYSm-D9Ej5fM ()F
 	public final fun getButtonPaddingYXs-D9Ej5fM ()F
-	public final fun getButtonRadiusFull ()Landroidx/compose/foundation/shape/CornerSize;
-	public final fun getButtonRadiusLg ()Landroidx/compose/foundation/shape/CornerSize;
-	public final fun getButtonRadiusMd ()Landroidx/compose/foundation/shape/CornerSize;
-	public final fun getButtonRadiusSm ()Landroidx/compose/foundation/shape/CornerSize;
+	public final fun getButtonRadiusFull-D9Ej5fM ()F
+	public final fun getButtonRadiusLg-D9Ej5fM ()F
+	public final fun getButtonRadiusMd-D9Ej5fM ()F
+	public final fun getButtonRadiusSm-D9Ej5fM ()F
 	public final fun getButtonVisualHeightLg-D9Ej5fM ()F
 	public final fun getButtonVisualHeightMd-D9Ej5fM ()F
 	public final fun getButtonVisualHeightSm-D9Ej5fM ()F
 	public final fun getButtonVisualHeightXs-D9Ej5fM ()F
-	public final fun getDeviceRadius ()Landroidx/compose/foundation/shape/CornerSize;
+	public final fun getDeviceRadius-D9Ej5fM ()F
 	public final fun getDeviceSafeAreaBottom-D9Ej5fM ()F
 	public final fun getDeviceSafeAreaTop-D9Ej5fM ()F
 	public final fun getEmoji2xl-XSAIIZE ()J
@@ -407,24 +407,24 @@ public final class io/getstream/android/core/ui/design/StreamTokens {
 	public final fun getIconStrokeDefault-D9Ej5fM ()F
 	public final fun getIconStrokeEmphasis-D9Ej5fM ()F
 	public final fun getIconStrokeSubtle-D9Ej5fM ()F
-	public final fun getInputRadiusOptionCard ()Landroidx/compose/foundation/shape/CornerSize;
-	public final fun getInputRadiusSearchInput ()Landroidx/compose/foundation/shape/CornerSize;
-	public final fun getInputRadiusSelectInput ()Landroidx/compose/foundation/shape/CornerSize;
-	public final fun getInputRadiusTextInput ()Landroidx/compose/foundation/shape/CornerSize;
+	public final fun getInputRadiusOptionCard-D9Ej5fM ()F
+	public final fun getInputRadiusSearchInput-D9Ej5fM ()F
+	public final fun getInputRadiusSelectInput-D9Ej5fM ()F
+	public final fun getInputRadiusTextInput-D9Ej5fM ()F
 	public final fun getLineHeightNormal-XSAIIZE ()J
 	public final fun getLineHeightRelaxed-XSAIIZE ()J
 	public final fun getLineHeightTight-XSAIIZE ()J
-	public final fun getRadius2xl ()Landroidx/compose/foundation/shape/CornerSize;
-	public final fun getRadius2xs ()Landroidx/compose/foundation/shape/CornerSize;
-	public final fun getRadius3xl ()Landroidx/compose/foundation/shape/CornerSize;
-	public final fun getRadius4xl ()Landroidx/compose/foundation/shape/CornerSize;
-	public final fun getRadiusLg ()Landroidx/compose/foundation/shape/CornerSize;
-	public final fun getRadiusMax ()Landroidx/compose/foundation/shape/CornerSize;
-	public final fun getRadiusMd ()Landroidx/compose/foundation/shape/CornerSize;
-	public final fun getRadiusNone ()Landroidx/compose/foundation/shape/CornerSize;
-	public final fun getRadiusSm ()Landroidx/compose/foundation/shape/CornerSize;
-	public final fun getRadiusXl ()Landroidx/compose/foundation/shape/CornerSize;
-	public final fun getRadiusXs ()Landroidx/compose/foundation/shape/CornerSize;
+	public final fun getRadius2xl-D9Ej5fM ()F
+	public final fun getRadius2xs-D9Ej5fM ()F
+	public final fun getRadius3xl-D9Ej5fM ()F
+	public final fun getRadius4xl-D9Ej5fM ()F
+	public final fun getRadiusLg-D9Ej5fM ()F
+	public final fun getRadiusMax-D9Ej5fM ()F
+	public final fun getRadiusMd-D9Ej5fM ()F
+	public final fun getRadiusNone-D9Ej5fM ()F
+	public final fun getRadiusSm-D9Ej5fM ()F
+	public final fun getRadiusXl-D9Ej5fM ()F
+	public final fun getRadiusXs-D9Ej5fM ()F
 	public final fun getSize10-D9Ej5fM ()F
 	public final fun getSize12-D9Ej5fM ()F
 	public final fun getSize128-D9Ej5fM ()F
