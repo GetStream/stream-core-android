@@ -1,0 +1,1851 @@
+<!doctype html>
+<html class="no-js" lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8">
+    <title>StreamTokens</title>
+<link href="../../../images/logo-icon.svg" rel="icon" type="image/svg"><script>var pathToRoot = "../../../";</script>
+    <script>document.documentElement.classList.replace("no-js", "js");</script>
+    <script>const storage = localStorage.getItem("dokka-dark-mode")
+      if (storage == null) {
+        const osDarkSchemePreferred = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+        if (osDarkSchemePreferred === true) {
+          document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+      } else {
+        const savedDarkMode = JSON.parse(storage)
+        if (savedDarkMode === true) {
+          document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+      }
+    </script>
+<script type="text/javascript" src="../../../scripts/sourceset_dependencies.js" async></script>
+<link href="../../../styles/style.css" rel="Stylesheet">
+<link href="../../../styles/main.css" rel="Stylesheet">
+<link href="../../../styles/prism.css" rel="Stylesheet">
+<link href="../../../styles/logo-styles.css" rel="Stylesheet">
+<link href="../../../ui-kit/ui-kit.min.css" rel="Stylesheet">
+<script type="text/javascript" src="../../../scripts/safe-local-storage_blocking.js"></script>
+<script type="text/javascript" src="../../../scripts/navigation-loader.js" async></script>
+<script type="text/javascript" src="../../../scripts/platform-content-handler.js" async></script>
+<script type="text/javascript" src="../../../scripts/main.js" defer></script>
+<script type="text/javascript" src="../../../scripts/prism.js" async></script>
+<script type="text/javascript" src="../../../ui-kit/ui-kit.min.js" defer></script></head>
+<body>
+<div class="root">
+    <header class="navigation theme-dark" id="navigation-wrapper" role="banner">
+<a class="library-name--link" href="../../../index.html" tabindex="1">
+                    stream-android-core
+            </a>        <button class="navigation-controls--btn navigation-controls--btn_toc ui-kit_mobile-only" id="toc-toggle" type="button">Toggle table of contents
+        </button>
+        <div class="navigation-controls--break ui-kit_mobile-only"></div>
+        <div class="library-version" id="library-version">5.1.0
+        </div>
+        <div class="navigation-controls">
+        <ul class="filter-section filter-section_loading" id="filter-section" aria-label="Target filter">
+                <button class="platform-tag platform-selector jvm-like" data-active="" aria-pressed="true" data-filter=":stream-android-core-ui/main">androidJvm</button>
+            <div class="dropdown filter-section--dropdown" data-role="dropdown" id="filter-section-dropdown">
+                <button class="button button_dropdown filter-section--dropdown-toggle" role="combobox" data-role="dropdown-toggle" aria-controls="platform-tags-listbox" aria-haspopup="listbox" aria-expanded="false" aria-label="Toggle source sets"></button>
+                <ul role="listbox" id="platform-tags-listbox" class="dropdown--list" data-role="dropdown-listbox" aria-label="Target filter">
+                    <div class="dropdown--header"><span>Target filter</span>
+                        <button class="button" data-role="dropdown-toggle" aria-label="Close target filter">
+                            <i class="ui-kit-icon ui-kit-icon_cross"></i>
+                        </button>
+                    </div>
+                        <li role="option" class="dropdown--option platform-selector-option jvm-like" tabindex="0">
+                            <label class="checkbox">
+                                <input type="checkbox" class="checkbox--input" id=":stream-android-core-ui/main" data-filter=":stream-android-core-ui/main">
+                                <span class="checkbox--icon"></span>
+                                androidJvm
+                            </label>
+                        </li>
+                </ul>
+                <div class="dropdown--overlay"></div>
+            </div>
+        </ul>
+            <button class="navigation-controls--btn navigation-controls--btn_theme" id="theme-toggle-button" type="button">Switch theme
+            </button>
+            <div class="navigation-controls--btn navigation-controls--btn_search" id="searchBar" role="button">Search in
+                API
+            </div>
+        </div>
+    </header>
+    <div id="container">
+        <nav id="leftColumn" class="sidebar" data-item-type="SECTION" data-item-config="{&quot;defaultSize&quot;: 280, &quot;minSize&quot;: 200, &quot;maxSize&quot;: 400}">
+            <a class="toc--skip-link" href="#main">Skip to content</a>
+            <div class="dropdown theme-dark_mobile" data-role="dropdown" id="toc-dropdown">
+                <ul role="listbox" id="toc-listbox" class="dropdown--list dropdown--list_toc-list" data-role="dropdown-listbox" aria-label="Table of contents">
+                    <div class="dropdown--header">
+                            <span>
+                                    stream-android-core
+                            </span>
+                        <button class="button" data-role="dropdown-toggle" aria-label="Close table of contents">
+                            <i class="ui-kit-icon ui-kit-icon_cross"></i>
+                        </button>
+                    </div>
+                    <div class="sidebar--inner" id="sideMenu"></div>
+                </ul>
+                <div class="dropdown--overlay"></div>
+            </div>
+        </nav>
+        <div id="resizer" class="resizer" data-item-type="BAR"></div>
+        <div id="main" data-item-type="SECTION" role="main">
+<div class="main-content" data-page-type="classlike" id="content" pageids="stream-android-core-ui::io.getstream.android.core.ui.design/StreamTokens///PointingToDeclaration//812192306">
+  <div class="breadcrumbs"><a href="../../index.html">stream-android-core-ui</a><span class="delimiter">/</span><a href="../index.html">io.getstream.android.core.ui.design</a><span class="delimiter">/</span><span class="current">StreamTokens</span></div>
+  <div class="cover ">
+    <h1 class="cover"><span>Stream</span><wbr><span><span>Tokens</span></span></h1>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">object </span><a href="index.html">StreamTokens</a></div><p class="paragraph">Layout, radius, typography and component primitives from the design system foundations. Semantic classes build on these; components use them directly.</p></div></div>
+  </div>
+  <div class="tabbedcontent">
+    <div class="tabs-section" tabs-section="tabs-section"><button class="section-tab" data-active="" data-togglable="CONSTRUCTOR,TYPE,PROPERTY,FUNCTION">Members</button></div>
+    <div class="tabs-section-body">
+      <div data-togglable="PROPERTY">
+        <h2 class="tableheader">Properties</h2>
+        <div class="table"><a data-name="-742266296%2FProperties%2F812192306" anchor-label="buttonHitTargetMinHeight" id="-742266296%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="button-hit-target-min-height.html"><span>button</span><wbr><span>Hit</span><wbr><span>Target</span><wbr><span>Min</span><wbr><span><span>Height</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-742266296%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="button-hit-target-min-height.html">buttonHitTargetMinHeight</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/unit/Dp.html">Dp</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1508355931%2FProperties%2F812192306" anchor-label="buttonHitTargetMinWidth" id="-1508355931%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="button-hit-target-min-width.html"><span>button</span><wbr><span>Hit</span><wbr><span>Target</span><wbr><span>Min</span><wbr><span><span>Width</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1508355931%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="button-hit-target-min-width.html">buttonHitTargetMinWidth</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/unit/Dp.html">Dp</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-644664298%2FProperties%2F812192306" anchor-label="buttonPaddingXIconOnlyLg" id="-644664298%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="button-padding-x-icon-only-lg.html"><span>button</span><wbr><span>Padding</span><wbr><span>XIcon</span><wbr><span>Only</span><wbr><span><span>Lg</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-644664298%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="button-padding-x-icon-only-lg.html">buttonPaddingXIconOnlyLg</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/unit/Dp.html">Dp</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="223890298%2FProperties%2F812192306" anchor-label="buttonPaddingXIconOnlyMd" id="223890298%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="button-padding-x-icon-only-md.html"><span>button</span><wbr><span>Padding</span><wbr><span>XIcon</span><wbr><span>Only</span><wbr><span><span>Md</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="223890298%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="button-padding-x-icon-only-md.html">buttonPaddingXIconOnlyMd</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/unit/Dp.html">Dp</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1977785367%2FProperties%2F812192306" anchor-label="buttonPaddingXIconOnlySm" id="1977785367%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="button-padding-x-icon-only-sm.html"><span>button</span><wbr><span>Padding</span><wbr><span>XIcon</span><wbr><span>Only</span><wbr><span><span>Sm</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1977785367%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="button-padding-x-icon-only-sm.html">buttonPaddingXIconOnlySm</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/unit/Dp.html">Dp</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1617960298%2FProperties%2F812192306" anchor-label="buttonPaddingXIconOnlyXs" id="-1617960298%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="button-padding-x-icon-only-xs.html"><span>button</span><wbr><span>Padding</span><wbr><span>XIcon</span><wbr><span>Only</span><wbr><span><span>Xs</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1617960298%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="button-padding-x-icon-only-xs.html">buttonPaddingXIconOnlyXs</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/unit/Dp.html">Dp</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-934461797%2FProperties%2F812192306" anchor-label="buttonPaddingXWithLabelLg" id="-934461797%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="button-padding-x-with-label-lg.html"><span>button</span><wbr><span>Padding</span><wbr><span>XWith</span><wbr><span>Label</span><wbr><span><span>Lg</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-934461797%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="button-padding-x-with-label-lg.html">buttonPaddingXWithLabelLg</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/unit/Dp.html">Dp</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-65907201%2FProperties%2F812192306" anchor-label="buttonPaddingXWithLabelMd" id="-65907201%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="button-padding-x-with-label-md.html"><span>button</span><wbr><span>Padding</span><wbr><span>XWith</span><wbr><span>Label</span><wbr><span><span>Md</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-65907201%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="button-padding-x-with-label-md.html">buttonPaddingXWithLabelMd</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/unit/Dp.html">Dp</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1687987868%2FProperties%2F812192306" anchor-label="buttonPaddingXWithLabelSm" id="1687987868%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="button-padding-x-with-label-sm.html"><span>button</span><wbr><span>Padding</span><wbr><span>XWith</span><wbr><span>Label</span><wbr><span><span>Sm</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1687987868%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="button-padding-x-with-label-sm.html">buttonPaddingXWithLabelSm</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/unit/Dp.html">Dp</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1907757797%2FProperties%2F812192306" anchor-label="buttonPaddingXWithLabelXs" id="-1907757797%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="button-padding-x-with-label-xs.html"><span>button</span><wbr><span>Padding</span><wbr><span>XWith</span><wbr><span>Label</span><wbr><span><span>Xs</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1907757797%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="button-padding-x-with-label-xs.html">buttonPaddingXWithLabelXs</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/unit/Dp.html">Dp</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="760019834%2FProperties%2F812192306" anchor-label="buttonPaddingYLg" id="760019834%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="button-padding-y-lg.html"><span>button</span><wbr><span>Padding</span><wbr><span><span>YLg</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="760019834%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="button-padding-y-lg.html">buttonPaddingYLg</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/unit/Dp.html">Dp</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1628574430%2FProperties%2F812192306" anchor-label="buttonPaddingYMd" id="1628574430%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="button-padding-y-md.html"><span>button</span><wbr><span>Padding</span><wbr><span><span>YMd</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1628574430%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="button-padding-y-md.html">buttonPaddingYMd</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/unit/Dp.html">Dp</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-912497797%2FProperties%2F812192306" anchor-label="buttonPaddingYSm" id="-912497797%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="button-padding-y-sm.html"><span>button</span><wbr><span>Padding</span><wbr><span><span>YSm</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-912497797%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="button-padding-y-sm.html">buttonPaddingYSm</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/unit/Dp.html">Dp</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-213276166%2FProperties%2F812192306" anchor-label="buttonPaddingYXs" id="-213276166%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="button-padding-y-xs.html"><span>button</span><wbr><span>Padding</span><wbr><span><span>YXs</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-213276166%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="button-padding-y-xs.html">buttonPaddingYXs</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/unit/Dp.html">Dp</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-651589380%2FProperties%2F812192306" anchor-label="buttonRadiusFull" id="-651589380%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="button-radius-full.html"><span>button</span><wbr><span>Radius</span><wbr><span><span>Full</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-651589380%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="button-radius-full.html">buttonRadiusFull</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/unit/Dp.html">Dp</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1334502160%2FProperties%2F812192306" anchor-label="buttonRadiusLg" id="1334502160%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="button-radius-lg.html"><span>button</span><wbr><span>Radius</span><wbr><span><span>Lg</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1334502160%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="button-radius-lg.html">buttonRadiusLg</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/unit/Dp.html">Dp</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-2091910540%2FProperties%2F812192306" anchor-label="buttonRadiusMd" id="-2091910540%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="button-radius-md.html"><span>button</span><wbr><span>Radius</span><wbr><span><span>Md</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-2091910540%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="button-radius-md.html">buttonRadiusMd</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/unit/Dp.html">Dp</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-338015471%2FProperties%2F812192306" anchor-label="buttonRadiusSm" id="-338015471%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="button-radius-sm.html"><span>button</span><wbr><span>Radius</span><wbr><span><span>Sm</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-338015471%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="button-radius-sm.html">buttonRadiusSm</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/unit/Dp.html">Dp</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1526571515%2FProperties%2F812192306" anchor-label="buttonVisualHeightLg" id="1526571515%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="button-visual-height-lg.html"><span>button</span><wbr><span>Visual</span><wbr><span>Height</span><wbr><span><span>Lg</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1526571515%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="button-visual-height-lg.html">buttonVisualHeightLg</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/unit/Dp.html">Dp</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1899841185%2FProperties%2F812192306" anchor-label="buttonVisualHeightMd" id="-1899841185%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="button-visual-height-md.html"><span>button</span><wbr><span>Visual</span><wbr><span>Height</span><wbr><span><span>Md</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1899841185%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="button-visual-height-md.html">buttonVisualHeightMd</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/unit/Dp.html">Dp</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-145946116%2FProperties%2F812192306" anchor-label="buttonVisualHeightSm" id="-145946116%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="button-visual-height-sm.html"><span>button</span><wbr><span>Visual</span><wbr><span>Height</span><wbr><span><span>Sm</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-145946116%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="button-visual-height-sm.html">buttonVisualHeightSm</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/unit/Dp.html">Dp</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="553275515%2FProperties%2F812192306" anchor-label="buttonVisualHeightXs" id="553275515%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="button-visual-height-xs.html"><span>button</span><wbr><span>Visual</span><wbr><span>Height</span><wbr><span><span>Xs</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="553275515%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="button-visual-height-xs.html">buttonVisualHeightXs</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/unit/Dp.html">Dp</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1305634855%2FProperties%2F812192306" anchor-label="deviceRadius" id="1305634855%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="device-radius.html"><span>device</span><wbr><span><span>Radius</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1305634855%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="device-radius.html">deviceRadius</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/unit/Dp.html">Dp</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-449685612%2FProperties%2F812192306" anchor-label="deviceSafeAreaBottom" id="-449685612%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="device-safe-area-bottom.html"><span>device</span><wbr><span>Safe</span><wbr><span>Area</span><wbr><span><span>Bottom</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-449685612%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="device-safe-area-bottom.html">deviceSafeAreaBottom</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/unit/Dp.html">Dp</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-562464858%2FProperties%2F812192306" anchor-label="deviceSafeAreaTop" id="-562464858%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="device-safe-area-top.html"><span>device</span><wbr><span>Safe</span><wbr><span>Area</span><wbr><span><span>Top</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-562464858%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="device-safe-area-top.html">deviceSafeAreaTop</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/unit/Dp.html">Dp</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1712554481%2FProperties%2F812192306" anchor-label="emoji2xl" id="-1712554481%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="emoji2xl.html"><span><span>emoji2xl</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1712554481%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="emoji2xl.html">emoji2xl</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/unit/TextUnit.html">TextUnit</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1948128950%2FProperties%2F812192306" anchor-label="emojiLg" id="-1948128950%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="emoji-lg.html"><span>emoji</span><wbr><span><span>Lg</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1948128950%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="emoji-lg.html">emojiLg</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/unit/TextUnit.html">TextUnit</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1079574354%2FProperties%2F812192306" anchor-label="emojiMd" id="-1079574354%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="emoji-md.html"><span>emoji</span><wbr><span><span>Md</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1079574354%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="emoji-md.html">emojiMd</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/unit/TextUnit.html">TextUnit</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="674320715%2FProperties%2F812192306" anchor-label="emojiSm" id="674320715%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="emoji-sm.html"><span>emoji</span><wbr><span><span>Sm</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="674320715%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="emoji-sm.html">emojiSm</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/unit/TextUnit.html">TextUnit</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1156403697%2FProperties%2F812192306" anchor-label="emojiXl" id="1156403697%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="emoji-xl.html"><span>emoji</span><wbr><span><span>Xl</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1156403697%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="emoji-xl.html">emojiXl</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/unit/TextUnit.html">TextUnit</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-330688363%2FProperties%2F812192306" anchor-label="fontSize2xl" id="-330688363%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="font-size2xl.html"><span>font</span><wbr><span><span>Size2xl</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-330688363%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="font-size2xl.html">fontSize2xl</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/unit/TextUnit.html">TextUnit</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-113549714%2FProperties%2F812192306" anchor-label="fontSize2xs" id="-113549714%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="font-size2xs.html"><span>font</span><wbr><span><span>Size2xs</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-113549714%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="font-size2xs.html">fontSize2xs</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/unit/TextUnit.html">TextUnit</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1975772676%2FProperties%2F812192306" anchor-label="fontSizeLg" id="1975772676%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="font-size-lg.html"><span>font</span><wbr><span>Size</span><wbr><span><span>Lg</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1975772676%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="font-size-lg.html">fontSizeLg</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/unit/TextUnit.html">TextUnit</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1450640024%2FProperties%2F812192306" anchor-label="fontSizeMd" id="-1450640024%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="font-size-md.html"><span>font</span><wbr><span>Size</span><wbr><span><span>Md</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1450640024%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="font-size-md.html">fontSizeMd</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/unit/TextUnit.html">TextUnit</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1677510953%2FProperties%2F812192306" anchor-label="fontSizeMicro" id="-1677510953%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="font-size-micro.html"><span>font</span><wbr><span>Size</span><wbr><span><span>Micro</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1677510953%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="font-size-micro.html">fontSizeMicro</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/unit/TextUnit.html">TextUnit</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="303255045%2FProperties%2F812192306" anchor-label="fontSizeSm" id="303255045%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="font-size-sm.html"><span>font</span><wbr><span>Size</span><wbr><span><span>Sm</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="303255045%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="font-size-sm.html">fontSizeSm</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/unit/TextUnit.html">TextUnit</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="785338027%2FProperties%2F812192306" anchor-label="fontSizeXl" id="785338027%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="font-size-xl.html"><span>font</span><wbr><span>Size</span><wbr><span><span>Xl</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="785338027%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="font-size-xl.html">fontSizeXl</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/unit/TextUnit.html">TextUnit</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1002476676%2FProperties%2F812192306" anchor-label="fontSizeXs" id="1002476676%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="font-size-xs.html"><span>font</span><wbr><span>Size</span><wbr><span><span>Xs</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1002476676%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="font-size-xs.html">fontSizeXs</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/unit/TextUnit.html">TextUnit</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-331767837%2FProperties%2F812192306" anchor-label="fontWeightBold" id="-331767837%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="font-weight-bold.html"><span>font</span><wbr><span>Weight</span><wbr><span><span>Bold</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-331767837%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="font-weight-bold.html">fontWeightBold</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/text/font/FontWeight.html">FontWeight</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="538452531%2FProperties%2F812192306" anchor-label="fontWeightMedium" id="538452531%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="font-weight-medium.html"><span>font</span><wbr><span>Weight</span><wbr><span><span>Medium</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="538452531%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="font-weight-medium.html">fontWeightMedium</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/text/font/FontWeight.html">FontWeight</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1308760906%2FProperties%2F812192306" anchor-label="fontWeightRegular" id="-1308760906%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="font-weight-regular.html"><span>font</span><wbr><span>Weight</span><wbr><span><span>Regular</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1308760906%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="font-weight-regular.html">fontWeightRegular</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/text/font/FontWeight.html">FontWeight</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-822156907%2FProperties%2F812192306" anchor-label="fontWeightSemiBold" id="-822156907%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="font-weight-semi-bold.html"><span>font</span><wbr><span>Weight</span><wbr><span>Semi</span><wbr><span><span>Bold</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-822156907%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="font-weight-semi-bold.html">fontWeightSemiBold</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/text/font/FontWeight.html">FontWeight</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="428290202%2FProperties%2F812192306" anchor-label="iconSizeLg" id="428290202%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="icon-size-lg.html"><span>icon</span><wbr><span>Size</span><wbr><span><span>Lg</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="428290202%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="icon-size-lg.html">iconSizeLg</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/unit/Dp.html">Dp</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1296844798%2FProperties%2F812192306" anchor-label="iconSizeMd" id="1296844798%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="icon-size-md.html"><span>icon</span><wbr><span>Size</span><wbr><span><span>Md</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1296844798%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="icon-size-md.html">iconSizeMd</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/unit/Dp.html">Dp</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1244227429%2FProperties%2F812192306" anchor-label="iconSizeSm" id="-1244227429%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="icon-size-sm.html"><span>icon</span><wbr><span>Size</span><wbr><span><span>Sm</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1244227429%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="icon-size-sm.html">iconSizeSm</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/unit/Dp.html">Dp</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-545005798%2FProperties%2F812192306" anchor-label="iconSizeXs" id="-545005798%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="icon-size-xs.html"><span>icon</span><wbr><span>Size</span><wbr><span><span>Xs</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-545005798%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="icon-size-xs.html">iconSizeXs</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/unit/Dp.html">Dp</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1543665179%2FProperties%2F812192306" anchor-label="iconStrokeDefault" id="1543665179%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="icon-stroke-default.html"><span>icon</span><wbr><span>Stroke</span><wbr><span><span>Default</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1543665179%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="icon-stroke-default.html">iconStrokeDefault</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/unit/Dp.html">Dp</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-70298590%2FProperties%2F812192306" anchor-label="iconStrokeEmphasis" id="-70298590%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="icon-stroke-emphasis.html"><span>icon</span><wbr><span>Stroke</span><wbr><span><span>Emphasis</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-70298590%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="icon-stroke-emphasis.html">iconStrokeEmphasis</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/unit/Dp.html">Dp</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="872332369%2FProperties%2F812192306" anchor-label="iconStrokeSubtle" id="872332369%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="icon-stroke-subtle.html"><span>icon</span><wbr><span>Stroke</span><wbr><span><span>Subtle</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="872332369%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="icon-stroke-subtle.html">iconStrokeSubtle</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/unit/Dp.html">Dp</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="745324010%2FProperties%2F812192306" anchor-label="inputRadiusOptionCard" id="745324010%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="input-radius-option-card.html"><span>input</span><wbr><span>Radius</span><wbr><span>Option</span><wbr><span><span>Card</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="745324010%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="input-radius-option-card.html">inputRadiusOptionCard</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/unit/Dp.html">Dp</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="862529929%2FProperties%2F812192306" anchor-label="inputRadiusSearchInput" id="862529929%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="input-radius-search-input.html"><span>input</span><wbr><span>Radius</span><wbr><span>Search</span><wbr><span><span>Input</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="862529929%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="input-radius-search-input.html">inputRadiusSearchInput</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/unit/Dp.html">Dp</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1790668253%2FProperties%2F812192306" anchor-label="inputRadiusSelectInput" id="1790668253%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="input-radius-select-input.html"><span>input</span><wbr><span>Radius</span><wbr><span>Select</span><wbr><span><span>Input</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1790668253%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="input-radius-select-input.html">inputRadiusSelectInput</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/unit/Dp.html">Dp</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="212999630%2FProperties%2F812192306" anchor-label="inputRadiusTextInput" id="212999630%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="input-radius-text-input.html"><span>input</span><wbr><span>Radius</span><wbr><span>Text</span><wbr><span><span>Input</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="212999630%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="input-radius-text-input.html">inputRadiusTextInput</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/unit/Dp.html">Dp</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="731145197%2FProperties%2F812192306" anchor-label="lineHeightNormal" id="731145197%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="line-height-normal.html"><span>line</span><wbr><span>Height</span><wbr><span><span>Normal</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="731145197%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="line-height-normal.html">lineHeightNormal</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/unit/TextUnit.html">TextUnit</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-167377129%2FProperties%2F812192306" anchor-label="lineHeightRelaxed" id="-167377129%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="line-height-relaxed.html"><span>line</span><wbr><span>Height</span><wbr><span><span>Relaxed</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-167377129%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="line-height-relaxed.html">lineHeightRelaxed</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/unit/TextUnit.html">TextUnit</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1647914424%2FProperties%2F812192306" anchor-label="lineHeightTight" id="-1647914424%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="line-height-tight.html"><span>line</span><wbr><span>Height</span><wbr><span><span>Tight</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1647914424%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="line-height-tight.html">lineHeightTight</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/unit/TextUnit.html">TextUnit</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1785227081%2FProperties%2F812192306" anchor-label="radius2xl" id="-1785227081%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="radius2xl.html"><span><span>radius2xl</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1785227081%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="radius2xl.html">radius2xl</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/unit/Dp.html">Dp</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1568088432%2FProperties%2F812192306" anchor-label="radius2xs" id="-1568088432%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="radius2xs.html"><span><span>radius2xs</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1568088432%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="radius2xs.html">radius2xs</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/unit/Dp.html">Dp</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-2039963626%2FProperties%2F812192306" anchor-label="radius3xl" id="-2039963626%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="radius3xl.html"><span><span>radius3xl</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-2039963626%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="radius3xl.html">radius3xl</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/unit/Dp.html">Dp</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="2000267125%2FProperties%2F812192306" anchor-label="radius4xl" id="2000267125%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="radius4xl.html"><span><span>radius4xl</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="2000267125%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="radius4xl.html">radius4xl</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/unit/Dp.html">Dp</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-426452574%2FProperties%2F812192306" anchor-label="radiusLg" id="-426452574%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="radius-lg.html"><span>radius</span><wbr><span><span>Lg</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-426452574%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="radius-lg.html">radiusLg</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/unit/Dp.html">Dp</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-343227431%2FProperties%2F812192306" anchor-label="radiusMax" id="-343227431%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="radius-max.html"><span>radius</span><wbr><span><span>Max</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-343227431%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="radius-max.html">radiusMax</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/unit/Dp.html">Dp</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="442102022%2FProperties%2F812192306" anchor-label="radiusMd" id="442102022%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="radius-md.html"><span>radius</span><wbr><span><span>Md</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="442102022%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="radius-md.html">radiusMd</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/unit/Dp.html">Dp</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-522586491%2FProperties%2F812192306" anchor-label="radiusNone" id="-522586491%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="radius-none.html"><span>radius</span><wbr><span><span>None</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-522586491%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="radius-none.html">radiusNone</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/unit/Dp.html">Dp</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-2098970205%2FProperties%2F812192306" anchor-label="radiusSm" id="-2098970205%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="radius-sm.html"><span>radius</span><wbr><span><span>Sm</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-2098970205%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="radius-sm.html">radiusSm</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/unit/Dp.html">Dp</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1616887223%2FProperties%2F812192306" anchor-label="radiusXl" id="-1616887223%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="radius-xl.html"><span>radius</span><wbr><span><span>Xl</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1616887223%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="radius-xl.html">radiusXl</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/unit/Dp.html">Dp</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1399748574%2FProperties%2F812192306" anchor-label="radiusXs" id="-1399748574%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="radius-xs.html"><span>radius</span><wbr><span><span>Xs</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1399748574%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="radius-xs.html">radiusXs</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/unit/Dp.html">Dp</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1061825871%2FProperties%2F812192306" anchor-label="size10" id="1061825871%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="size10.html"><span><span>size10</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1061825871%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="size10.html">size10</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/unit/Dp.html">Dp</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1123865485%2FProperties%2F812192306" anchor-label="size12" id="1123865485%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="size12.html"><span><span>size12</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1123865485%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="size12.html">size12</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/unit/Dp.html">Dp</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="216177845%2FProperties%2F812192306" anchor-label="size128" id="216177845%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="size128.html"><span><span>size128</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="216177845%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="size128.html">size128</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/unit/Dp.html">Dp</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1154885292%2FProperties%2F812192306" anchor-label="size13" id="1154885292%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="size13.html"><span><span>size13</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1154885292%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="size13.html">size13</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/unit/Dp.html">Dp</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1185905099%2FProperties%2F812192306" anchor-label="size14" id="1185905099%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="size14.html"><span><span>size14</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1185905099%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="size14.html">size14</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/unit/Dp.html">Dp</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="2015326651%2FProperties%2F812192306" anchor-label="size144" id="2015326651%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="size144.html"><span><span>size144</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="2015326651%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="size144.html">size144</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/unit/Dp.html">Dp</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1216924906%2FProperties%2F812192306" anchor-label="size15" id="1216924906%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="size15.html"><span><span>size15</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1216924906%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="size15.html">size15</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/unit/Dp.html">Dp</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1247944713%2FProperties%2F812192306" anchor-label="size16" id="1247944713%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="size16.html"><span><span>size16</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1247944713%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="size16.html">size16</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/unit/Dp.html">Dp</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1278964520%2FProperties%2F812192306" anchor-label="size17" id="1278964520%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="size17.html"><span><span>size17</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1278964520%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="size17.html">size17</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/unit/Dp.html">Dp</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1309984327%2FProperties%2F812192306" anchor-label="size18" id="1309984327%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="size18.html"><span><span>size18</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1309984327%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="size18.html">size18</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/unit/Dp.html">Dp</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1026587942%2FProperties%2F812192306" anchor-label="size2" id="-1026587942%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="size2.html"><span><span>size2</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1026587942%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="size2.html">size2</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/unit/Dp.html">Dp</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="2023439888%2FProperties%2F812192306" anchor-label="size20" id="2023439888%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="size20.html"><span><span>size20</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="2023439888%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="size20.html">size20</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/unit/Dp.html">Dp</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1961786734%2FProperties%2F812192306" anchor-label="size208" id="-1961786734%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="size208.html"><span><span>size208</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1961786734%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="size208.html">size208</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/unit/Dp.html">Dp</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="2085479502%2FProperties%2F812192306" anchor-label="size22" id="2085479502%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="size22.html"><span><span>size22</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="2085479502%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="size22.html">size22</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/unit/Dp.html">Dp</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-2147448180%2FProperties%2F812192306" anchor-label="size24" id="-2147448180%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="size24.html"><span><span>size24</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-2147448180%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="size24.html">size24</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/unit/Dp.html">Dp</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1636510878%2FProperties%2F812192306" anchor-label="size240" id="1636510878%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="size240.html"><span><span>size240</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1636510878%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="size240.html">size240</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/unit/Dp.html">Dp</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-2023368952%2FProperties%2F812192306" anchor-label="size28" id="-2023368952%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="size28.html"><span><span>size28</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-2023368952%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="size28.html">size28</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/unit/Dp.html">Dp</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1247873777%2FProperties%2F812192306" anchor-label="size32" id="-1247873777%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="size32.html"><span><span>size32</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1247873777%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="size32.html">size32</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/unit/Dp.html">Dp</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-541453701%2FProperties%2F812192306" anchor-label="size320" id="-541453701%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="size320.html"><span><span>size320</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-541453701%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="size320.html">size320</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/unit/Dp.html">Dp</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-964548328%2FProperties%2F812192306" anchor-label="size4" id="-964548328%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="size4.html"><span><span>size4</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-964548328%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="size4.html">size4</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/unit/Dp.html">Dp</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-348299374%2FProperties%2F812192306" anchor-label="size40" id="-348299374%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="size40.html"><span><span>size40</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-348299374%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="size40.html">size40</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/unit/Dp.html">Dp</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-100140918%2FProperties%2F812192306" anchor-label="size48" id="-100140918%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="size48.html"><span><span>size48</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-100140918%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="size48.html">size48</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/unit/Dp.html">Dp</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="678526560%2FProperties%2F812192306" anchor-label="size480" id="678526560%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="size480.html"><span><span>size480</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="678526560%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="size480.html">size480</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/unit/Dp.html">Dp</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="799433485%2FProperties%2F812192306" anchor-label="size56" id="799433485%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="size56.html"><span><span>size56</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="799433485%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="size56.html">size56</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/unit/Dp.html">Dp</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1499438019%2FProperties%2F812192306" anchor-label="size560" id="-1499438019%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="size560.html"><span><span>size560</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1499438019%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="size560.html">size560</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/unit/Dp.html">Dp</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-902508714%2FProperties%2F812192306" anchor-label="size6" id="-902508714%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="size6.html"><span><span>size6</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-902508714%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="size6.html">size6</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/unit/Dp.html">Dp</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1699007888%2FProperties%2F812192306" anchor-label="size64" id="1699007888%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="size64.html"><span><span>size64</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1699007888%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="size64.html">size64</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/unit/Dp.html">Dp</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="617564698%2FProperties%2F812192306" anchor-label="size640" id="617564698%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="size640.html"><span><span>size640</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="617564698%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="size640.html">size640</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/unit/Dp.html">Dp</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-2008911109%2FProperties%2F812192306" anchor-label="size760" id="-2008911109%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="size760.html"><span><span>size760</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-2008911109%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="size760.html">size760</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/unit/Dp.html">Dp</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-840469100%2FProperties%2F812192306" anchor-label="size8" id="-840469100%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="size8.html"><span><span>size8</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-840469100%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="size8.html">size8</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/unit/Dp.html">Dp</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-796810602%2FProperties%2F812192306" anchor-label="size80" id="-796810602%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="size80.html"><span><span>size80</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-796810602%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="size80.html">size80</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/unit/Dp.html">Dp</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="616054796%2FProperties%2F812192306" anchor-label="spacing2xl" id="616054796%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="spacing2xl.html"><span><span>spacing2xl</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="616054796%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="spacing2xl.html">spacing2xl</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/unit/Dp.html">Dp</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="833193445%2FProperties%2F812192306" anchor-label="spacing2xs" id="833193445%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="spacing2xs.html"><span><span>spacing2xs</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="833193445%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="spacing2xs.html">spacing2xs</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/unit/Dp.html">Dp</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="361318251%2FProperties%2F812192306" anchor-label="spacing3xl" id="361318251%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="spacing3xl.html"><span><span>spacing3xl</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="361318251%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="spacing3xl.html">spacing3xl</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/unit/Dp.html">Dp</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="578456900%2FProperties%2F812192306" anchor-label="spacing3xs" id="578456900%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="spacing3xs.html"><span><span>spacing3xs</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="578456900%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="spacing3xs.html">spacing3xs</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/unit/Dp.html">Dp</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1036481453%2FProperties%2F812192306" anchor-label="spacingLg" id="1036481453%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="spacing-lg.html"><span>spacing</span><wbr><span><span>Lg</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1036481453%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="spacing-lg.html">spacingLg</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/unit/Dp.html">Dp</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1905036049%2FProperties%2F812192306" anchor-label="spacingMd" id="1905036049%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="spacing-md.html"><span>spacing</span><wbr><span><span>Md</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1905036049%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="spacing-md.html">spacingMd</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/unit/Dp.html">Dp</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="902707664%2FProperties%2F812192306" anchor-label="spacingNone" id="902707664%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="spacing-none.html"><span>spacing</span><wbr><span><span>None</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="902707664%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="spacing-none.html">spacingNone</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/unit/Dp.html">Dp</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-636036178%2FProperties%2F812192306" anchor-label="spacingSm" id="-636036178%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="spacing-sm.html"><span>spacing</span><wbr><span><span>Sm</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-636036178%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="spacing-sm.html">spacingSm</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/unit/Dp.html">Dp</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-153953196%2FProperties%2F812192306" anchor-label="spacingXl" id="-153953196%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="spacing-xl.html"><span>spacing</span><wbr><span><span>Xl</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-153953196%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="spacing-xl.html">spacingXl</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/unit/Dp.html">Dp</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="63185453%2FProperties%2F812192306" anchor-label="spacingXs" id="63185453%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="spacing-xs.html"><span>spacing</span><wbr><span><span>Xs</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="63185453%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="spacing-xs.html">spacingXs</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/unit/Dp.html">Dp</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-419311107%2FProperties%2F812192306" anchor-label="strokeW100" id="-419311107%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="stroke-w100.html"><span>stroke</span><wbr><span><span>W100</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-419311107%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="stroke-w100.html">strokeW100</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/unit/Dp.html">Dp</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1503916927%2FProperties%2F812192306" anchor-label="strokeW120" id="1503916927%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="stroke-w120.html"><span>stroke</span><wbr><span><span>W120</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1503916927%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="stroke-w120.html">strokeW120</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/unit/Dp.html">Dp</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="93791682%2FProperties%2F812192306" anchor-label="strokeW150" id="93791682%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="stroke-w150.html"><span>stroke</span><wbr><span><span>W150</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="93791682%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="stroke-w150.html">strokeW150</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/unit/Dp.html">Dp</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-674047652%2FProperties%2F812192306" anchor-label="strokeW200" id="-674047652%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="stroke-w200.html"><span>stroke</span><wbr><span><span>W200</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-674047652%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="stroke-w200.html">strokeW200</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/unit/Dp.html">Dp</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-928784197%2FProperties%2F812192306" anchor-label="strokeW300" id="-928784197%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="stroke-w300.html"><span>stroke</span><wbr><span><span>W300</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-928784197%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="stroke-w300.html">strokeW300</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/unit/Dp.html">Dp</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1183520742%2FProperties%2F812192306" anchor-label="strokeW400" id="-1183520742%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="stroke-w400.html"><span>stroke</span><wbr><span><span>W400</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1183520742%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="stroke-w400.html">strokeW400</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/unit/Dp.html">Dp</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-608718188%2FProperties%2F812192306" anchor-label="strokeW80" id="-608718188%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="stroke-w80.html"><span>stroke</span><wbr><span><span>W80</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-608718188%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="stroke-w80.html">strokeW80</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/unit/Dp.html">Dp</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    <div class="footer">
+        <div class="footer--container">
+            <a href="#content" id="go-to-top-link" class="footer--button footer--button_go-to-top"></a>
+            <div class="footer--content">
+                <div>
+                    <span>Generated by </span>
+                    <a class="footer--link footer--link_external" href="https://github.com/Kotlin/dokka">
+                        Dokka
+                    </a>
+                    <div>© 2026 Copyright</div>
+                </div>
+            </div>
+        </div>
+    </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

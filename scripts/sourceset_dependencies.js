@@ -1,1 +1,1 @@
-sourceset_dependencies = '{":stream-android-core/main":[],":stream-android-core/release":[],":stream-android-core-annotations/main":[],":stream-android-core-lint/main":[]}'
+sourceset_dependencies = '{":stream-android-core-ui/main":[],":stream-android-core-ui/release":[],":stream-android-core/main":[],":stream-android-core/release":[],":stream-android-core-annotations/main":[],":stream-android-core-lint/main":[]}'

@@ -40,3 +40,5 @@ io.getstream.android.core.annotations
 module:stream-android-core-lint
 io.getstream.android.core.lint
 io.getstream.android.core.lint.detectors
+module:stream-android-core-ui
+io.getstream.android.core.ui.design

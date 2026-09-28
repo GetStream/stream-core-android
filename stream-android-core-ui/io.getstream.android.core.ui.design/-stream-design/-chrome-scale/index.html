@@ -1,0 +1,359 @@
+<!doctype html>
+<html class="no-js" lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8">
+    <title>ChromeScale</title>
+<link href="../../../../images/logo-icon.svg" rel="icon" type="image/svg"><script>var pathToRoot = "../../../../";</script>
+    <script>document.documentElement.classList.replace("no-js", "js");</script>
+    <script>const storage = localStorage.getItem("dokka-dark-mode")
+      if (storage == null) {
+        const osDarkSchemePreferred = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+        if (osDarkSchemePreferred === true) {
+          document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+      } else {
+        const savedDarkMode = JSON.parse(storage)
+        if (savedDarkMode === true) {
+          document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+      }
+    </script>
+<script type="text/javascript" src="../../../../scripts/sourceset_dependencies.js" async></script>
+<link href="../../../../styles/style.css" rel="Stylesheet">
+<link href="../../../../styles/main.css" rel="Stylesheet">
+<link href="../../../../styles/prism.css" rel="Stylesheet">
+<link href="../../../../styles/logo-styles.css" rel="Stylesheet">
+<link href="../../../../ui-kit/ui-kit.min.css" rel="Stylesheet">
+<script type="text/javascript" src="../../../../scripts/safe-local-storage_blocking.js"></script>
+<script type="text/javascript" src="../../../../scripts/navigation-loader.js" async></script>
+<script type="text/javascript" src="../../../../scripts/platform-content-handler.js" async></script>
+<script type="text/javascript" src="../../../../scripts/main.js" defer></script>
+<script type="text/javascript" src="../../../../scripts/prism.js" async></script>
+<script type="text/javascript" src="../../../../ui-kit/ui-kit.min.js" defer></script></head>
+<body>
+<div class="root">
+    <header class="navigation theme-dark" id="navigation-wrapper" role="banner">
+<a class="library-name--link" href="../../../../index.html" tabindex="1">
+                    stream-android-core
+            </a>        <button class="navigation-controls--btn navigation-controls--btn_toc ui-kit_mobile-only" id="toc-toggle" type="button">Toggle table of contents
+        </button>
+        <div class="navigation-controls--break ui-kit_mobile-only"></div>
+        <div class="library-version" id="library-version">5.1.0
+        </div>
+        <div class="navigation-controls">
+        <ul class="filter-section filter-section_loading" id="filter-section" aria-label="Target filter">
+                <button class="platform-tag platform-selector jvm-like" data-active="" aria-pressed="true" data-filter=":stream-android-core-ui/main">androidJvm</button>
+            <div class="dropdown filter-section--dropdown" data-role="dropdown" id="filter-section-dropdown">
+                <button class="button button_dropdown filter-section--dropdown-toggle" role="combobox" data-role="dropdown-toggle" aria-controls="platform-tags-listbox" aria-haspopup="listbox" aria-expanded="false" aria-label="Toggle source sets"></button>
+                <ul role="listbox" id="platform-tags-listbox" class="dropdown--list" data-role="dropdown-listbox" aria-label="Target filter">
+                    <div class="dropdown--header"><span>Target filter</span>
+                        <button class="button" data-role="dropdown-toggle" aria-label="Close target filter">
+                            <i class="ui-kit-icon ui-kit-icon_cross"></i>
+                        </button>
+                    </div>
+                        <li role="option" class="dropdown--option platform-selector-option jvm-like" tabindex="0">
+                            <label class="checkbox">
+                                <input type="checkbox" class="checkbox--input" id=":stream-android-core-ui/main" data-filter=":stream-android-core-ui/main">
+                                <span class="checkbox--icon"></span>
+                                androidJvm
+                            </label>
+                        </li>
+                </ul>
+                <div class="dropdown--overlay"></div>
+            </div>
+        </ul>
+            <button class="navigation-controls--btn navigation-controls--btn_theme" id="theme-toggle-button" type="button">Switch theme
+            </button>
+            <div class="navigation-controls--btn navigation-controls--btn_search" id="searchBar" role="button">Search in
+                API
+            </div>
+        </div>
+    </header>
+    <div id="container">
+        <nav id="leftColumn" class="sidebar" data-item-type="SECTION" data-item-config="{&quot;defaultSize&quot;: 280, &quot;minSize&quot;: 200, &quot;maxSize&quot;: 400}">
+            <a class="toc--skip-link" href="#main">Skip to content</a>
+            <div class="dropdown theme-dark_mobile" data-role="dropdown" id="toc-dropdown">
+                <ul role="listbox" id="toc-listbox" class="dropdown--list dropdown--list_toc-list" data-role="dropdown-listbox" aria-label="Table of contents">
+                    <div class="dropdown--header">
+                            <span>
+                                    stream-android-core
+                            </span>
+                        <button class="button" data-role="dropdown-toggle" aria-label="Close table of contents">
+                            <i class="ui-kit-icon ui-kit-icon_cross"></i>
+                        </button>
+                    </div>
+                    <div class="sidebar--inner" id="sideMenu"></div>
+                </ul>
+                <div class="dropdown--overlay"></div>
+            </div>
+        </nav>
+        <div id="resizer" class="resizer" data-item-type="BAR"></div>
+        <div id="main" data-item-type="SECTION" role="main">
+<div class="main-content" data-page-type="classlike" id="content" pageids="stream-android-core-ui::io.getstream.android.core.ui.design/StreamDesign.ChromeScale///PointingToDeclaration//812192306">
+  <div class="breadcrumbs"><a href="../../../index.html">stream-android-core-ui</a><span class="delimiter">/</span><a href="../../index.html">io.getstream.android.core.ui.design</a><span class="delimiter">/</span><a href="../index.html">StreamDesign</a><span class="delimiter">/</span><span class="current">ChromeScale</span></div>
+  <div class="cover ">
+    <h1 class="cover"><span>Chrome</span><wbr><span><span>Scale</span></span></h1>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation builtin">@</span><a href="https://developer.android.com/reference/kotlin/androidx/compose/runtime/Immutable.html"><span class="token annotation builtin">Immutable</span></a></div></div><span class="token keyword">data </span><span class="token keyword">class </span><a href="index.html">ChromeScale</a><span class="token punctuation">(</span><span class="parameters "><span class="parameter "><span class="token keyword">val </span>s0<span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/graphics/Color.html">Color</a><span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>s50<span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/graphics/Color.html">Color</a><span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>s100<span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/graphics/Color.html">Color</a><span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>s150<span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/graphics/Color.html">Color</a><span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>s200<span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/graphics/Color.html">Color</a><span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>s300<span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/graphics/Color.html">Color</a><span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>s400<span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/graphics/Color.html">Color</a><span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>s500<span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/graphics/Color.html">Color</a><span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>s600<span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/graphics/Color.html">Color</a><span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>s700<span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/graphics/Color.html">Color</a><span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>s800<span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/graphics/Color.html">Color</a><span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>s900<span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/graphics/Color.html">Color</a><span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>s1000<span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/graphics/Color.html">Color</a></span></span><span class="token punctuation">)</span></div><p class="paragraph">A 13-stop neutral ramp for the chrome (structural gray) palette: text, backgrounds, borders, surfaces.</p><p class="paragraph"><a href="../../../../stream-android-core-ui/io.getstream.android.core.ui.design/-stream-design/-chrome-scale/--root--.html">s0</a> and <a href="../../../../stream-android-core-ui/io.getstream.android.core.ui.design/-stream-design/-chrome-scale/--root--.html">s1000</a> are the absolute endpoints (white and black in light, black and white in dark). They absorb the light and dark polarity, so downstream tokens reference chrome stops with the same expression in both themes.</p><h4 class="tableheader">Parameters</h4><div class="table"><div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><u><span><span>s0</span></span></u></div></span></div><div><div class="title"><p class="paragraph">The first endpoint: white in light themes, black in dark themes.</p></div></div></div></div><div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><u><span><span>s50</span></span></u></div></span></div><div><div class="title"><p class="paragraph">The 50 stop.</p></div></div></div></div><div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><u><span><span>s100</span></span></u></div></span></div><div><div class="title"><p class="paragraph">The 100 stop.</p></div></div></div></div><div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><u><span><span>s150</span></span></u></div></span></div><div><div class="title"><p class="paragraph">The 150 stop.</p></div></div></div></div><div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><u><span><span>s200</span></span></u></div></span></div><div><div class="title"><p class="paragraph">The 200 stop.</p></div></div></div></div><div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><u><span><span>s300</span></span></u></div></span></div><div><div class="title"><p class="paragraph">The 300 stop.</p></div></div></div></div><div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><u><span><span>s400</span></span></u></div></span></div><div><div class="title"><p class="paragraph">The 400 stop.</p></div></div></div></div><div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><u><span><span>s500</span></span></u></div></span></div><div><div class="title"><p class="paragraph">The 500 stop.</p></div></div></div></div><div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><u><span><span>s600</span></span></u></div></span></div><div><div class="title"><p class="paragraph">The 600 stop.</p></div></div></div></div><div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><u><span><span>s700</span></span></u></div></span></div><div><div class="title"><p class="paragraph">The 700 stop.</p></div></div></div></div><div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><u><span><span>s800</span></span></u></div></span></div><div><div class="title"><p class="paragraph">The 800 stop.</p></div></div></div></div><div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><u><span><span>s900</span></span></u></div></span></div><div><div class="title"><p class="paragraph">The 900 stop.</p></div></div></div></div><div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><u><span><span>s1000</span></span></u></div></span></div><div><div class="title"><p class="paragraph">The last endpoint: black in light themes, white in dark themes.</p></div></div></div></div></div></div></div>
+  </div>
+  <div class="tabbedcontent">
+    <div class="tabs-section" tabs-section="tabs-section"><button class="section-tab" data-active="" data-togglable="CONSTRUCTOR,TYPE,PROPERTY,FUNCTION">Members</button></div>
+    <div class="tabs-section-body">
+      <div data-togglable="CONSTRUCTOR">
+        <h2 class="tableheader">Constructors</h2>
+        <div class="table"><a data-name="-1266364228%2FConstructors%2F812192306" anchor-label="ChromeScale" id="-1266364228%2FConstructors%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-togglable="CONSTRUCTOR" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-chrome-scale.html"><span>Chrome</span><wbr><span><span>Scale</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1266364228%2FConstructors%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">constructor</span><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">s0<span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/graphics/Color.html">Color</a><span class="token punctuation">, </span></span><span class="parameter ">s50<span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/graphics/Color.html">Color</a><span class="token punctuation">, </span></span><span class="parameter ">s100<span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/graphics/Color.html">Color</a><span class="token punctuation">, </span></span><span class="parameter ">s150<span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/graphics/Color.html">Color</a><span class="token punctuation">, </span></span><span class="parameter ">s200<span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/graphics/Color.html">Color</a><span class="token punctuation">, </span></span><span class="parameter ">s300<span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/graphics/Color.html">Color</a><span class="token punctuation">, </span></span><span class="parameter ">s400<span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/graphics/Color.html">Color</a><span class="token punctuation">, </span></span><span class="parameter ">s500<span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/graphics/Color.html">Color</a><span class="token punctuation">, </span></span><span class="parameter ">s600<span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/graphics/Color.html">Color</a><span class="token punctuation">, </span></span><span class="parameter ">s700<span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/graphics/Color.html">Color</a><span class="token punctuation">, </span></span><span class="parameter ">s800<span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/graphics/Color.html">Color</a><span class="token punctuation">, </span></span><span class="parameter ">s900<span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/graphics/Color.html">Color</a><span class="token punctuation">, </span></span><span class="parameter ">s1000<span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/graphics/Color.html">Color</a></span></span><span class="token punctuation">)</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div data-togglable="TYPE">
+        <h2 class="tableheader">Types</h2>
+        <div class="table"><a data-name="-634911732%2FClasslikes%2F812192306" anchor-label="Companion" id="-634911732%2FClasslikes%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-companion/index.html"><span><span>Companion</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-634911732%2FClasslikes%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">object </span><a href="-companion/index.html">Companion</a></div><div class="brief "><p class="paragraph">Factories for the default chrome scales.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div data-togglable="PROPERTY">
+        <h2 class="tableheader">Properties</h2>
+        <div class="table"><a data-name="-2110944712%2FProperties%2F812192306" anchor-label="s0" id="-2110944712%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="s0.html"><span><span>s0</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-2110944712%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="s0.html">s0</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/graphics/Color.html">Color</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-854484777%2FProperties%2F812192306" anchor-label="s100" id="-854484777%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="s100.html"><span><span>s100</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-854484777%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="s100.html">s100</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/graphics/Color.html">Color</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1231296589%2FProperties%2F812192306" anchor-label="s1000" id="-1231296589%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="s1000.html"><span><span>s1000</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1231296589%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="s1000.html">s1000</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/graphics/Color.html">Color</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-341381988%2FProperties%2F812192306" anchor-label="s150" id="-341381988%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="s150.html"><span><span>s150</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-341381988%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="s150.html">s150</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/graphics/Color.html">Color</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1109221322%2FProperties%2F812192306" anchor-label="s200" id="-1109221322%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="s200.html"><span><span>s200</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1109221322%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="s200.html">s200</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/graphics/Color.html">Color</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1363957867%2FProperties%2F812192306" anchor-label="s300" id="-1363957867%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="s300.html"><span><span>s300</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1363957867%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="s300.html">s300</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/graphics/Color.html">Color</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1618694412%2FProperties%2F812192306" anchor-label="s400" id="-1618694412%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="s400.html"><span><span>s400</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1618694412%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="s400.html">s400</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/graphics/Color.html">Color</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1013746121%2FProperties%2F812192306" anchor-label="s50" id="-1013746121%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="s50.html"><span><span>s50</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1013746121%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="s50.html">s50</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/graphics/Color.html">Color</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1873430957%2FProperties%2F812192306" anchor-label="s500" id="-1873430957%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="s500.html"><span><span>s500</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1873430957%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="s500.html">s500</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/graphics/Color.html">Color</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-2128167502%2FProperties%2F812192306" anchor-label="s600" id="-2128167502%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="s600.html"><span><span>s600</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-2128167502%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="s600.html">s600</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/graphics/Color.html">Color</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1912063249%2FProperties%2F812192306" anchor-label="s700" id="1912063249%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="s700.html"><span><span>s700</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1912063249%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="s700.html">s700</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/graphics/Color.html">Color</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1657326704%2FProperties%2F812192306" anchor-label="s800" id="1657326704%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="s800.html"><span><span>s800</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1657326704%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="s800.html">s800</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/graphics/Color.html">Color</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1402590159%2FProperties%2F812192306" anchor-label="s900" id="1402590159%2FProperties%2F812192306" data-filterable-set=":stream-android-core-ui/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":stream-android-core-ui/main" data-filterable-set=":stream-android-core-ui/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="s900.html"><span><span>s900</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1402590159%2FProperties%2F812192306"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":stream-android-core-ui/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="s900.html">s900</a><span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/androidx/compose/ui/graphics/Color.html">Color</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    <div class="footer">
+        <div class="footer--container">
+            <a href="#content" id="go-to-top-link" class="footer--button footer--button_go-to-top"></a>
+            <div class="footer--content">
+                <div>
+                    <span>Generated by </span>
+                    <a class="footer--link footer--link_external" href="https://github.com/Kotlin/dokka">
+                        Dokka
+                    </a>
+                    <div>© 2026 Copyright</div>
+                </div>
+            </div>
+        </div>
+    </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>
