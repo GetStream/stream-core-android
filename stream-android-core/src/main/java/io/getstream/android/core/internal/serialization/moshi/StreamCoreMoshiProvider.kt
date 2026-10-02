@@ -34,10 +34,13 @@ internal class StreamCoreMoshiProvider {
     /**
      * Adapter for [Date] fields on internal WS events.
      *
-     * Writes epoch millis, so the wire format of outbound messages is unchanged. Reads leniently:
-     * gateways send dates either as epoch millis (number) or as RFC3339/ISO-8601 strings — e.g. the
-     * video coordinator's `connection.ok` carries `"created_at": "2026-07-06T07:47:26.592958Z"` at
-     * `$.me.created_at` — so both encodings are accepted.
+     * Reads both encodings the gateways use. The v2 gateway (`/api/v2/connect`, used by Feeds)
+     * sends dates as epoch nanoseconds (e.g. `"created_at": 1755586996702859000`); the video
+     * coordinator sends RFC3339 strings (e.g. `"created_at": "2026-07-06T07:47:26.592958Z"`). No
+     * gateway sends numeric dates in any other unit.
+     *
+     * Writes epoch millis, so the wire format of outbound messages (the health check echoes the
+     * connected event) is unchanged.
      */
     object LenientDateAdapter : JsonAdapter<Date>() {
         private val rfc3339 = Rfc3339DateJsonAdapter()
@@ -45,11 +48,11 @@ internal class StreamCoreMoshiProvider {
         override fun fromJson(reader: JsonReader): Date? =
             when (reader.peek()) {
                 JsonReader.Token.NULL -> reader.nextNull()
-                JsonReader.Token.NUMBER -> Date(reader.nextLong())
+                JsonReader.Token.NUMBER -> Date(reader.nextLong() / NANOS_PER_MILLI)
                 JsonReader.Token.STRING -> rfc3339.fromJson(reader)
                 else ->
                     throw JsonDataException(
-                        "Expected a date as epoch millis or an RFC3339 string " +
+                        "Expected a date as epoch nanoseconds or an RFC3339 string " +
                             "but was ${reader.peek()} at path ${reader.path}"
                     )
             }
@@ -57,6 +60,8 @@ internal class StreamCoreMoshiProvider {
         override fun toJson(writer: JsonWriter, value: Date?) {
             writer.value(value?.time)
         }
+
+        private const val NANOS_PER_MILLI = 1_000_000L
     }
 
     fun builder(configure: (Moshi.Builder) -> Unit): Moshi.Builder {

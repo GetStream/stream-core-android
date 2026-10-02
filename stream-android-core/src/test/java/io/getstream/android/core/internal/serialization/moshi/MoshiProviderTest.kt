@@ -39,17 +39,14 @@ class MoshiProviderTest {
         val json = adapter.toJson(date)
 
         assertEquals("1704000123456", json)
-        // round-trip
-        val parsed = adapter.fromJson(json)
-        assertEquals(date.time, parsed!!.time)
     }
 
     @Test
-    fun `DateMillisAdapter fromJson reads epoch millis`() {
+    fun `DateMillisAdapter fromJson reads epoch nanos`() {
         val m = moshi()
         val adapter = m.adapter(Date::class.java)
 
-        val parsed = adapter.fromJson("123456789")
+        val parsed = adapter.fromJson("123456789000000")
         assertNotNull(parsed)
         assertEquals(123456789L, parsed!!.time)
     }
@@ -141,14 +138,14 @@ class MoshiProviderTest {
     }
 
     @Test
-    fun `fromJson returns Date for non-null millis`() {
-        val millis = 1734567890000L
-        val date = StreamCoreMoshiProvider.LenientDateAdapter.fromJson("$millis")
-        assertEquals(Date(millis), date)
+    fun `fromJson returns Date truncated to millis for non-null nanos`() {
+        val nanos = 1734567890123456789L
+        val date = StreamCoreMoshiProvider.LenientDateAdapter.fromJson("$nanos")
+        assertEquals(Date(1734567890123L), date)
     }
 
     @Test
-    fun `fromJson returns null for null millis`() {
+    fun `fromJson returns null for null`() {
         val date = StreamCoreMoshiProvider.LenientDateAdapter.fromJson("null")
         assertNull(date)
     }
