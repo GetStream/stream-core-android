@@ -841,6 +841,10 @@ class StreamEventAggregatorImplTest {
                         deserializer = deserializer,
                         aggregationThreshold = threshold,
                         maxWindowMs = 500,
+                        // A full dispatch queue drops events by design, and the collector can
+                        // outrun the dispatcher when the inbox is flooded. Every queued item holds
+                        // at least one event, so this capacity can never fill up.
+                        dispatchQueueCapacity = totalEvents,
                     ),
             )
 
