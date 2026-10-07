@@ -30,6 +30,7 @@ pluginManagement {
         mavenCentral()
         gradlePluginPortal()
         maven("https://plugins.gradle.org/m2/")
+        maven("https://stream-io-repo.com")
     }
 }
 dependencyResolutionManagement {
