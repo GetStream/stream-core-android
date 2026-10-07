@@ -12,6 +12,22 @@ on:
           - minor
           - major
         default: minor
+      suffix:
+        description: 'Optional version suffix (e.g. beta, rc01). A dash is added automatically.'
+        required: false
+        type: string
+        default: ''
+      publish-targets:
+        description: >-
+          Leave as-is. central is a manual escape hatch for a release that has to
+          go out when the Stream repository cannot take it.
+        required: false
+        type: choice
+        options:
+          - streamRepo
+          - streamRepo,central
+          - central
+        default: streamRepo
 
 concurrency:
   group: release
@@ -35,7 +51,8 @@ jobs:
     uses: GetStream/stream-build-conventions-android/.github/workflows/release.yml@161dace284ff29473ea607bf26f436f6bb46c057
     with:
       bump: ${{ inputs.bump }}
-      publish-targets: streamRepo
+      suffix: ${{ inputs.suffix }}
+      publish-targets: ${{ inputs.publish-targets }}
     secrets:
       github-token: ${{ secrets.STREAM_PUBLIC_BOT_TOKEN }}
       maven-central-username: ${{ secrets.OSSRH_USERNAME }}
