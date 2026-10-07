@@ -25,7 +25,6 @@ import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
 import kotlin.test.assertEquals
-import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 import org.junit.Test
 
@@ -66,15 +65,17 @@ internal class StreamCoreMoshiProviderDateParsingTest {
     }
 
     @Test
-    fun `connection ok with epoch millis dates still parses`() {
-        // Given: the pre-existing wire format — dates as epoch millis.
+    fun `connection ok with epoch nanos dates parses`() {
+        // Given: a connection.ok frame as sent by the v2 gateway used by Feeds (captured from a
+        // real handshake) — all date fields are epoch nanoseconds.
         val adapter = moshi.adapter(StreamClientWsEvent::class.java)
-        val millis = 1_783_064_846_592L
         val raw =
             """
-            {"type":"connection.ok","connection_id":"conn-1",
-            "me":{"id":"u1","language":"en","role":"user","teams":[],
-            "created_at":$millis,"updated_at":$millis}}
+            {"type":"connection.ok","created_at":1790947725196662581,
+            "connection_id":"6abb765b-0a82-0bb6-0300-000000179c31",
+            "me":{"id":"u1","name":"U1","image":"","custom":{},"language":"","role":"user",
+            "teams":[],"created_at":1755586996702859000,"updated_at":1765800663371302000,
+            "banned":false,"online":true,"last_active":1790947725188417871}}
             """
                 .trimIndent()
 
@@ -83,8 +84,21 @@ internal class StreamCoreMoshiProviderDateParsingTest {
 
         // Then
         assertTrue(event is StreamClientConnectedEvent)
-        assertEquals(Date(millis), event.me.createdAt)
-        assertEquals(Date(millis), event.me.updatedAt)
+        assertEquals(utcDate("2025-08-19T07:03:16.702"), event.me.createdAt)
+        assertEquals(utcDate("2025-12-15T12:11:03.371"), event.me.updatedAt)
+        assertEquals(utcDate("2026-10-02T13:28:45.188"), event.me.lastActive)
+    }
+
+    @Test
+    fun `zero epoch nanos parses as the epoch`() {
+        // Given: the v2 gateway writes zero and pre-1970 times as 0.
+        val adapter = moshi.adapter(Date::class.java)
+
+        // When
+        val date = adapter.fromJson("0")
+
+        // Then
+        assertEquals(Date(0), date)
     }
 
     @Test
@@ -104,24 +118,9 @@ internal class StreamCoreMoshiProviderDateParsingTest {
         // When
         val json = adapter.toJson(user)
 
-        // Then: outbound wire format is unchanged.
+        // Then: outbound wire format is unchanged (millis, even though numeric reads are nanos).
         assertTrue(json.contains("\"created_at\":1000"))
         assertTrue(json.contains("\"updated_at\":2000"))
-    }
-
-    @Test
-    fun `RFC3339 date round-trips through millis`() {
-        // Given
-        val adapter = moshi.adapter(Date::class.java)
-        val parsed = adapter.fromJson("\"2026-07-06T07:47:26.592Z\"")
-
-        // When
-        val json = adapter.toJson(parsed)
-        val reparsed = adapter.fromJson(json)
-
-        // Then
-        assertNotNull(parsed)
-        assertEquals(parsed, reparsed)
     }
 
     @Test(expected = JsonDataException::class)
