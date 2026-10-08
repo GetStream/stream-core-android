@@ -325,15 +325,23 @@ when (state) {
 #### Network Monitoring
 
 ```kotlin
+import android.content.Context
+import android.net.ConnectivityManager
+import android.net.wifi.WifiManager
+import android.telephony.TelephonyManager
 import io.getstream.android.core.api.model.connection.network.StreamNetworkInfo
 import io.getstream.android.core.api.observers.network.StreamNetworkMonitor
 import io.getstream.android.core.api.observers.network.StreamNetworkMonitorListener
 import io.getstream.android.core.api.subscribe.StreamSubscriptionManager
 
 val networkMonitor = StreamNetworkMonitor(
-    context = context,
     logger = logger,
-    subscriptionManager = StreamSubscriptionManager(logger)
+    scope = scope,
+    subscriptionManager = StreamSubscriptionManager(logger),
+    wifiManager = context.getSystemService(Context.WIFI_SERVICE) as WifiManager,
+    telephonyManager = context.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager,
+    connectivityManager =
+        context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager,
 )
 
 val listener = object : StreamNetworkMonitorListener {
@@ -1015,8 +1023,8 @@ import io.getstream.android.core.api.socket.monitor.StreamHealthMonitor
 val healthMonitor = StreamHealthMonitor(
     logger = logger,
     scope = scope,
-    pingInterval = 30_000, // Ping every 30s
-    pongTimeout = 10_000   // Expect pong within 10s
+    interval = 25_000,          // Send a health check every 25s
+    livenessThreshold = 60_000, // Unhealthy after 60s with no inbound event
 )
 
 healthMonitor.start().getOrThrow()
@@ -1116,26 +1124,42 @@ thread {
 **Problem**: Reusing the same subscription manager instance can cause event loops.
 
 ```kotlin
-// ❌ WRONG
-val sharedManager = StreamSubscriptionManager<MyListener>(logger)
+import io.getstream.android.core.api.StreamClient
+import io.getstream.android.core.api.model.config.StreamComponentProvider
+import io.getstream.android.core.api.socket.listeners.StreamClientListener
+import io.getstream.android.core.api.subscribe.StreamSubscriptionManager
 
-val client = StreamClient(
-    subscriptionManager = sharedManager,
+// ❌ WRONG - one registry handed to two clients
+val sharedManager = StreamSubscriptionManager<StreamClientListener>(logger)
+
+val clientA = StreamClient(
     // ...
+    components = StreamComponentProvider(clientSubscriptionManager = sharedManager),
 )
 
-val session = StreamSession(
-    subscriptionManager = sharedManager, // Same instance!
+val clientB = StreamClient(
     // ...
+    components = StreamComponentProvider(clientSubscriptionManager = sharedManager), // Same instance!
 )
 ```
 
-**Solution**: Create separate instances for different components:
+**Solution**: Give each client its own registry:
 
 ```kotlin
 // ✅ CORRECT
-val clientManager = StreamSubscriptionManager<ClientListener>(logger)
-val sessionManager = StreamSubscriptionManager<SessionListener>(logger)
+val clientA = StreamClient(
+    // ...
+    components = StreamComponentProvider(
+        clientSubscriptionManager = StreamSubscriptionManager(logger),
+    ),
+)
+
+val clientB = StreamClient(
+    // ...
+    components = StreamComponentProvider(
+        clientSubscriptionManager = StreamSubscriptionManager(logger),
+    ),
+)
 ```
 
 **Why**: Shared managers can cause nested event notifications leading to stack overflows or infinite loops.
