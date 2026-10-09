@@ -60,6 +60,20 @@ Rather than duplicating infrastructure code across multiple SDKs, Stream Android
 | `io.getstream:stream-android-core` | The runtime described in this README: connectivity, tokens, state, reliability. |
 | `io.getstream:stream-android-core-ui` | The shared design tokens (`StreamDesign`, `StreamTokens`) as immutable Compose classes, consumed by the Chat and Video Compose themes. It does not depend on `stream-android-core`. |
 
+Releases are published to the [Stream Maven repository](https://browse.stream-io-repo.com/releases/stream-core-android). Add it to your `settings.gradle.kts`:
+
+```kotlin
+dependencyResolutionManagement {
+    repositories {
+        google()
+        mavenCentral()
+        maven("https://stream-io-repo.com")
+    }
+}
+```
+
+Earlier versions remain available from Maven Central.
+
 ## Overview
 
 **Stream Android Core** provides shared primitives and infrastructure for Stream's Android SDKs:
