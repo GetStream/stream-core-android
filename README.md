@@ -59,6 +59,8 @@ Rather than duplicating infrastructure code across multiple SDKs, Stream Android
 | --- | --- |
 | `io.getstream:stream-android-core` | The runtime described in this README: connectivity, tokens, state, reliability. |
 | `io.getstream:stream-android-core-ui` | The shared design tokens (`StreamDesign`, `StreamTokens`) as immutable Compose classes, consumed by the Chat and Video Compose themes. It does not depend on `stream-android-core`. |
+| `io.getstream:stream-android-core-annotations` | The opt-in markers `@StreamInternalApi`, `@StreamPublishedApi` and `@StreamDelicateApi`. |
+| `io.getstream:stream-android-core-lint` | Lint checks for Core's annotations. |
 
 Releases are published to the [Stream Maven repository](https://browse.stream-io-repo.com/releases/stream-core-android). Add it to your `settings.gradle.kts`:
 
@@ -73,6 +75,16 @@ dependencyResolutionManagement {
 ```
 
 Earlier versions remain available from Maven Central.
+
+Then add the dependencies. `stream-android-core` only pulls the annotations in at runtime, so add
+them explicitly to use `@OptIn(StreamInternalApi::class)`:
+
+```kotlin
+dependencies {
+    implementation("io.getstream:stream-android-core:5.1.1")
+    implementation("io.getstream:stream-android-core-annotations:5.1.1")
+}
+```
 
 ## Overview
 
@@ -101,7 +113,7 @@ Stream Android Core uses annotations to distinguish between stable public APIs a
 
 ### Who Should Use This?
 
-**Integrator/app developers**: Use [Stream Chat SDK](https://github.com/GetStream/stream-chat-android), [Stream Video SDK](https://github.com/GetStream/stream-video-android), or [Stream Feeds SDK](https://github.com/GetStream/stream-android). Access published Core types through your product SDK's public API.
+**Integrator/app developers**: Use [Stream Chat SDK](https://github.com/GetStream/stream-chat-android), [Stream Video SDK](https://github.com/GetStream/stream-video-android), or [Stream Feeds SDK](https://github.com/GetStream/stream-feeds-android). Access published Core types through your product SDK's public API.
 
 **Stream SDK maintainers**: Use Core as your infrastructure foundation. Expose `@StreamPublishedApi` types in your SDK's public API, keep `@StreamInternalApi` types private.
 
@@ -136,8 +148,10 @@ Stream Android Core uses annotations to distinguish between stable public APIs a
 
 > **Before you copy anything below:** nearly every type in this library is annotated
 > `@StreamInternalApi`, whose opt-in level is `ERROR` — including `StreamClient` itself,
-> `StreamUser`, `StreamSocketConfig`, `StreamLogger`, and the processing utilities. Only a handful
-> of value types (`StreamApiKey`, `StreamUserId`, `StreamToken`) are `@StreamPublishedApi`. Add a
+> `StreamUser`, `StreamSocketConfig`, `StreamLogger`, and the processing utilities. Only the types
+> product SDKs expose to integrators are `@StreamPublishedApi` — value types such as
+> `StreamApiKey`, `StreamUserId` and `StreamToken`, plus `StreamTokenProvider`,
+> `StreamConnectionState` and `StreamConnectedUser`. Add a
 > file-level opt-in once and every snippet on this page compiles:
 >
 > ```kotlin
@@ -245,7 +259,8 @@ val connected = client.connect() // Result<StreamConnectedUser>
 
 ### Component Lifecycle
 
-Most components in Stream Android Core implement `StreamStartableComponent`:
+The monitors (`StreamHealthMonitor`, `StreamLifecycleMonitor`, `StreamNetworkMonitor`) and
+`StreamWatcher` implement `StreamStartableComponent`:
 
 ```kotlin
 interface StreamStartableComponent {
@@ -257,7 +272,7 @@ interface StreamStartableComponent {
 **Pattern**: Always call `start()` before using a component and `stop()` when done:
 
 ```kotlin
-val component = StreamSerialProcessingQueue(logger, scope)
+val component = StreamHealthMonitor(logger = logger, scope = scope)
 
 component.start()
     .onSuccess { /* component is ready */ }
@@ -267,7 +282,7 @@ component.start()
 
 component.stop()
     .onSuccess { /* cleanup complete */ }
-    .onFailure { error -> logger.w(error) { "Failed to stop gracefully" } }
+    .onFailure { error -> logger.e(error) { "Failed to stop gracefully" } }
 ```
 
 ### Result-Based Error Handling
@@ -383,7 +398,8 @@ networkMonitor.start().getOrThrow()
 
 **Key Points**:
 - Lifecycle operations (add/remove observers) **must** run on the main thread
-- The library handles thread dispatching automatically using `runOnMainLooper`
+- `StreamLifecycleMonitor` runs inline when already on the main thread and otherwise posts to the
+  main looper without blocking
 - Network listener methods are `suspend` functions and run on background threads
 
 ---
@@ -564,14 +580,16 @@ Delays for the first four retries at `backoffStepMillis = 250` (`fixed` shown at
 
 The table stops at four deliberately: the processor gives up on the last attempt *before* asking
 the policy for another delay, so with the default `maxRetries = 5` a fifth delay is never
-computed. That matters for `quadratic` in particular — doubling only overtakes it at retry 5, so
-in practice `quadratic` always waits longer than `exponential`, not less.
+computed. `maxRetries` counts every attempt including the first, and `giveUp` is only consulted
+once `attempt >= minRetries`. The four-delay limit matters for `quadratic` in particular —
+doubling only overtakes it at retry 5, so in practice `quadratic` always waits longer than `exponential`, not less.
 
 #### Linear Backoff
 
 ```kotlin
 import io.getstream.android.core.annotations.StreamInternalApi
 import io.getstream.android.core.api.processing.StreamRetryProcessor
+import io.getstream.android.core.api.model.exceptions.StreamEndpointException
 import io.getstream.android.core.api.model.retry.StreamRetryPolicy
 
 val retryProcessor = StreamRetryProcessor(logger)
@@ -601,7 +619,7 @@ val policy = StreamRetryPolicy.exponential(
     maxBackoffMillis = 60_000, // Cap at 60s
     giveUp = { retry, error ->
         // Stop retrying on specific errors
-        error is UnauthorizedException
+        error is StreamEndpointException && error.apiError?.statusCode == 401
     }
 )
 ```
@@ -655,7 +673,7 @@ val jitterPolicy = StreamRetryPolicy.custom(
     minBackoffMills = 200,
     maxBackoffMills = 10_000,
     initialDelayMillis = 100,
-    giveUp = { _, cause -> cause is UnauthorizedException },
+    giveUp = { _, cause -> cause is StreamEndpointException && cause.apiError?.statusCode == 401 },
 ) { retry, previousDelay ->
     // 1-based retry index, previous delay in ms — add ±20% jitter to a doubling curve
     val base = previousDelay * 2
@@ -1003,37 +1021,45 @@ Reliable WebSocket connections with health monitoring.
 
 #### Creating a WebSocket
 
+`onOpen` and `onFailure` take OkHttp types, and Core keeps OkHttp as an `implementation`
+dependency, so overriding them needs `com.squareup.okhttp3:okhttp` on your own classpath.
+
 ```kotlin
 import io.getstream.android.core.api.socket.StreamWebSocket
 import io.getstream.android.core.api.socket.StreamWebSocketFactory
 import io.getstream.android.core.api.socket.listeners.StreamWebSocketListener
+import io.getstream.android.core.api.subscribe.StreamSubscriptionManager
+import okhttp3.Response
 
-val socketFactory = StreamWebSocketFactory(logger)
+val webSocket = StreamWebSocket(
+    logger = logger,
+    socketFactory = StreamWebSocketFactory(logger = logger),
+    subscriptionManager = StreamSubscriptionManager<StreamWebSocketListener>(logger),
+)
 
-val listener = object : StreamWebSocketListener {
-    override fun onConnected(webSocket: StreamWebSocket) {
+webSocket.subscribe(object : StreamWebSocketListener {
+    override fun onOpen(response: Response) {
         logger.i { "WebSocket connected" }
     }
 
-    override fun onMessage(webSocket: StreamWebSocket, text: String) {
+    override fun onMessage(text: String) {
         logger.d { "Received: $text" }
     }
 
-    override fun onClosing(webSocket: StreamWebSocket, code: Int, reason: String) {
+    override fun onClosing(code: Int, reason: String) {
         logger.w { "Closing: $code - $reason" }
     }
 
-    override fun onFailure(webSocket: StreamWebSocket, t: Throwable) {
+    override fun onFailure(t: Throwable, response: Response?) {
         logger.e(t) { "WebSocket error" }
     }
-}
+}).getOrThrow()
 
-val webSocket = socketFactory.create(
-    url = "wss://example.com/socket",
-    listener = listener
-)
+// socketConfig: a StreamSocketConfig.jwt(...) built as in Basic Client Instantiation
+webSocket.open(socketConfig).getOrThrow()
 
-webSocket.connect()
+webSocket.send("{\"type\":\"health.check\"}")
+webSocket.close()
 ```
 
 #### Health Monitoring
@@ -1136,7 +1162,7 @@ thread {
 }
 ```
 
-**Why**: The library uses `runOnMainLooper` internally in `StreamLifecycleMonitorImpl` to ensure thread safety.
+**Why**: `Lifecycle.addObserver` throws when called off the main thread.
 
 ---
 
@@ -1189,22 +1215,23 @@ val clientB = StreamClient(
 
 ### 3. Forgetting to Start/Stop Components
 
-**Problem**: Components don't work until started, resources leak if not stopped.
+**Problem**: The queue and the batcher start themselves on first use (`autoStart = true`). With
+`autoStart = false` they don't, and resources leak if they are never stopped.
 
 ```kotlin
-// ❌ WRONG
-val queue = StreamSerialProcessingQueue(logger, scope)
-queue.submit { /* Never runs! */ }
+// ❌ WRONG - submit suspends until someone calls start()
+val queue = StreamSerialProcessingQueue(logger, scope, autoStart = false)
+queue.submit { work() }
 ```
 
-**Solution**: Always follow the start/use/stop pattern:
+**Solution**: Start explicitly when you turn `autoStart` off, and always stop when done:
 
 ```kotlin
-// ✅ CORRECT
-val queue = StreamSerialProcessingQueue(logger, scope)
+// ✅ CORRECT (inside a coroutine; start() and stop() are suspend)
+val queue = StreamSerialProcessingQueue(logger, scope, autoStart = false)
 queue.start().getOrThrow()
 
-queue.submit { /* Runs correctly */ }
+queue.submit { work() }
 
 queue.stop().getOrThrow()
 ```
@@ -1219,7 +1246,7 @@ queue.stop().getOrThrow()
 // ❌ WRONG - Blocks main thread
 fun onButtonClick() {
     runOn(backgroundLooper) {
-        Thread.sleep(10_000) // Main thread blocked for 10s!
+        Thread.sleep(10_000) // Main thread blocked until runOn times out (5s)
     }
 }
 ```
@@ -1297,17 +1324,17 @@ class MyComponent : ViewModel() {
 **Problem**: Submitting from multiple threads without synchronization.
 
 ```kotlin
-// ❌ POTENTIALLY WRONG
-thread { queue.submit { work1() } }
-thread { queue.submit { work2() } }
+// ❌ POTENTIALLY WRONG - two coroutines race to submit
+scope.launch { queue.submit { work1() } }
+scope.launch { queue.submit { work2() } }
 // Order not guaranteed!
 ```
 
-**Solution**: Queue operations are thread-safe, but if order matters across threads, use explicit synchronization:
+**Solution**: The queue runs jobs in submission order. If order matters, submit from one coroutine:
 
 ```kotlin
-// ✅ CORRECT - If order must be guaranteed
-synchronized(lock) {
+// ✅ CORRECT
+scope.launch {
     queue.submit { work1() }
     queue.submit { work2() }
 }
@@ -1416,9 +1443,8 @@ val policy = StreamRetryPolicy.exponential(
     backoffStepMillis = 1000,
     giveUp = { attempt, error ->
         when (error) {
-            is UnauthorizedException,
-            is ForbiddenException,
-            is NotFoundException -> true // Don't retry
+            is StreamEndpointException ->
+                error.apiError?.statusCode in setOf(401, 403, 404) // Don't retry
             else -> false // Continue retrying
         }
     }
@@ -1440,11 +1466,11 @@ class MySubscriptionManager<T> : StreamSubscriptionManager<T> {
         // Custom logic
     }
 
-    override fun clear() {
+    override fun clear(): Result<Unit> {
         // Custom cleanup
     }
 
-    override fun forEach(action: (T) -> Unit): Result<Unit> {
+    override fun forEach(block: (T) -> Unit): Result<Unit> {
         // Custom iteration
     }
 }
@@ -1524,17 +1550,26 @@ stream-android-core/
 │   └── src/main/java/io/getstream/android/core/
 │       ├── api/                       # Public API
 │       │   ├── authentication/        # Token management
+│       │   ├── components/            # Android system service access
+│       │   ├── filter/                # Query filters
+│       │   ├── http/                  # OkHttp interceptors
 │       │   ├── observers/             # Lifecycle & network monitoring
 │       │   │   ├── lifecycle/
 │       │   │   └── network/
 │       │   ├── processing/            # Queue, retry, single-flight, batcher, debouncer, throttler
 │       │   ├── subscribe/             # Subscription management
 │       │   ├── socket/                # WebSocket connections
+│       │   ├── recovery/              # Reconnect evaluation
+│       │   ├── serialization/         # Event (de)serialization
+│       │   ├── sort/                  # Query sorting
+│       │   ├── telemetry/             # Telemetry
+│       │   ├── watcher/               # Watch registry and rewatch
 │       │   ├── log/                   # Logging infrastructure
 │       │   ├── utils/                 # Threading, Result utilities
 │       │   └── model/                 # Data models
 │       └── internal/                  # Internal implementations
-├── stream-android-core-annotations/   # Annotations & processors
+├── stream-android-core-annotations/   # Opt-in marker annotations
+├── stream-android-core-ui/            # Shared Compose design tokens
 ├── stream-android-core-lint/          # Custom lint rules
 ├── config/                            # Static analysis configs
 └── gradle/                            # Gradle configuration
